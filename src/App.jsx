@@ -9,24 +9,32 @@ import AuthCallbackPage from './pages/AuthCallbackPage'
 import ProjectsPage from './pages/ProjectsPage'
 import ProjectPage from './pages/ProjectPage'
 import ProfilePage from './pages/ProfilePage'
+import PWAUpdatePrompt from './components/PWAUpdatePrompt'
+import OfflineIndicator from './components/OfflineIndicator'
 
 function App() {
   return (
-    <Routes>
-      {/* Public Routes */}
-      <Route path="/" element={<HomePage />} />
-      <Route path="/login" element={<LoginPage />} />
-      <Route path="/auth/callback" element={<AuthCallbackPage />} />
-      <Route path="/privacy" element={<PrivacyPage />} />
-      <Route path="/contact" element={<ContactPage />} />
-      <Route path="/docs" element={<DocsPage />} />
-      <Route path="/test/file-api" element={<FileApiTest />} />
+    <>
+      {/* PWA Components */}
+      <PWAUpdatePrompt />
+      <OfflineIndicator />
       
-      {/* Protected Routes (App Area) */}
-      <Route path="/projects" element={<ProjectsPage />} />
-      <Route path="/project/:projectId" element={<ProjectPage />} />
-      <Route path="/profile" element={<ProfilePage />} />
-    </Routes>
+      <Routes>
+        {/* Public Routes */}
+        <Route path="/" element={<HomePage />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/auth/callback" element={<AuthCallbackPage />} />
+        <Route path="/privacy" element={<PrivacyPage />} />
+        <Route path="/contact" element={<ContactPage />} />
+        <Route path="/docs" element={<DocsPage />} />
+        <Route path="/test/file-api" element={<FileApiTest />} />
+        
+        {/* Protected Routes (App Area) */}
+        <Route path="/projects" element={<ProjectsPage />} />
+        <Route path="/project/:projectId" element={<ProjectPage />} />
+        <Route path="/profile" element={<ProfilePage />} />
+      </Routes>
+    </>
   )
 }
 
