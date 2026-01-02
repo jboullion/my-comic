@@ -40,7 +40,7 @@ export default function PublicNav() {
   const isActive = (path) => location.pathname === path
 
   return (
-    <header className="border-b border-slate-800 bg-slate-900/95 backdrop-blur-sm sticky top-0 z-50">
+    <header className="border-b border-slate-800 bg-slate-900 sticky top-0 z-50">
       <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-3 hover:opacity-90 transition-opacity">

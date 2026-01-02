@@ -27,11 +27,12 @@ npm run lint     # ESLint check
 
 ## Architecture Decisions
 
-### Storage Strategy (Planned)
+### Storage Strategy
 Per the [tech spec](docs/Comic_Book_Maker_Tech_Spec.md):
-- **IndexedDB** (via Dexie.js) for auto-save and working projects
+- **IndexedDB** via Dexie.js ([src/lib/db.js](src/lib/db.js)) for auto-save and working projects
 - **File System Access API** for explicit saves as `.cbproject` files (JSON format)
 - **Fallback:** Traditional download/upload for Firefox
+- **Zustand store** ([src/stores/useProjectStore.js](src/stores/useProjectStore.js)) manages project state
 
 ### Image Handling (Planned)
 - Convert to WebP (80-85% quality), max 1920px width
@@ -52,7 +53,7 @@ Per the [tech spec](docs/Comic_Book_Maker_Tech_Spec.md):
 ### Layouts
 - **PublicLayout** ([src/layouts/PublicLayout.jsx](src/layouts/PublicLayout.jsx)): Standard pages (Home, Privacy, Contact)
 - **DocsLayout** ([src/layouts/DocsLayout.jsx](src/layouts/DocsLayout.jsx)): Documentation with sidebar navigation
-- **AppLayout** ([src/layouts/AppLayout.jsx](src/layouts/AppLayout.jsx)): Protected pages for logged-in users (Dashboard, Project, Profile)
+- **AppLayout** ([src/layouts/AppLayout.jsx](src/layouts/AppLayout.jsx)): Protected pages for logged-in users (Projects, Project, Profile)
 - Public layouts use **PublicNav** ([src/components/PublicNav.jsx](src/components/PublicNav.jsx)) for header
 - App layouts use **AppNav** ([src/components/AppNav.jsx](src/components/AppNav.jsx)) with user menu
 
