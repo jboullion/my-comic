@@ -47,11 +47,12 @@ The application follows a client-centric architecture where all creative work ha
 
 ## **Frontend**
 
-* **Framework:** React 18+ with hooks  
-* **Build Tool:** Vite (fast development, optimized production builds)  
-* **Styling:** Tailwind CSS (utility-first, small bundle size)  
-* **Canvas Library:** Fabric.js or Konva.js (for panel manipulation)  
-* **State Management:** Zustand or React Context (lightweight solutions)
+* **Framework:** React 19 with hooks  
+* **Build Tool:** Vite 7 (fast development, optimized production builds)  
+* **Routing:** React Router 7 (client-side navigation, BrowserRouter)  
+* **Styling:** Tailwind CSS 4 (utility-first, small bundle size)  
+* **Canvas Library:** Konva.js via react-konva (for panel manipulation)  
+* **State Management:** Zustand (lightweight, with persistence middleware)
 
 ## **Storage Layer**
 

@@ -10,6 +10,7 @@ A Progressive Web App (PWA) for creating digital comic books. Client-centric arc
 
 - **React 19** with functional components and hooks (no class components)
 - **Vite 7** for dev/build with HMR at `http://localhost:5173`
+- **React Router 7** for client-side routing (`BrowserRouter` in [src/main.jsx](src/main.jsx))
 - **Tailwind CSS 4** via `@tailwindcss/vite` plugin (import in [src/index.css](src/index.css))
 - **vite-plugin-pwa** with Workbox for offline support, configured in [vite.config.js](vite.config.js)
 - **Konva** via `react-konva` for canvas rendering (preferred over Fabric.js for React integration)
@@ -41,9 +42,15 @@ Per the [tech spec](docs/Comic_Book_Maker_Tech_Spec.md):
 
 ### Component Structure
 - Single component per file, default export
-- Inline sub-components OK for file-scoped helpers (see `FeatureCard` in [src/App.jsx](src/App.jsx))
+- Page components go in `src/pages/` (e.g., `HomePage.jsx`, `FileApiTest.jsx`)
+- Inline sub-components OK for file-scoped helpers (see `FeatureCard` in [src/pages/HomePage.jsx](src/pages/HomePage.jsx))
 - Use `useState`/`useEffect` hooks; Zustand for global/shared state
 - Zustand stores go in `src/stores/` (e.g., `useProjectStore.js`)
+
+### Routing
+- Routes defined in [src/App.jsx](src/App.jsx) using `<Routes>` and `<Route>`
+- Use React Router's `<Link to="/path">` for navigation (not `<a href>`)
+- Test pages under `/test/*` (e.g., `/test/file-api`)
 
 ### Styling
 - Tailwind utility classes only (no CSS modules)
@@ -90,5 +97,8 @@ When adding features, include tests for:
 | File | Purpose |
 |------|---------|
 | [vite.config.js](vite.config.js) | Vite + PWA + Tailwind configuration |
-| [src/App.jsx](src/App.jsx) | Main app component (landing page) |
+| [src/main.jsx](src/main.jsx) | Entry point with BrowserRouter |
+| [src/App.jsx](src/App.jsx) | Route definitions |
+| [src/pages/HomePage.jsx](src/pages/HomePage.jsx) | Landing page |
+| [docs/Comic_Book_Maker_Tech_Spec.md](docs/Comic_Book_Maker_Tech_Spec.md) | Full technical specification |
 | [docs/Comic_Book_Maker_Tech_Spec.md](docs/Comic_Book_Maker_Tech_Spec.md) | Full technical specification |
