@@ -1,8 +1,10 @@
 import { Link, useLocation } from 'react-router-dom'
 import { useState, useEffect } from 'react'
+import { useAuth } from '../contexts/AuthContext'
 
 export default function PublicNav() {
   const location = useLocation()
+  const { user, loading, signOut } = useAuth()
   const [isPWAInstallable, setIsPWAInstallable] = useState(false)
   const [deferredPrompt, setDeferredPrompt] = useState(null)
 
@@ -25,6 +27,14 @@ export default function PublicNav() {
       setIsPWAInstallable(false)
     }
     setDeferredPrompt(null)
+  }
+
+  const handleSignOut = async () => {
+    try {
+      await signOut()
+    } catch (error) {
+      console.error('Sign out error:', error)
+    }
   }
 
   const isActive = (path) => location.pathname === path
@@ -68,12 +78,31 @@ export default function PublicNav() {
               Install App
             </button>
           )}
-          <Link 
-            to="/"
-            className="px-4 py-2 bg-indigo-500 hover:bg-indigo-600 rounded-lg text-sm font-medium transition-colors text-white"
-          >
-            Start Creating
-          </Link>
+          
+          {loading ? (
+            <div className="w-8 h-8 rounded-full bg-slate-700 animate-pulse" />
+          ) : user ? (
+            <div className="flex items-center gap-3">
+              <img 
+                src={user.user_metadata?.avatar_url || `https://ui-avatars.com/api/?name=${user.email}&background=6366f1&color=fff`}
+                alt="Avatar"
+                className="w-8 h-8 rounded-full border-2 border-slate-700"
+              />
+              <button
+                onClick={handleSignOut}
+                className="px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-sm font-medium transition-colors text-slate-300"
+              >
+                Sign Out
+              </button>
+            </div>
+          ) : (
+            <Link 
+              to="/login"
+              className="px-4 py-2 bg-indigo-500 hover:bg-indigo-600 rounded-lg text-sm font-medium transition-colors text-white"
+            >
+              Sign In
+            </Link>
+          )}
         </div>
       </div>
     </header>

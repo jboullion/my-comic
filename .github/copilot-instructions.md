@@ -86,6 +86,24 @@ When implementing new features, refer to Phase 1 in the tech spec:
 4. Panel manipulation, image upload, text tools
 5. Export as PNG/JPG
 
+## Authentication (Supabase)
+
+- **Provider:** Supabase Auth with Google and Discord OAuth
+- **Setup:** Copy `.env.example` to `.env.local` and add Supabase credentials
+- **Context:** `AuthProvider` wraps app in [src/main.jsx](src/main.jsx)
+- **Hook:** Use `useAuth()` from [src/contexts/AuthContext.jsx](src/contexts/AuthContext.jsx)
+- **Callback:** OAuth redirects to `/auth/callback` for token exchange
+
+```jsx
+// Example usage in components
+const { user, loading, signInWithGoogle, signInWithDiscord, signOut } = useAuth()
+```
+
+**Supabase Dashboard Setup Required:**
+1. Enable Google and Discord providers in Authentication → Providers
+2. Add `http://localhost:5173/auth/callback` to redirect URLs
+3. Configure OAuth credentials from Google Cloud Console and Discord Developer Portal
+
 ## Testing Strategy
 
 - **Framework:** Vitest (Vite-native, fast) + React Testing Library
