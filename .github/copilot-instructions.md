@@ -43,9 +43,16 @@ Per the [tech spec](docs/Comic_Book_Maker_Tech_Spec.md):
 ### Component Structure
 - Single component per file, default export
 - Page components go in `src/pages/` (e.g., `HomePage.jsx`, `FileApiTest.jsx`)
+- Layouts go in `src/layouts/` — wrap pages with consistent nav/footer
+- Shared components go in `src/components/` (e.g., `PublicNav.jsx`)
 - Inline sub-components OK for file-scoped helpers (see `FeatureCard` in [src/pages/HomePage.jsx](src/pages/HomePage.jsx))
 - Use `useState`/`useEffect` hooks; Zustand for global/shared state
 - Zustand stores go in `src/stores/` (e.g., `useProjectStore.js`)
+
+### Layouts
+- **PublicLayout** ([src/layouts/PublicLayout.jsx](src/layouts/PublicLayout.jsx)): Standard pages (Home, Privacy, Contact)
+- **DocsLayout** ([src/layouts/DocsLayout.jsx](src/layouts/DocsLayout.jsx)): Documentation with sidebar navigation
+- All layouts use **PublicNav** ([src/components/PublicNav.jsx](src/components/PublicNav.jsx)) for consistent header
 
 ### Routing
 - Routes defined in [src/App.jsx](src/App.jsx) using `<Routes>` and `<Route>`

@@ -1,58 +1,11 @@
-import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
+import PublicLayout from '../layouts/PublicLayout'
 
 export default function HomePage() {
-  const [isPWAInstallable, setIsPWAInstallable] = useState(false)
-  const [deferredPrompt, setDeferredPrompt] = useState(null)
-
-  useEffect(() => {
-    const handler = (e) => {
-      e.preventDefault()
-      setDeferredPrompt(e)
-      setIsPWAInstallable(true)
-    }
-    
-    window.addEventListener('beforeinstallprompt', handler)
-    return () => window.removeEventListener('beforeinstallprompt', handler)
-  }, [])
-
-  const handleInstall = async () => {
-    if (!deferredPrompt) return
-    deferredPrompt.prompt()
-    const { outcome } = await deferredPrompt.userChoice
-    if (outcome === 'accepted') {
-      setIsPWAInstallable(false)
-    }
-    setDeferredPrompt(null)
-  }
-
   return (
-    <div className="min-h-screen bg-slate-900 text-white">
-      {/* Header */}
-      <header className="border-b border-slate-800">
-        <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-indigo-500 rounded-lg flex items-center justify-center">
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-              </svg>
-            </div>
-            <span className="text-xl font-bold">Comic Book Maker</span>
-          </div>
-          
-          {isPWAInstallable && (
-            <button 
-              onClick={handleInstall}
-              className="px-4 py-2 bg-indigo-500 hover:bg-indigo-600 rounded-lg text-sm font-medium transition-colors"
-            >
-              Install App
-            </button>
-          )}
-        </div>
-      </header>
-
+    <PublicLayout>
       {/* Hero Section */}
-      <main className="max-w-6xl mx-auto px-4 py-16">
+      <div className="max-w-6xl mx-auto px-4 py-16">
         <div className="text-center mb-16">
           <h1 className="text-5xl font-bold mb-6 bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">
             Create Amazing Comics
@@ -117,15 +70,8 @@ export default function HomePage() {
             </Link>
           </div>
         </div>
-      </main>
-
-      {/* Footer */}
-      <footer className="border-t border-slate-800 mt-16">
-        <div className="max-w-6xl mx-auto px-4 py-6 text-center text-slate-500 text-sm">
-          Comic Book Maker v1.0 • Built with ❤️
-        </div>
-      </footer>
-    </div>
+      </div>
+    </PublicLayout>
   )
 }
 
