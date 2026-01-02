@@ -6,7 +6,7 @@ import ContactPage from './pages/ContactPage'
 import DocsPage from './pages/DocsPage'
 import LoginPage from './pages/LoginPage'
 import AuthCallbackPage from './pages/AuthCallbackPage'
-import DashboardPage from './pages/DashboardPage'
+import ProjectsPage from './pages/ProjectsPage'
 import ProjectPage from './pages/ProjectPage'
 import ProfilePage from './pages/ProfilePage'
 
@@ -23,7 +23,7 @@ function App() {
       <Route path="/test/file-api" element={<FileApiTest />} />
       
       {/* Protected Routes (App Area) */}
-      <Route path="/dashboard" element={<DashboardPage />} />
+      <Route path="/projects" element={<ProjectsPage />} />
       <Route path="/project/:projectId" element={<ProjectPage />} />
       <Route path="/profile" element={<ProfilePage />} />
     </Routes>

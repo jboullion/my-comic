@@ -60,8 +60,8 @@ Per the [tech spec](docs/Comic_Book_Maker_Tech_Spec.md):
 - Routes defined in [src/App.jsx](src/App.jsx) using `<Routes>` and `<Route>`
 - Use React Router's `<Link to="/path">` for navigation (not `<a href>`)
 - Test pages under `/test/*` (e.g., `/test/file-api`)
-- **Protected routes:** `/dashboard`, `/project/:projectId`, `/profile` — wrapped in `AppLayout` which redirects to `/login` if not authenticated
-- **Auth flow:** Login → OAuth callback (`/auth/callback`) → Dashboard
+- **Protected routes:** `/projects`, `/project/:projectId`, `/profile` — wrapped in `AppLayout` which redirects to `/login` if not authenticated
+- **Auth flow:** Login → OAuth callback (`/auth/callback`) → Projects
 
 ### Styling
 - Tailwind utility classes only (no CSS modules)

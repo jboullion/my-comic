@@ -9,7 +9,7 @@ const PLACEHOLDER_PROJECTS = [
   { id: '3', title: 'Untitled Project', updatedAt: '2023-12-28', pages: 1, thumbnail: null },
 ]
 
-export default function DashboardPage() {
+export default function ProjectsPage() {
   const { user } = useAuth()
   
   // TODO: Fetch projects from Supabase/IndexedDB
