@@ -19,8 +19,8 @@ export default function AuthCallbackPage() {
         console.error('Auth callback error:', error)
         navigate('/login?error=auth_failed')
       } else {
-        // Successful login - redirect to home or intended destination
-        navigate('/')
+        // Successful login - redirect to dashboard
+        navigate('/dashboard')
       }
     }
 

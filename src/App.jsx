@@ -6,10 +6,14 @@ import ContactPage from './pages/ContactPage'
 import DocsPage from './pages/DocsPage'
 import LoginPage from './pages/LoginPage'
 import AuthCallbackPage from './pages/AuthCallbackPage'
+import DashboardPage from './pages/DashboardPage'
+import ProjectPage from './pages/ProjectPage'
+import ProfilePage from './pages/ProfilePage'
 
 function App() {
   return (
     <Routes>
+      {/* Public Routes */}
       <Route path="/" element={<HomePage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/auth/callback" element={<AuthCallbackPage />} />
@@ -17,6 +21,11 @@ function App() {
       <Route path="/contact" element={<ContactPage />} />
       <Route path="/docs" element={<DocsPage />} />
       <Route path="/test/file-api" element={<FileApiTest />} />
+      
+      {/* Protected Routes (App Area) */}
+      <Route path="/dashboard" element={<DashboardPage />} />
+      <Route path="/project/:projectId" element={<ProjectPage />} />
+      <Route path="/profile" element={<ProfilePage />} />
     </Routes>
   )
 }

@@ -52,12 +52,16 @@ Per the [tech spec](docs/Comic_Book_Maker_Tech_Spec.md):
 ### Layouts
 - **PublicLayout** ([src/layouts/PublicLayout.jsx](src/layouts/PublicLayout.jsx)): Standard pages (Home, Privacy, Contact)
 - **DocsLayout** ([src/layouts/DocsLayout.jsx](src/layouts/DocsLayout.jsx)): Documentation with sidebar navigation
-- All layouts use **PublicNav** ([src/components/PublicNav.jsx](src/components/PublicNav.jsx)) for consistent header
+- **AppLayout** ([src/layouts/AppLayout.jsx](src/layouts/AppLayout.jsx)): Protected pages for logged-in users (Dashboard, Project, Profile)
+- Public layouts use **PublicNav** ([src/components/PublicNav.jsx](src/components/PublicNav.jsx)) for header
+- App layouts use **AppNav** ([src/components/AppNav.jsx](src/components/AppNav.jsx)) with user menu
 
 ### Routing
 - Routes defined in [src/App.jsx](src/App.jsx) using `<Routes>` and `<Route>`
 - Use React Router's `<Link to="/path">` for navigation (not `<a href>`)
 - Test pages under `/test/*` (e.g., `/test/file-api`)
+- **Protected routes:** `/dashboard`, `/project/:projectId`, `/profile` — wrapped in `AppLayout` which redirects to `/login` if not authenticated
+- **Auth flow:** Login → OAuth callback (`/auth/callback`) → Dashboard
 
 ### Styling
 - Tailwind utility classes only (no CSS modules)
@@ -125,5 +129,6 @@ When adding features, include tests for:
 | [src/main.jsx](src/main.jsx) | Entry point with BrowserRouter |
 | [src/App.jsx](src/App.jsx) | Route definitions |
 | [src/pages/HomePage.jsx](src/pages/HomePage.jsx) | Landing page |
-| [docs/Comic_Book_Maker_Tech_Spec.md](docs/Comic_Book_Maker_Tech_Spec.md) | Full technical specification |
+| [src/contexts/AuthContext.jsx](src/contexts/AuthContext.jsx) | Supabase auth provider and useAuth hook |
+| [src/layouts/AppLayout.jsx](src/layouts/AppLayout.jsx) | Protected layout for logged-in users |
 | [docs/Comic_Book_Maker_Tech_Spec.md](docs/Comic_Book_Maker_Tech_Spec.md) | Full technical specification |
