@@ -1,7 +1,5 @@
 ## Current TODOs
 
-- 
-- 
 
 
 ## Bugs

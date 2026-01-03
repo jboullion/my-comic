@@ -1,5 +1,26 @@
 @import "tailwindcss";
 
+@theme {
+  /* Comic Palette Overrides */
+  --color-indigo-500: #4c69f6;
+  --color-indigo-600: #3b54d1;
+  
+  /* Dark Gray Palette (replacing Slate with neutral grays) */
+  --color-slate-950: #0a0a0a;
+  --color-slate-900: #121212;
+  --color-slate-800: #1e1e1e;
+  --color-slate-700: #2d2d2d;
+  --color-slate-600: #3f3f3f;
+  --color-slate-500: #525252;
+  --color-slate-400: #737373;
+
+  /* Additional Comic Colors */
+  --color-comic-blue: #4c94f6;
+  --color-comic-yellow: #f6db35;
+  --color-comic-orange: #ffc510;
+  --color-comic-red: #ee5454;
+}
+
 /* Override default hover variant to work without media query check */
 @custom-variant hover (&:hover);
 
@@ -24,7 +45,7 @@ button:disabled,
 button:focus-visible,
 [role="button"]:focus-visible,
 a:focus-visible {
-  outline: 2px solid #6366f1;
+  outline: 2px solid #4c69f6;
   outline-offset: 2px;
 }
 
@@ -32,7 +53,7 @@ a:focus-visible {
 @layer base {
   * {
     scrollbar-width: thin;
-    scrollbar-color: #334155 transparent;
+    scrollbar-color: #2d2d2d transparent;
   }
 
   /* Chrome, Edge, and Safari */
@@ -46,13 +67,13 @@ a:focus-visible {
   }
 
   *::-webkit-scrollbar-thumb {
-    background-color: #334155; /* slate-700 */
+    background-color: #2d2d2d; /* slate-700 (new gray) */
     border-radius: 20px;
     border: 2px solid transparent;
     background-clip: content-box;
   }
 
   *::-webkit-scrollbar-thumb:hover {
-    background-color: #475569; /* slate-600 */
+    background-color: #3f3f3f; /* slate-600 (new gray) */
   }
 }
