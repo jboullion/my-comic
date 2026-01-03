@@ -4,7 +4,7 @@
 
 A Progressive Web App (PWA) for creating digital comic books. Client-centric architecture where all creative work happens in the browser—no backend storage for user content (user data sovereignty).
 
-**Current State:** Early MVP phase with landing page and PWA shell. Core editor features are not yet implemented.
+**Current State:** MVP with project management, IndexedDB storage, and PWA functionality. Users can create/save projects, work offline. Canvas editor is placeholder (Konva integration pending).
 
 ## Tech Stack & Patterns
 
@@ -13,8 +13,9 @@ A Progressive Web App (PWA) for creating digital comic books. Client-centric arc
 - **React Router 7** for client-side routing (`BrowserRouter` in [src/main.jsx](src/main.jsx))
 - **Tailwind CSS 4** via `@tailwindcss/vite` plugin (import in [src/index.css](src/index.css))
 - **vite-plugin-pwa** with Workbox for offline support, configured in [vite.config.js](vite.config.js)
-- **Konva** via `react-konva` for canvas rendering (preferred over Fabric.js for React integration)
-- **Zustand** for global state (comic project data, UI state) with persistence middleware
+- **Dexie.js** for IndexedDB operations ([src/lib/db.js](src/lib/db.js))
+- **Zustand** for global state management ([src/stores/useProjectStore.js](src/stores/useProjectStore.js))
+- **Konva.js** via `react-konva` for canvas rendering (planned, not yet integrated)
 
 ## Commands
 
@@ -68,12 +69,31 @@ Per the [tech spec](docs/Comic_Book_Maker_Tech_Spec.md):
 - Tailwind utility classes only (no CSS modules)
 - Dark theme: `bg-slate-900`, `text-white`, accents with `indigo-500`
 - Use `@import "tailwindcss"` in CSS files
+- **Avoid transparency/opacity on backgrounds** — Use solid colors (`bg-slate-900` not `bg-slate-900/50`) to prevent GPU rendering artifacts (diagonal scratch lines)
+- **Avoid `backdrop-blur`** — Can cause visual artifacts on some GPUs
+
+### User Menus
+- Both **PublicNav** and **AppNav** use dropdown menus on user avatar click
+- Dropdown includes: Install App (if available), Projects, Profile, Sign Out
+- Click-outside-to-close backdrop pattern for dropdowns
 
 ### ESLint Rules
 - Configured for React hooks and fast refresh
 - Unused vars starting with uppercase are ignored (`varsIgnorePattern: '^[A-Z_]'`)
 
 ## PWA Configuration
+
+**Service Worker Features:**
+- **Auto-update** — New versions detected and prompt shown via `PWAUpdatePrompt`
+- **Offline indicator** — Banner shows when connectivity lost/restored via `OfflineIndicator`
+- **Install prompt** — "Install App" option in user dropdown when PWA installable
+- **Dev mode enabled** — PWA works in development for testing (`devOptions.enabled: true`)
+
+**Caching Strategy:**
+- Static assets → Precached on install
+- Google Fonts → CacheFirst (1 year)
+- Supabase API → NetworkFirst (5 min cache, 10s timeout)
+- Images → CacheFirst (30 days, max 100 entries)
 
 Icons must be generated for multiple sizes. The [generate-icons.js](generate-icons.js) script uses Sharp:
 - `pwa-192x192.png`, `pwa-512x512.png` — main PWA icons
@@ -85,8 +105,8 @@ PWA manifest configured in [vite.config.js](vite.config.js) with `registerType: 
 ## Planned Features (Roadmap Priority)
 
 When implementing new features, refer to Phase 1 in the tech spec:
-1. IndexedDB setup with Dexie.js wrapper
-2. File System Access API with fallback
+1. ✅ IndexedDB setup with Dexie.js wrapper
+2. ✅ File System Access API with fallback
 3. Canvas workspace (Konva.js via `react-konva`)
 4. Panel manipulation, image upload, text tools
 5. Export as PNG/JPG
@@ -130,6 +150,13 @@ When adding features, include tests for:
 | [src/main.jsx](src/main.jsx) | Entry point with BrowserRouter |
 | [src/App.jsx](src/App.jsx) | Route definitions |
 | [src/pages/HomePage.jsx](src/pages/HomePage.jsx) | Landing page |
+| [src/pages/ProjectsPage.jsx](src/pages/ProjectsPage.jsx) | Project list with cards, create/open/delete |
+| [src/pages/ProjectPage.jsx](src/pages/ProjectPage.jsx) | Main editor workspace with canvas placeholder |
+| [src/lib/db.js](src/lib/db.js) | Dexie.js IndexedDB wrapper with CRUD operations |
+| [src/stores/useProjectStore.js](src/stores/useProjectStore.js) | Zustand store for project state management |
+| [src/components/NewProjectModal.jsx](src/components/NewProjectModal.jsx) | Modal for creating new projects |
+| [src/components/PWAUpdatePrompt.jsx](src/components/PWAUpdatePrompt.jsx) | Service worker update notification |
+| [src/components/OfflineIndicator.jsx](src/components/OfflineIndicator.jsx) | Online/offline status banner |
 | [src/contexts/AuthContext.jsx](src/contexts/AuthContext.jsx) | Supabase auth provider and useAuth hook |
 | [src/layouts/AppLayout.jsx](src/layouts/AppLayout.jsx) | Protected layout for logged-in users |
 | [docs/Comic_Book_Maker_Tech_Spec.md](docs/Comic_Book_Maker_Tech_Spec.md) | Full technical specification |
