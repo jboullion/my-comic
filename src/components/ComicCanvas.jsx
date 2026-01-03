@@ -1,72 +1,9 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react'
-import { Stage, Layer, Rect, Group, Image, Transformer, Shape } from 'react-konva'
+import { Stage, Layer, Rect, Group, Transformer } from 'react-konva'
 import useProjectStore from '../stores/useProjectStore'
-import { useImage } from '../hooks/useImage'
-
-/**
- * Helper to draw corner shapes (CSS corner-shape property)
- */
-const drawCornerShapePath = (ctx, width, height, radius, cornerShape) => {
-  const r = Math.min(radius, width / 2, height / 2)
-  ctx.beginPath()
-  
-  if (cornerShape === 'round' || !cornerShape || r <= 0) {
-    ctx.moveTo(r, 0)
-    ctx.lineTo(width - r, 0)
-    ctx.arcTo(width, 0, width, r, r)
-    ctx.lineTo(width, height - r)
-    ctx.arcTo(width, height, width - r, height, r)
-    ctx.lineTo(r, height)
-    ctx.arcTo(0, height, 0, height - r, r)
-    ctx.lineTo(0, r)
-    ctx.arcTo(0, 0, r, 0, r)
-  } else if (cornerShape === 'bevel') {
-    ctx.moveTo(r, 0)
-    ctx.lineTo(width - r, 0)
-    ctx.lineTo(width, r)
-    ctx.lineTo(width, height - r)
-    ctx.lineTo(width - r, height)
-    ctx.lineTo(r, height)
-    ctx.lineTo(0, height - r)
-    ctx.lineTo(0, r)
-  } else if (cornerShape === 'notch') {
-    ctx.moveTo(r, 0)
-    ctx.lineTo(width - r, 0)
-    ctx.lineTo(width - r, r)
-    ctx.lineTo(width, r)
-    ctx.lineTo(width, height - r)
-    ctx.lineTo(width - r, height - r)
-    ctx.lineTo(width - r, height)
-    ctx.lineTo(r, height)
-    ctx.lineTo(r, height - r)
-    ctx.lineTo(0, height - r)
-    ctx.lineTo(0, r)
-    ctx.lineTo(r, r)
-  } else if (cornerShape === 'scoop') {
-    ctx.moveTo(r, 0)
-    ctx.lineTo(width - r, 0)
-    ctx.arc(width, 0, r, Math.PI, Math.PI / 2, true)
-    ctx.lineTo(width, height - r)
-    ctx.arc(width, height, r, -Math.PI / 2, Math.PI, true)
-    ctx.lineTo(r, height)
-    ctx.arc(0, height, r, 0, -Math.PI / 2, true)
-    ctx.lineTo(0, r)
-    ctx.arc(0, 0, r, Math.PI / 2, 0, true)
-  } else if (cornerShape === 'squircle') {
-    // Approximation of a squircle (superellipse n=4)
-    const cp = r * 0.8 
-    ctx.moveTo(r, 0)
-    ctx.lineTo(width - r, 0)
-    ctx.bezierCurveTo(width - (r - cp), 0, width, r - cp, width, r)
-    ctx.lineTo(width, height - r)
-    ctx.bezierCurveTo(width, height - (r - cp), width - (r - cp), height, width - r, height)
-    ctx.lineTo(r, height)
-    ctx.bezierCurveTo(r - cp, height, 0, height - (r - cp), 0, height - r)
-    ctx.lineTo(0, r)
-    ctx.bezierCurveTo(0, r - cp, r - cp, 0, r, 0)
-  }
-  ctx.closePath()
-}
+import ElementRenderer from './canvas/elements/ElementRenderer'
+import ZoomControls from './canvas/ZoomControls'
+import CanvasContextMenu from './canvas/CanvasContextMenu'
 
 /**
  * ComicCanvas Component
@@ -309,6 +246,20 @@ export default function ComicCanvas() {
     })
   }
 
+  /**
+   * Handle zoom reset (100%)
+   */
+  const handleZoomReset = useCallback(() => {
+    setZoom(1)
+    // Center it
+    if (containerRef.current) {
+      setPosition({
+        x: (containerRef.current.offsetWidth - pageWidth) / 2,
+        y: (containerRef.current.offsetHeight - pageHeight) / 2
+      })
+    }
+  }, [pageWidth, pageHeight, setZoom])
+
   return (
     <div 
       ref={containerRef} 
@@ -380,289 +331,26 @@ export default function ComicCanvas() {
       </Stage>
 
       {/* Zoom Controls Overlay */}
-      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-slate-900/80 backdrop-blur border border-slate-700 rounded-full px-4 py-2 shadow-xl z-10">
-        <button 
-          onClick={() => setZoom(Math.max(0.1, zoom - 0.1))}
-          className="p-1 hover:text-indigo-400 transition-colors"
-        >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
-          </svg>
-        </button>
-        <span className="text-xs font-mono min-w-[4rem] text-center">
-          {Math.round(zoom * 100)}%
-        </span>
-        <button 
-          onClick={() => setZoom(Math.min(5, zoom + 0.1))}
-          className="p-1 hover:text-indigo-400 transition-colors"
-        >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
-        </button>
-        <div className="w-px h-4 bg-slate-700 mx-1" />
-        <button 
-          onClick={handleFitToScreen}
-          className="text-xs font-medium hover:text-indigo-400 transition-colors"
-        >
-          Fit
-        </button>
-        <button 
-          onClick={() => {
-            setZoom(1)
-            // Center it
-            if (containerRef.current) {
-              setPosition({
-                x: (containerRef.current.offsetWidth - pageWidth) / 2,
-                y: (containerRef.current.offsetHeight - pageHeight) / 2
-              })
-            }
-          }}
-          className="text-xs font-medium hover:text-indigo-400 transition-colors"
-        >
-          100%
-        </button>
-      </div>
+      <ZoomControls 
+        zoom={zoom}
+        onZoomChange={setZoom}
+        onFitToScreen={handleFitToScreen}
+        onReset={handleZoomReset}
+      />
 
       {/* Context Menu */}
-      {contextMenu.visible && (
-        <div 
-          className="fixed z-50 bg-slate-800 border border-slate-700 rounded-lg shadow-2xl py-1.5 w-30 overflow-hidden"
-          style={{ left: contextMenu.x, top: contextMenu.y }}
-          onClick={(e) => e.stopPropagation()}
-        >
-          <ContextMenuItem 
-            label="Bring to Front" 
-            onClick={() => {
-              reorderElements(selectedElementIds, 'front')
-              setContextMenu({ visible: false, x: 0, y: 0 })
-            }}
-          />
-          <ContextMenuItem 
-            label="Bring Forward" 
-            onClick={() => {
-              reorderElements(selectedElementIds, 'forward')
-              setContextMenu({ visible: false, x: 0, y: 0 })
-            }}
-          />
-          <ContextMenuItem 
-            label="Send Backward" 
-            onClick={() => {
-              reorderElements(selectedElementIds, 'backward')
-              setContextMenu({ visible: false, x: 0, y: 0 })
-            }}
-          />
-          <ContextMenuItem 
-            label="Send to Back" 
-            onClick={() => {
-              reorderElements(selectedElementIds, 'back')
-              setContextMenu({ visible: false, x: 0, y: 0 })
-            }}
-          />
-          <div className="h-px bg-slate-700 my-1" />
-          <ContextMenuItem 
-            label="Delete" 
-            className="text-red-400 hover:bg-red-500 hover:text-white"
-            onClick={() => {
-              deleteSelectedElements()
-              setContextMenu({ visible: false, x: 0, y: 0 })
-            }}
-          />
-        </div>
-      )}
+      <CanvasContextMenu
+        visible={contextMenu.visible}
+        x={contextMenu.x}
+        y={contextMenu.y}
+        onBringToFront={() => reorderElements(selectedElementIds, 'front')}
+        onBringForward={() => reorderElements(selectedElementIds, 'forward')}
+        onSendBackward={() => reorderElements(selectedElementIds, 'backward')}
+        onSendToBack={() => reorderElements(selectedElementIds, 'back')}
+        onDelete={deleteSelectedElements}
+        onClose={() => setContextMenu({ visible: false, x: 0, y: 0 })}
+      />
     </div>
   )
 }
-
-/**
- * Context Menu Item Component
- */
-function ContextMenuItem({ label, onClick, className = '' }) {
-  return (
-    <button 
-      className={`w-full text-left px-3 py-1.5 text-xs font-medium text-slate-300 hover:bg-indigo-600 hover:text-white active:bg-indigo-700 active:scale-95 transition-all duration-150 ${className}`}
-      onClick={onClick}
-    >
-      {label}
-    </button>
-  )
-}
-
-/**
- * Element Renderer
- */
-function ElementRenderer({ element, isSelected, onSelect, onChange }) {
-  if (element.type === 'image') {
-    return (
-      <ImageElement 
-        element={element} 
-        isSelected={isSelected} 
-        onSelect={onSelect} 
-        onChange={onChange} 
-      />
-    )
-  }
-  if (element.type === 'panel') {
-    return (
-      <PanelElement 
-        element={element} 
-        isSelected={isSelected} 
-        onSelect={onSelect} 
-        onChange={onChange} 
-      />
-    )
-  }
-  return null
-}
-
-/**
- * Panel Element Component
- */
-const PanelElement = React.memo(({ element, onSelect, onChange }) => {
-  const shapeRef = useRef(null)
-
-  return (
-    <Shape
-      id={element.id}
-      ref={shapeRef}
-      x={element.x}
-      y={element.y}
-      width={element.width}
-      height={element.height}
-      offsetX={element.width / 2}
-      offsetY={element.height / 2}
-      fill={element.fill || '#ffffff'}
-      stroke={element.stroke || '#000000'}
-      strokeWidth={element.strokeWidth || 0}
-      rotation={element.rotation}
-      scaleX={element.scaleX}
-      scaleY={element.scaleY}
-      opacity={element.opacity}
-      draggable
-      onClick={onSelect}
-      onTap={onSelect}
-      sceneFunc={(ctx, shape) => {
-        drawCornerShapePath(ctx, element.width, element.height, element.cornerRadius || 0, element.cornerShape)
-        ctx.fillStrokeShape(shape)
-      }}
-      hitFunc={(ctx, shape) => {
-        drawCornerShapePath(ctx, element.width, element.height, element.cornerRadius || 0, element.cornerShape)
-        ctx.fillStrokeShape(shape)
-      }}
-      onDragEnd={(e) => {
-        onChange({
-          x: e.target.x(),
-          y: e.target.y(),
-        })
-      }}
-      onTransformEnd={() => {
-        const node = shapeRef.current
-        const scaleX = node.scaleX()
-        const scaleY = node.scaleY()
-
-        node.scaleX(1)
-        node.scaleY(1)
-
-        const newWidth = Math.max(5, node.width() * scaleX)
-        const newHeight = Math.max(5, node.height() * scaleY)
-
-        onChange({
-          x: node.x(),
-          y: node.y(),
-          width: newWidth,
-          height: newHeight,
-          rotation: node.rotation(),
-        })
-      }}
-    />
-  )
-})
-
-PanelElement.displayName = 'PanelElement'
-
-/**
- * Image Element Component
- */
-const ImageElement = React.memo(({ element, onSelect, onChange }) => {
-  const image = useImage(element.assetId)
-  const imageRef = useRef(null)
-
-  // Set initial size based on image dimensions if not set
-  useEffect(() => {
-    if (image && !element.widthSet) {
-      const aspectRatio = image.width / image.height
-      const defaultWidth = 300
-      onChange({ 
-        width: defaultWidth, 
-        height: defaultWidth / aspectRatio,
-        widthSet: true 
-      })
-    }
-  }, [image, element.widthSet, onChange])
-
-  return (
-    <Shape
-      id={element.id}
-      ref={imageRef}
-      x={element.x}
-      y={element.y}
-      width={element.width}
-      height={element.height}
-      offsetX={element.width / 2}
-      offsetY={element.height / 2}
-      stroke={element.stroke || '#000000'}
-      strokeWidth={element.strokeWidth || 0}
-      rotation={element.rotation}
-      scaleX={element.scaleX}
-      scaleY={element.scaleY}
-      opacity={element.opacity}
-      draggable
-      onClick={onSelect}
-      onTap={onSelect}
-      sceneFunc={(ctx, shape) => {
-        drawCornerShapePath(ctx, element.width, element.height, element.cornerRadius || 0, element.cornerShape)
-        ctx.fillShape(shape)
-        ctx.save()
-        ctx.clip()
-        if (image) {
-          ctx.drawImage(image, 0, 0, element.width, element.height)
-        }
-        ctx.restore()
-        ctx.strokeShape(shape)
-      }}
-      hitFunc={(ctx, shape) => {
-        drawCornerShapePath(ctx, element.width, element.height, element.cornerRadius || 0, element.cornerShape)
-        ctx.fillStrokeShape(shape)
-      }}
-      onDragEnd={(e) => {
-        onChange({
-          x: e.target.x(),
-          y: e.target.y(),
-        })
-      }}
-      onTransformEnd={() => {
-        const node = imageRef.current
-        const scaleX = node.scaleX()
-        const scaleY = node.scaleY()
-
-        // Reset scale and apply to width/height for cleaner data
-        node.scaleX(1)
-        node.scaleY(1)
-
-        const newWidth = Math.max(5, node.width() * scaleX)
-        const newHeight = Math.max(5, node.height() * scaleY)
-
-        onChange({
-          x: node.x(),
-          y: node.y(),
-          width: newWidth,
-          height: newHeight,
-          rotation: node.rotation(),
-        })
-      }}
-    />
-  )
-})
-
-ImageElement.displayName = 'ImageElement'
 
