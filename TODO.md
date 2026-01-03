@@ -4,8 +4,6 @@
 
 ## Bugs
 
-- Images should rotate from the center I think.
-
 ## Ideas and Brainstorming
 
 - Lots of project default settings

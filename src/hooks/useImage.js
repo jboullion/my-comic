@@ -11,22 +11,20 @@ const imageCache = new Map()
  */
 export function useImage(assetId) {
   const [image, setImage] = useState(() => imageCache.get(assetId) || null)
+  const [prevAssetId, setPrevAssetId] = useState(assetId)
+
+  // Adjust state if assetId changes during render
+  if (assetId !== prevAssetId) {
+    setPrevAssetId(assetId)
+    setImage(imageCache.get(assetId) || null)
+  }
 
   useEffect(() => {
-    if (!assetId) {
-      if (image !== null) setImage(null)
-      return
-    }
+    if (!assetId) return
 
     // If already in state and matches assetId, skip
     const cached = imageCache.get(assetId)
     if (cached && image === cached) {
-      return
-    }
-
-    // Check cache first
-    if (imageCache.has(assetId)) {
-      setImage(imageCache.get(assetId))
       return
     }
 
