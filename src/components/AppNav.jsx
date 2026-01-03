@@ -1,9 +1,8 @@
-import { Link, useLocation } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { useState, useEffect } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 
 export default function AppNav() {
-  const location = useLocation()
   const { user, signOut } = useAuth()
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
   const [isPWAInstallable, setIsPWAInstallable] = useState(false)
@@ -37,8 +36,6 @@ export default function AppNav() {
       console.error('Sign out error:', error)
     }
   }
-
-  const isActive = (path) => location.pathname === path
 
   return (
     <header className="border-b border-slate-800 bg-slate-900 sticky top-0 z-50">

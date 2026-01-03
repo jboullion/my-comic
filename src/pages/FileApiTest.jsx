@@ -17,10 +17,7 @@ export default function FileApiTest() {
   })
   const [fileHandle, setFileHandle] = useState(null)
   const [status, setStatus] = useState('')
-  const [supportsFileApi, setSupportsFileApi] = useState('showSaveFilePicker' in window)
-
-  // Check if File System Access API is supported
-  const isFileSystemSupported = () => 'showSaveFilePicker' in window
+  const supportsFileApi = 'showSaveFilePicker' in window
 
   // ============ SAVE FUNCTIONALITY ============
 

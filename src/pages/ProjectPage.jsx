@@ -2,10 +2,10 @@ import { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import AppLayout from '../layouts/AppLayout'
 import useProjectStore from '../stores/useProjectStore'
+import ComicCanvas from '../components/ComicCanvas'
 
 export default function ProjectPage() {
   const { projectId } = useParams()
-  const [activePage, setActivePage] = useState(0)
   
   const { 
     currentProject,
@@ -19,6 +19,11 @@ export default function ProjectPage() {
     saveToFile,
     addPage,
     updateCurrentProject,
+    activePageIndex,
+    setActivePageIndex,
+    tool,
+    setTool,
+    updateCurrentProjectLocal,
   } = useProjectStore()
 
   // Load project on mount
@@ -42,9 +47,42 @@ export default function ProjectPage() {
   // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e) => {
+      // Don't trigger shortcuts if user is typing in an input
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return
+
+      // Ctrl+S to save
       if ((e.metaKey || e.ctrlKey) && e.key === 's') {
         e.preventDefault()
         saveCurrentProject()
+      }
+      
+      // Ctrl+Z to undo
+      if ((e.metaKey || e.ctrlKey) && e.key === 'z' && !e.shiftKey) {
+        e.preventDefault()
+        useProjectStore.temporal.getState().undo()
+      }
+      
+      // Ctrl+Shift+Z or Ctrl+Y to redo
+      if (((e.metaKey || e.ctrlKey) && e.key === 'z' && e.shiftKey) || ((e.metaKey || e.ctrlKey) && e.key === 'y')) {
+        e.preventDefault()
+        useProjectStore.temporal.getState().redo()
+      }
+
+      // Delete / Backspace to delete selected
+      if (e.key === 'Delete' || e.key === 'Backspace') {
+        useProjectStore.getState().deleteSelectedElements()
+      }
+
+      // Arrow keys to nudge
+      if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.key)) {
+        e.preventDefault()
+        const amount = e.shiftKey ? 10 : 1
+        let dx = 0, dy = 0
+        if (e.key === 'ArrowLeft') dx = -amount
+        if (e.key === 'ArrowRight') dx = amount
+        if (e.key === 'ArrowUp') dy = -amount
+        if (e.key === 'ArrowDown') dy = amount
+        useProjectStore.getState().nudgeSelectedElements(dx, dy)
       }
     }
     window.addEventListener('keydown', handleKeyDown)
@@ -61,14 +99,32 @@ export default function ProjectPage() {
 
   const handleAddPage = async () => {
     await addPage()
-    // Switch to the new page
-    setActivePage((currentProject?.pages?.length || 1))
   }
 
   const handleTitleChange = async (newTitle) => {
     if (newTitle.trim() !== currentProject?.title) {
       await updateCurrentProject({ title: newTitle.trim() })
     }
+  }
+
+  const handleSettingsChange = (key, value) => {
+    const numValue = parseInt(value, 10) || 0
+    updateCurrentProjectLocal({
+      settings: {
+        ...currentProject.settings,
+        [key]: numValue
+      }
+    })
+  }
+
+  const applyPreset = (width, height) => {
+    updateCurrentProjectLocal({
+      settings: {
+        ...currentProject.settings,
+        width,
+        height
+      }
+    })
   }
 
   // Loading state
@@ -188,37 +244,19 @@ export default function ProjectPage() {
             <div className="space-y-2">
               {pages.map((page, index) => (
                 <PageThumbnail 
-                  key={index}
+                  key={page.id || index}
                   pageNumber={index + 1} 
-                  isActive={activePage === index}
-                  onClick={() => setActivePage(index)}
+                  isActive={activePageIndex === index}
+                  onClick={() => setActivePageIndex(index)}
                 />
               ))}
             </div>
           </aside>
 
           {/* Main Canvas Area */}
-          <div className="flex-1 flex items-center justify-center bg-slate-950 overflow-auto">
-            <div className="text-center p-8">
-              <div 
-                className="bg-white rounded-lg shadow-xl flex items-center justify-center mb-4"
-                style={{ 
-                  width: currentProject.settings?.width || 800, 
-                  height: currentProject.settings?.height || 1200,
-                  maxWidth: '100%',
-                  maxHeight: 'calc(100vh - 250px)',
-                }}
-              >
-                <div className="text-slate-400">
-                  <svg className="w-16 h-16 mx-auto mb-4 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
-                  <p className="text-sm font-medium">Page {activePage + 1}</p>
-                  <p className="text-xs text-slate-500 mt-1">Konva.js canvas coming soon</p>
-                </div>
-              </div>
-            </div>
-          </div>
+          <main className="flex-1 relative">
+            <ComicCanvas />
+          </main>
 
           {/* Right Sidebar - Properties Panel */}
           <aside className="w-64 border-l border-slate-800 p-4 overflow-y-auto bg-slate-900">
@@ -234,23 +272,86 @@ export default function ProjectPage() {
               <div>
                 <h4 className="text-sm font-medium mb-2">Tools</h4>
                 <div className="grid grid-cols-4 gap-1">
-                  <ToolButton icon="pointer" label="Select" active />
-                  <ToolButton icon="square" label="Panel" />
-                  <ToolButton icon="image" label="Image" />
-                  <ToolButton icon="type" label="Text" />
+                  <ToolButton 
+                    icon="pointer" 
+                    label="Select" 
+                    active={tool === 'select'} 
+                    onClick={() => setTool('select')}
+                  />
+                  <ToolButton 
+                    icon="square" 
+                    label="Panel" 
+                    active={tool === 'panel'} 
+                    onClick={() => setTool('panel')}
+                  />
+                  <ToolButton 
+                    icon="image" 
+                    label="Image" 
+                    active={tool === 'image'} 
+                    onClick={() => setTool('image')}
+                  />
+                  <ToolButton 
+                    icon="type" 
+                    label="Text" 
+                    active={tool === 'text'} 
+                    onClick={() => setTool('text')}
+                  />
                 </div>
               </div>
 
               <div>
                 <h4 className="text-sm font-medium mb-2">Page Settings</h4>
-                <div className="p-3 bg-slate-800 rounded-lg border border-slate-700 text-sm">
-                  <div className="flex justify-between mb-1">
-                    <span className="text-slate-500">Width</span>
-                    <span>{currentProject.settings?.width || 800}px</span>
+                <div className="p-3 bg-slate-800 rounded-lg border border-slate-700 space-y-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <label className="text-xs text-slate-500 uppercase font-semibold">Width</label>
+                    <div className="flex items-center gap-1">
+                      <input 
+                        type="number" 
+                        value={currentProject.settings?.width || 800}
+                        onChange={(e) => handleSettingsChange('width', e.target.value)}
+                        className="w-20 bg-slate-900 border border-slate-700 rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                      />
+                      <span className="text-xs text-slate-500">px</span>
+                    </div>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-500">Height</span>
-                    <span>{currentProject.settings?.height || 1200}px</span>
+                  <div className="flex items-center justify-between gap-2">
+                    <label className="text-xs text-slate-500 uppercase font-semibold">Height</label>
+                    <div className="flex items-center gap-1">
+                      <input 
+                        type="number" 
+                        value={currentProject.settings?.height || 1200}
+                        onChange={(e) => handleSettingsChange('height', e.target.value)}
+                        className="w-20 bg-slate-900 border border-slate-700 rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                      />
+                      <span className="text-xs text-slate-500">px</span>
+                    </div>
+                  </div>
+
+                  <div className="pt-2 border-t border-slate-700">
+                    <p className="text-[10px] text-slate-500 uppercase font-bold mb-2">Presets</p>
+                    <div className="grid grid-cols-1 gap-1.5">
+                      <button 
+                        onClick={() => applyPreset(800, 1200)}
+                        className="text-left px-2 py-1.5 bg-slate-900 hover:bg-slate-700 rounded text-xs transition-colors flex justify-between items-center"
+                      >
+                        <span>Standard Comic</span>
+                        <span className="text-slate-500">800x1200</span>
+                      </button>
+                      <button 
+                        onClick={() => applyPreset(600, 900)}
+                        className="text-left px-2 py-1.5 bg-slate-900 hover:bg-slate-700 rounded text-xs transition-colors flex justify-between items-center"
+                      >
+                        <span>Manga</span>
+                        <span className="text-slate-500">600x900</span>
+                      </button>
+                      <button 
+                        onClick={() => applyPreset(1000, 1000)}
+                        className="text-left px-2 py-1.5 bg-slate-900 hover:bg-slate-700 rounded text-xs transition-colors flex justify-between items-center"
+                      >
+                        <span>Square</span>
+                        <span className="text-slate-500">1000x1000</span>
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -309,18 +410,20 @@ function PageThumbnail({ pageNumber, isActive, onClick }) {
   return (
     <button
       onClick={onClick}
-      className={`w-full aspect-[3/4] rounded-lg border-2 transition-colors ${
+      className={`w-full aspect-[3/4] rounded-lg border-2 transition-colors flex items-center justify-center ${
         isActive 
           ? 'border-indigo-500 bg-slate-800' 
           : 'border-slate-700 bg-slate-800 hover:border-slate-600'
       }`}
     >
-      <span className="text-xs text-slate-500">{pageNumber}</span>
+      <span className={`text-xs ${isActive ? 'text-indigo-400 font-bold' : 'text-slate-500'}`}>
+        {pageNumber}
+      </span>
     </button>
   )
 }
 
-function ToolButton({ icon, label, active = false }) {
+function ToolButton({ icon, label, active = false, onClick }) {
   const icons = {
     pointer: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122" />,
     square: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h12a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2V6z" />,
@@ -330,6 +433,7 @@ function ToolButton({ icon, label, active = false }) {
 
   return (
     <button
+      onClick={onClick}
       className={`p-2 rounded-lg transition-colors ${
         active 
           ? 'bg-indigo-500 text-white' 
@@ -343,3 +447,4 @@ function ToolButton({ icon, label, active = false }) {
     </button>
   )
 }
+
