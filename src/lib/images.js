@@ -119,5 +119,13 @@ export const imageAssets = {
    */
   async delete(id) {
     return await db.images.delete(id)
+  },
+
+  /**
+   * Rename an image asset
+   */
+  async rename(id, newName) {
+    await db.images.update(id, { name: newName })
+    return await db.images.get(id)
   }
 }

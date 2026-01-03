@@ -11,7 +11,6 @@ export default function ProjectHeader({
   hasUnsavedChanges, 
   isSaving,
   onTitleChange,
-  onSave,
   onSaveToFile
 }) {
   return (
@@ -29,25 +28,18 @@ export default function ProjectHeader({
             onSave={onTitleChange}
           />
           {hasUnsavedChanges && (
-            <span className="text-xs text-amber-500">• Unsaved</span>
+            <span className="text-xs text-amber-500">Saving...</span>
           )}
-          {project.fileHandle && (
+          {!hasUnsavedChanges && project.fileHandle && (
             <span className="text-xs text-green-500 flex items-center gap-1">
-              <FiCheck className="w-3 h-3" />
-              Saved to file
+              Saved
             </span>
           )}
         </div>
       </div>
       
       <div className="flex items-center gap-2">
-        <button 
-          onClick={onSave}
-          disabled={isSaving || !hasUnsavedChanges}
-          className="px-3 py-1.5 text-sm text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors disabled:opacity-50"
-        >
-          {isSaving ? 'Saving...' : 'Save'}
-        </button>
+        
         <button 
           onClick={onSaveToFile}
           disabled={isSaving}

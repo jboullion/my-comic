@@ -476,6 +476,20 @@ export const useProjectStore = create(
       },
 
       /**
+       * Rename an asset
+       */
+      renameAsset: async (assetId, newName) => {
+        try {
+          await imageAssets.rename(assetId, newName)
+          // Dispatch event to notify hooks/components
+          window.dispatchEvent(new CustomEvent('asset-updated', { detail: { assetId } }))
+        } catch (error) {
+          console.error('Failed to rename asset:', error)
+          throw error
+        }
+      },
+
+      /**
        * Add a panel (rectangle) to the current page
        */
       addPanel: () => {

@@ -1,12 +1,16 @@
 ## Current TODOs
 
-- Remove any SVGs and implement icons around the site.
-- Rename Assets and use asset name as layer name
+- Styled scrollbars
+- 
+
 
 ## Bugs
 
 ## Ideas and Brainstorming
 
+### UI / UX
+
+- Should we use a daisy theme? Perhaps at least a light and dark theme? Using daisy we no longer need the 'dark:' for dark mode I think. Although I might not want to complicate things like that. I don't LOVE any of the daisy themes. So I think maybe stick with default tailwind and maybe set up a custom style later.
 
 ### Projects
 - Lots of project default settings
@@ -27,11 +31,21 @@
 
 - Clipping groups / panels
 
+- Chat Bubbles
+- Customizable chat bubbles.
+- Text
+- - Use Google fonts with "suggested" options?
 
+- Text elements
+- - Should be highly customizable SVG elements. Not standard text.
   
 
 ### Tools
-Rename assets and layers. OR use asset name for layers.
+
+
+### Internationalization
+
+I think a lot of people in other countries would like this application. Can I keep it in english only? There really isn't much to read. What is for reading should probably be auto transaltable to their language in their browser.
 
 
 ### AI
