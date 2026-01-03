@@ -194,7 +194,7 @@ export default function ProjectPage() {
   if (currentProjectLoading) {
     return (
       <AppLayout>
-        <div className="flex items-center justify-center h-[calc(100vh-120px)]">
+        <div className="flex items-center justify-center h-[calc(100vh-61px)]">
           <FiLoader className="w-8 h-8 animate-spin text-indigo-500" />
         </div>
       </AppLayout>
@@ -205,7 +205,7 @@ export default function ProjectPage() {
   if (currentProjectError || !currentProject) {
     return (
       <AppLayout>
-        <div className="flex flex-col items-center justify-center h-[calc(100vh-120px)]">
+        <div className="flex flex-col items-center justify-center h-[calc(100vh-61px)]">
           <div className="text-center">
             <FiFrown className="w-16 h-16 mx-auto text-slate-600 mb-4" />
             <h2 className="text-xl font-semibold mb-2">Project not found</h2>
@@ -228,7 +228,7 @@ export default function ProjectPage() {
 
   return (
     <AppLayout>
-      <div className="flex flex-col h-[calc(100vh-120px)]">
+      <div className="flex flex-col h-[calc(100vh-61px)]">
         {/* Project Header */}
         <ProjectHeader 
           project={currentProject}
