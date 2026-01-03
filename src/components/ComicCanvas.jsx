@@ -1,6 +1,7 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react'
-import { Stage, Layer, Rect, Group } from 'react-konva'
+import { Stage, Layer, Rect, Group, Image, Transformer } from 'react-konva'
 import useProjectStore from '../stores/useProjectStore'
+import { useImage } from '../hooks/useImage'
 
 /**
  * ComicCanvas Component
@@ -11,13 +12,16 @@ import useProjectStore from '../stores/useProjectStore'
 export default function ComicCanvas() {
   const stageRef = useRef(null)
   const containerRef = useRef(null)
+  const transformerRef = useRef(null)
   
   const { 
     currentProject, 
     activePageIndex, 
     zoom, 
     setZoom,
-    setSelectedElementIds
+    selectedElementIds,
+    setSelectedElementIds,
+    updateElement
   } = useProjectStore()
 
   const [stageSize, setStageSize] = useState({ width: 0, height: 0 })
@@ -28,6 +32,19 @@ export default function ComicCanvas() {
   const projectSettings = currentProject?.settings || { width: 800, height: 1200 }
   const pageWidth = projectSettings.width
   const pageHeight = projectSettings.height
+
+  // Update transformer when selection changes
+  useEffect(() => {
+    if (transformerRef.current) {
+      const stage = stageRef.current
+      const selectedNodes = selectedElementIds
+        .map(id => stage.findOne(`#${id}`))
+        .filter(Boolean)
+      
+      transformerRef.current.nodes(selectedNodes)
+      transformerRef.current.getLayer().batchDraw()
+    }
+  }, [selectedElementIds, activePageIndex])
 
   /**
    * Fit the page to the available screen space
@@ -110,13 +127,14 @@ export default function ComicCanvas() {
    * Handle panning (Space + Drag or Middle Mouse)
    */
   const handleMouseDown = (e) => {
-    // Middle mouse button (1) or Space key held (handled via global state if needed)
+    // Middle mouse button (1) or Space key held
     if (e.evt.button === 1 || (e.evt.button === 0 && isPanningMode)) {
       setIsPanning(true)
+      return
     }
     
     // Deselect if clicking on empty area
-    if (e.target === stageRef.current) {
+    if (e.target === stageRef.current || e.target.name() === 'page-bg') {
       setSelectedElementIds([])
     }
   }
@@ -181,6 +199,7 @@ export default function ComicCanvas() {
         <Layer>
           {/* Page Background */}
           <Rect
+            name="page-bg"
             x={0}
             y={0}
             width={pageWidth}
@@ -189,16 +208,39 @@ export default function ComicCanvas() {
             shadowBlur={20}
             shadowColor="rgba(0,0,0,0.5)"
             shadowOffset={{ x: 5, y: 5 }}
-            listening={false} // Don't catch events on background
           />
 
           {/* Elements Layer */}
           <Group>
-            {/* Elements will be rendered here */}
             {currentPage?.elements?.map((element) => (
-              <ElementRenderer key={element.id} element={element} />
+              <ElementRenderer 
+                key={element.id} 
+                element={element} 
+                isSelected={selectedElementIds.includes(element.id)}
+                onSelect={() => setSelectedElementIds([element.id])}
+                onChange={(updates) => updateElement(element.id, updates)}
+              />
             ))}
           </Group>
+
+          {/* Transformer Layer */}
+          <Transformer
+            ref={transformerRef}
+            boundBoxFunc={(oldBox, newBox) => {
+              // Limit minimum size
+              if (Math.abs(newBox.width) < 5 || Math.abs(newBox.height) < 5) {
+                return oldBox
+              }
+              return newBox
+            }}
+            rotateEnabled={true}
+            enabledAnchors={['top-left', 'top-right', 'bottom-left', 'bottom-right', 'top-center', 'bottom-center', 'middle-left', 'middle-right']}
+            anchorSize={8}
+            anchorCornerRadius={2}
+            anchorStroke="#6366f1"
+            anchorFill="#ffffff"
+            borderStroke="#6366f1"
+          />
         </Layer>
       </Stage>
 
@@ -251,9 +293,146 @@ export default function ComicCanvas() {
 }
 
 /**
- * Placeholder for element rendering
+ * Element Renderer
  */
-function ElementRenderer() {
-  // This will be expanded in Phase 3
+function ElementRenderer({ element, isSelected, onSelect, onChange }) {
+  if (element.type === 'image') {
+    return (
+      <ImageElement 
+        element={element} 
+        isSelected={isSelected} 
+        onSelect={onSelect} 
+        onChange={onChange} 
+      />
+    )
+  }
+  if (element.type === 'panel') {
+    return (
+      <PanelElement 
+        element={element} 
+        isSelected={isSelected} 
+        onSelect={onSelect} 
+        onChange={onChange} 
+      />
+    )
+  }
   return null
 }
+
+/**
+ * Panel Element Component
+ */
+const PanelElement = React.memo(({ element, onSelect, onChange }) => {
+  const shapeRef = useRef(null)
+
+  return (
+    <Rect
+      id={element.id}
+      ref={shapeRef}
+      x={element.x}
+      y={element.y}
+      width={element.width}
+      height={element.height}
+      fill={element.fill || '#ffffff'}
+      stroke={element.stroke || '#000000'}
+      strokeWidth={element.strokeWidth || 2}
+      rotation={element.rotation}
+      scaleX={element.scaleX}
+      scaleY={element.scaleY}
+      opacity={element.opacity}
+      draggable
+      onClick={onSelect}
+      onTap={onSelect}
+      onDragEnd={(e) => {
+        onChange({
+          x: e.target.x(),
+          y: e.target.y(),
+        })
+      }}
+      onTransformEnd={() => {
+        const node = shapeRef.current
+        const scaleX = node.scaleX()
+        const scaleY = node.scaleY()
+
+        node.scaleX(1)
+        node.scaleY(1)
+
+        onChange({
+          x: node.x(),
+          y: node.y(),
+          width: Math.max(5, node.width() * scaleX),
+          height: Math.max(5, node.height() * scaleY),
+          rotation: node.rotation(),
+        })
+      }}
+    />
+  )
+})
+
+PanelElement.displayName = 'PanelElement'
+
+/**
+ * Image Element Component
+ */
+const ImageElement = React.memo(({ element, onSelect, onChange }) => {
+  const image = useImage(element.assetId)
+  const imageRef = useRef(null)
+
+  // Set initial size based on image dimensions if not set
+  useEffect(() => {
+    if (image && !element.widthSet) {
+      const aspectRatio = image.width / image.height
+      const defaultWidth = 300
+      onChange({ 
+        width: defaultWidth, 
+        height: defaultWidth / aspectRatio,
+        widthSet: true 
+      })
+    }
+  }, [image, element.widthSet, onChange])
+
+  return (
+    <Image
+      id={element.id}
+      ref={imageRef}
+      image={image}
+      x={element.x}
+      y={element.y}
+      width={element.width}
+      height={element.height}
+      rotation={element.rotation}
+      scaleX={element.scaleX}
+      scaleY={element.scaleY}
+      opacity={element.opacity}
+      draggable
+      onClick={onSelect}
+      onTap={onSelect}
+      onDragEnd={(e) => {
+        onChange({
+          x: e.target.x(),
+          y: e.target.y(),
+        })
+      }}
+      onTransformEnd={() => {
+        const node = imageRef.current
+        const scaleX = node.scaleX()
+        const scaleY = node.scaleY()
+
+        // Reset scale and apply to width/height for cleaner data
+        node.scaleX(1)
+        node.scaleY(1)
+
+        onChange({
+          x: node.x(),
+          y: node.y(),
+          width: Math.max(5, node.width() * scaleX),
+          height: Math.max(5, node.height() * scaleY),
+          rotation: node.rotation(),
+        })
+      }}
+    />
+  )
+})
+
+ImageElement.displayName = 'ImageElement'
+

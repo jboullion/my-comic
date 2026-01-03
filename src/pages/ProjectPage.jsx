@@ -1,11 +1,13 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import AppLayout from '../layouts/AppLayout'
 import useProjectStore from '../stores/useProjectStore'
 import ComicCanvas from '../components/ComicCanvas'
+import { useImage } from '../hooks/useImage'
 
 export default function ProjectPage() {
   const { projectId } = useParams()
+  const fileInputRef = useRef(null)
   
   const { 
     currentProject,
@@ -24,7 +26,14 @@ export default function ProjectPage() {
     tool,
     setTool,
     updateCurrentProjectLocal,
+    addImage,
+    selectedElementIds,
+    setSelectedElementIds,
+    updateElement,
+    addPanel,
   } = useProjectStore()
+
+  const [rightSidebarTab, setRightSidebarTab] = useState('properties') // 'properties', 'assets', 'layers'
 
   // Load project on mount
   useEffect(() => {
@@ -127,6 +136,20 @@ export default function ProjectPage() {
     })
   }
 
+  const handleImageUpload = async (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    
+    try {
+      await addImage(file)
+      // Reset input
+      e.target.value = ''
+    } catch (error) {
+      console.error('Image upload failed:', error)
+      alert('Failed to upload image. Please try again.')
+    }
+  }
+
   // Loading state
   if (currentProjectLoading) {
     return (
@@ -165,6 +188,8 @@ export default function ProjectPage() {
   }
 
   const pages = currentProject.pages || []
+  const currentPage = pages[activePageIndex]
+  const selectedElement = currentPage?.elements?.find(el => el.id === selectedElementIds[0])
 
   return (
     <AppLayout>
@@ -256,110 +281,372 @@ export default function ProjectPage() {
           {/* Main Canvas Area */}
           <main className="flex-1 relative">
             <ComicCanvas />
+            
+            {/* Floating Toolbar */}
+            <div className="absolute top-4 left-1/2 -translate-x-1/2 flex items-center gap-1 bg-slate-900/90 backdrop-blur border border-slate-700 rounded-xl p-1.5 shadow-2xl z-10">
+              <ToolButton 
+                icon="pointer" 
+                label="Select (V)" 
+                active={tool === 'select'} 
+                onClick={() => setTool('select')}
+              />
+              <div className="w-px h-6 bg-slate-700 mx-1" />
+              <ToolButton 
+                icon="square" 
+                label="Panel (P)" 
+                active={tool === 'panel'} 
+                onClick={() => {
+                  setTool('panel')
+                  addPanel()
+                }}
+              />
+              <ToolButton 
+                icon="image" 
+                label="Image (I)" 
+                active={tool === 'image'} 
+                onClick={() => fileInputRef.current?.click()}
+              />
+              <ToolButton 
+                icon="type" 
+                label="Text (T)" 
+                active={tool === 'text'} 
+                onClick={() => setTool('text')}
+              />
+              <input 
+                type="file" 
+                ref={fileInputRef} 
+                className="hidden" 
+                accept="image/*" 
+                onChange={handleImageUpload}
+              />
+            </div>
           </main>
 
           {/* Right Sidebar - Properties Panel */}
-          <aside className="w-64 border-l border-slate-800 p-4 overflow-y-auto bg-slate-900">
-            <h3 className="text-xs font-medium text-slate-400 uppercase mb-4">Properties</h3>
-            
-            <div className="space-y-4">
-              <div className="p-3 bg-slate-800 rounded-lg border border-slate-700">
-                <p className="text-sm text-slate-500 text-center">
-                  Select an element to edit its properties
-                </p>
-              </div>
-              
-              <div>
-                <h4 className="text-sm font-medium mb-2">Tools</h4>
-                <div className="grid grid-cols-4 gap-1">
-                  <ToolButton 
-                    icon="pointer" 
-                    label="Select" 
-                    active={tool === 'select'} 
-                    onClick={() => setTool('select')}
-                  />
-                  <ToolButton 
-                    icon="square" 
-                    label="Panel" 
-                    active={tool === 'panel'} 
-                    onClick={() => setTool('panel')}
-                  />
-                  <ToolButton 
-                    icon="image" 
-                    label="Image" 
-                    active={tool === 'image'} 
-                    onClick={() => setTool('image')}
-                  />
-                  <ToolButton 
-                    icon="type" 
-                    label="Text" 
-                    active={tool === 'text'} 
-                    onClick={() => setTool('text')}
-                  />
-                </div>
-              </div>
+          <aside className="w-72 border-l border-slate-800 flex flex-col bg-slate-900">
+            {/* Tabs */}
+            <div className="flex border-b border-slate-800">
+              <button 
+                onClick={() => setRightSidebarTab('properties')}
+                className={`flex-1 py-3 text-xs font-medium uppercase tracking-wider transition-colors ${
+                  rightSidebarTab === 'properties' ? 'text-indigo-400 border-b-2 border-indigo-500' : 'text-slate-500 hover:text-slate-300'
+                }`}
+              >
+                Properties
+              </button>
+              <button 
+                onClick={() => setRightSidebarTab('assets')}
+                className={`flex-1 py-3 text-xs font-medium uppercase tracking-wider transition-colors ${
+                  rightSidebarTab === 'assets' ? 'text-indigo-400 border-b-2 border-indigo-500' : 'text-slate-500 hover:text-slate-300'
+                }`}
+              >
+                Assets
+              </button>
+              <button 
+                onClick={() => setRightSidebarTab('layers')}
+                className={`flex-1 py-3 text-xs font-medium uppercase tracking-wider transition-colors ${
+                  rightSidebarTab === 'layers' ? 'text-indigo-400 border-b-2 border-indigo-500' : 'text-slate-500 hover:text-slate-300'
+                }`}
+              >
+                Layers
+              </button>
+            </div>
 
-              <div>
-                <h4 className="text-sm font-medium mb-2">Page Settings</h4>
-                <div className="p-3 bg-slate-800 rounded-lg border border-slate-700 space-y-3">
-                  <div className="flex items-center justify-between gap-2">
-                    <label className="text-xs text-slate-500 uppercase font-semibold">Width</label>
-                    <div className="flex items-center gap-1">
-                      <input 
-                        type="number" 
-                        value={currentProject.settings?.width || 800}
-                        onChange={(e) => handleSettingsChange('width', e.target.value)}
-                        className="w-20 bg-slate-900 border border-slate-700 rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                      />
-                      <span className="text-xs text-slate-500">px</span>
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-between gap-2">
-                    <label className="text-xs text-slate-500 uppercase font-semibold">Height</label>
-                    <div className="flex items-center gap-1">
-                      <input 
-                        type="number" 
-                        value={currentProject.settings?.height || 1200}
-                        onChange={(e) => handleSettingsChange('height', e.target.value)}
-                        className="w-20 bg-slate-900 border border-slate-700 rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                      />
-                      <span className="text-xs text-slate-500">px</span>
-                    </div>
-                  </div>
+            <div className="flex-1 overflow-y-auto p-4">
+              {rightSidebarTab === 'properties' && (
+                <div className="space-y-6">
+                  {selectedElement ? (
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <h3 className="text-sm font-semibold text-white">
+                          {selectedElement.type.charAt(0).toUpperCase() + selectedElement.type.slice(1)}
+                        </h3>
+                        <button 
+                          onClick={() => useProjectStore.getState().deleteSelectedElements()}
+                          className="text-slate-500 hover:text-red-400 transition-colors"
+                          title="Delete element"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        </button>
+                      </div>
 
-                  <div className="pt-2 border-t border-slate-700">
-                    <p className="text-[10px] text-slate-500 uppercase font-bold mb-2">Presets</p>
-                    <div className="grid grid-cols-1 gap-1.5">
-                      <button 
-                        onClick={() => applyPreset(800, 1200)}
-                        className="text-left px-2 py-1.5 bg-slate-900 hover:bg-slate-700 rounded text-xs transition-colors flex justify-between items-center"
-                      >
-                        <span>Standard Comic</span>
-                        <span className="text-slate-500">800x1200</span>
-                      </button>
-                      <button 
-                        onClick={() => applyPreset(600, 900)}
-                        className="text-left px-2 py-1.5 bg-slate-900 hover:bg-slate-700 rounded text-xs transition-colors flex justify-between items-center"
-                      >
-                        <span>Manga</span>
-                        <span className="text-slate-500">600x900</span>
-                      </button>
-                      <button 
-                        onClick={() => applyPreset(1000, 1000)}
-                        className="text-left px-2 py-1.5 bg-slate-900 hover:bg-slate-700 rounded text-xs transition-colors flex justify-between items-center"
-                      >
-                        <span>Square</span>
-                        <span className="text-slate-500">1000x1000</span>
-                      </button>
+                      <div className="grid grid-cols-2 gap-3">
+                        <PropertyInput 
+                          label="X" 
+                          value={Math.round(selectedElement.x)} 
+                          onChange={(val) => updateElement(selectedElement.id, { x: val })}
+                        />
+                        <PropertyInput 
+                          label="Y" 
+                          value={Math.round(selectedElement.y)} 
+                          onChange={(val) => updateElement(selectedElement.id, { y: val })}
+                        />
+                        <PropertyInput 
+                          label="Width" 
+                          value={Math.round(selectedElement.width)} 
+                          onChange={(val) => updateElement(selectedElement.id, { width: val })}
+                        />
+                        <PropertyInput 
+                          label="Height" 
+                          value={Math.round(selectedElement.height)} 
+                          onChange={(val) => updateElement(selectedElement.id, { height: val })}
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-[10px] text-slate-500 uppercase font-bold">Opacity</label>
+                        <input 
+                          type="range" 
+                          min="0" 
+                          max="1" 
+                          step="0.01" 
+                          value={selectedElement.opacity ?? 1}
+                          onChange={(e) => updateElement(selectedElement.id, { opacity: parseFloat(e.target.value) })}
+                          className="w-full accent-indigo-500"
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-[10px] text-slate-500 uppercase font-bold">Rotation</label>
+                        <div className="flex items-center gap-2">
+                          <input 
+                            type="range" 
+                            min="0" 
+                            max="360" 
+                            value={selectedElement.rotation || 0}
+                            onChange={(e) => updateElement(selectedElement.id, { rotation: parseInt(e.target.value) })}
+                            className="flex-1 accent-indigo-500"
+                          />
+                          <span className="text-xs text-slate-400 w-8">{Math.round(selectedElement.rotation || 0)}°</span>
+                        </div>
+                      </div>
+
+                      {selectedElement.type === 'panel' && (
+                        <div className="space-y-4 pt-4 border-t border-slate-800">
+                          <div className="grid grid-cols-2 gap-3">
+                            <div className="space-y-1.5">
+                              <label className="text-[10px] text-slate-500 uppercase font-bold">Fill</label>
+                              <div className="flex items-center gap-2">
+                                <input 
+                                  type="color" 
+                                  value={selectedElement.fill || '#ffffff'}
+                                  onChange={(e) => updateElement(selectedElement.id, { fill: e.target.value })}
+                                  className="w-full h-8 bg-slate-900 border border-slate-700 rounded cursor-pointer"
+                                />
+                              </div>
+                            </div>
+                            <div className="space-y-1.5">
+                              <label className="text-[10px] text-slate-500 uppercase font-bold">Stroke</label>
+                              <div className="flex items-center gap-2">
+                                <input 
+                                  type="color" 
+                                  value={selectedElement.stroke || '#000000'}
+                                  onChange={(e) => updateElement(selectedElement.id, { stroke: e.target.value })}
+                                  className="w-full h-8 bg-slate-900 border border-slate-700 rounded cursor-pointer"
+                                />
+                              </div>
+                            </div>
+                          </div>
+                          <div className="space-y-1.5">
+                            <label className="text-[10px] text-slate-500 uppercase font-bold">Stroke Width</label>
+                            <input 
+                              type="number" 
+                              value={selectedElement.strokeWidth || 2}
+                              onChange={(e) => updateElement(selectedElement.id, { strokeWidth: parseInt(e.target.value) || 0 })}
+                              className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all"
+                            />
+                          </div>
+                        </div>
+                      )}
                     </div>
-                  </div>
+                  ) : (
+                    <div className="space-y-6">
+                      <div className="p-4 bg-slate-800/50 rounded-xl border border-slate-700/50 text-center">
+                        <p className="text-sm text-slate-400">
+                          Select an element on the canvas to edit its properties.
+                        </p>
+                      </div>
+
+                      <div>
+                        <h4 className="text-xs font-bold text-slate-500 uppercase mb-3 tracking-wider">Page Settings</h4>
+                        <div className="p-4 bg-slate-800/50 rounded-xl border border-slate-700/50 space-y-4">
+                          <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-1.5">
+                              <label className="text-[10px] text-slate-500 uppercase font-bold">Width</label>
+                              <div className="flex items-center gap-1">
+                                <input 
+                                  type="number" 
+                                  value={currentProject.settings?.width || 800}
+                                  onChange={(e) => handleSettingsChange('width', e.target.value)}
+                                  className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all"
+                                />
+                              </div>
+                            </div>
+                            <div className="space-y-1.5">
+                              <label className="text-[10px] text-slate-500 uppercase font-bold">Height</label>
+                              <div className="flex items-center gap-1">
+                                <input 
+                                  type="number" 
+                                  value={currentProject.settings?.height || 1200}
+                                  onChange={(e) => handleSettingsChange('height', e.target.value)}
+                                  className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all"
+                                />
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="pt-2 border-t border-slate-700/50">
+                            <p className="text-[10px] text-slate-500 uppercase font-bold mb-2">Presets</p>
+                            <div className="grid grid-cols-1 gap-1.5">
+                              <PresetButton label="Standard Comic" size="800x1200" onClick={() => applyPreset(800, 1200)} />
+                              <PresetButton label="Manga" size="600x900" onClick={() => applyPreset(600, 900)} />
+                              <PresetButton label="Square" size="1000x1000" onClick={() => applyPreset(1000, 1000)} />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
-              </div>
+              )}
+
+              {rightSidebarTab === 'assets' && (
+                <AssetGallery 
+                  imageIds={currentProject.assets?.imageIds || []} 
+                  onSelect={async (assetId) => {
+                    // Add existing asset to page
+                    const newElement = {
+                      type: 'image',
+                      id: `elem-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
+                      assetId: assetId,
+                      x: 50,
+                      y: 50,
+                      width: 300,
+                      height: 300,
+                      rotation: 0,
+                      scaleX: 1,
+                      scaleY: 1,
+                      opacity: 1,
+                      zIndex: (currentPage.elements?.length || 0) + 1
+                    }
+
+                    const pages = [...currentProject.pages]
+                    const page = { ...pages[activePageIndex] }
+                    page.elements = [...page.elements, newElement]
+                    pages[activePageIndex] = page
+
+                    await updateCurrentProject({ pages })
+                    setSelectedElementIds([newElement.id])
+                  }}
+                />
+              )}
+
+              {rightSidebarTab === 'layers' && (
+                <div className="space-y-2">
+                  {currentPage?.elements?.slice().reverse().map((el, idx) => (
+                    <div 
+                      key={el.id}
+                      onClick={() => setSelectedElementIds([el.id])}
+                      className={`p-2 rounded-lg border flex items-center gap-3 cursor-pointer transition-all ${
+                        selectedElementIds.includes(el.id) 
+                          ? 'bg-indigo-500/10 border-indigo-500/50 text-indigo-400' 
+                          : 'bg-slate-800/30 border-transparent hover:border-slate-700 text-slate-400'
+                      }`}
+                    >
+                      <div className="w-8 h-8 bg-slate-900 rounded flex items-center justify-center overflow-hidden">
+                        {el.type === 'image' ? (
+                          <AssetThumbnail assetId={el.assetId} />
+                        ) : (
+                          <span className="text-[10px] uppercase font-bold">{el.type.charAt(0)}</span>
+                        )}
+                      </div>
+                      <span className="text-xs font-medium truncate">
+                        {el.type.charAt(0).toUpperCase() + el.type.slice(1)} {(currentPage.elements?.length || 0) - idx}
+                      </span>
+                    </div>
+                  ))}
+                  {(!currentPage?.elements || currentPage.elements.length === 0) && (
+                    <p className="text-center text-slate-500 text-sm py-8">No elements on this page</p>
+                  )}
+                </div>
+              )}
             </div>
           </aside>
         </div>
       </div>
     </AppLayout>
+  )
+}
+
+function PropertyInput({ label, value, onChange }) {
+  return (
+    <div className="space-y-1.5">
+      <label className="text-[10px] text-slate-500 uppercase font-bold">{label}</label>
+      <input 
+        type="number" 
+        value={value}
+        onChange={(e) => onChange(parseInt(e.target.value) || 0)}
+        className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all"
+      />
+    </div>
+  )
+}
+
+function PresetButton({ label, size, onClick }) {
+  return (
+    <button 
+      onClick={onClick}
+      className="text-left px-3 py-2 bg-slate-900 hover:bg-slate-700 rounded-lg text-xs transition-colors flex justify-between items-center border border-slate-700/50"
+    >
+      <span className="font-medium">{label}</span>
+      <span className="text-slate-500 font-mono">{size}</span>
+    </button>
+  )
+}
+
+function AssetGallery({ imageIds, onSelect }) {
+  return (
+    <div className="space-y-4">
+      <div className="grid grid-cols-2 gap-2">
+        {imageIds.map(id => (
+          <button 
+            key={id}
+            onClick={() => onSelect(id)}
+            className="aspect-square bg-slate-800 rounded-lg border border-slate-700 overflow-hidden hover:border-indigo-500 transition-colors group relative"
+          >
+            <AssetThumbnail assetId={id} />
+            <div className="absolute inset-0 bg-indigo-500/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+            </div>
+          </button>
+        ))}
+      </div>
+      {imageIds.length === 0 && (
+        <div className="text-center py-8 px-4 border-2 border-dashed border-slate-800 rounded-xl">
+          <p className="text-sm text-slate-500">No assets uploaded yet.</p>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function AssetThumbnail({ assetId }) {
+  const image = useImage(assetId)
+  
+  if (!image) {
+    return <div className="w-full h-full animate-pulse bg-slate-700" />
+  }
+  
+  return (
+    <img 
+      src={image.src} 
+      alt="Asset" 
+      className="w-full h-full object-cover"
+    />
   )
 }
 
@@ -434,17 +721,18 @@ function ToolButton({ icon, label, active = false, onClick }) {
   return (
     <button
       onClick={onClick}
-      className={`p-2 rounded-lg transition-colors ${
+      className={`p-2.5 rounded-lg transition-all ${
         active 
-          ? 'bg-indigo-500 text-white' 
-          : 'text-slate-400 hover:text-white hover:bg-slate-700'
+          ? 'bg-indigo-500 text-white shadow-lg shadow-indigo-500/20' 
+          : 'text-slate-400 hover:text-white hover:bg-slate-800'
       }`}
       title={label}
     >
-      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         {icons[icon]}
       </svg>
     </button>
   )
 }
+
 

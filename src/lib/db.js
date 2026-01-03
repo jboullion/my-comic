@@ -9,11 +9,12 @@ import Dexie from 'dexie'
 export const db = new Dexie('ComicBookMaker')
 
 // Database schema
-db.version(2).stores({
+db.version(3).stores({
   // Projects table - stores project metadata and content
   projects: '++id, title, createdAt, updatedAt, fileHandle',
   // Images table - stores heavy binary data separately for performance
-  images: '++id, projectId, hash, name, size, type, createdAt',
+  // Added compound index [projectId+hash] for faster deduplication checks
+  images: '++id, projectId, hash, [projectId+hash], name, size, type, createdAt',
 })
 
 /**

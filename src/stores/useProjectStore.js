@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { temporal } from 'zundo'
 import { debounce } from 'lodash-es'
 import { projectsDb, createBlankPage } from '../lib/db'
+import { imageAssets } from '../lib/images'
 
 /**
  * Project Store
@@ -329,6 +330,90 @@ export const useProjectStore = create(
         const updatedPages = [...currentProject.pages, newPage]
         await get().updateCurrentProject({ pages: updatedPages })
         set({ activePageIndex: updatedPages.length - 1 })
+      },
+
+      /**
+       * Add an image to the project assets and current page
+       */
+      addImage: async (file) => {
+        const { currentProject, activePageIndex } = get()
+        if (!currentProject) return
+
+        try {
+          // 1. Upload to IndexedDB
+          const asset = await imageAssets.upload(currentProject.id, file)
+          
+          // 2. Add to project assets if not already there
+          const imageIds = [...(currentProject.assets?.imageIds || [])]
+          if (!imageIds.includes(asset.id)) {
+            imageIds.push(asset.id)
+          }
+
+          // 3. Create element on current page
+          const newElement = {
+            type: 'image',
+            id: `elem-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
+            assetId: asset.id,
+            x: 50,
+            y: 50,
+            width: 300, // Default width, will be adjusted by Konva
+            height: 300,
+            rotation: 0,
+            scaleX: 1,
+            scaleY: 1,
+            opacity: 1,
+            zIndex: (currentProject.pages[activePageIndex].elements?.length || 0) + 1
+          }
+
+          const pages = [...currentProject.pages]
+          const page = { ...pages[activePageIndex] }
+          page.elements = [...(page.elements || []), newElement]
+          pages[activePageIndex] = page
+
+          await get().updateCurrentProject({ 
+            assets: { ...currentProject.assets, imageIds },
+            pages 
+          })
+          
+          set({ selectedElementIds: [newElement.id] })
+          return newElement
+        } catch (error) {
+          console.error('Failed to add image:', error)
+          throw error
+        }
+      },
+
+      /**
+       * Add a panel (rectangle) to the current page
+       */
+      addPanel: () => {
+        const { currentProject, activePageIndex } = get()
+        if (!currentProject) return
+
+        const newElement = {
+          type: 'panel',
+          id: `elem-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
+          x: 100,
+          y: 100,
+          width: 400,
+          height: 300,
+          fill: '#ffffff',
+          stroke: '#000000',
+          strokeWidth: 4,
+          rotation: 0,
+          scaleX: 1,
+          scaleY: 1,
+          opacity: 1,
+          zIndex: (currentProject.pages[activePageIndex].elements?.length || 0) + 1
+        }
+
+        const pages = [...currentProject.pages]
+        const page = { ...pages[activePageIndex] }
+        page.elements = [...(page.elements || []), newElement]
+        pages[activePageIndex] = page
+
+        get().updateCurrentProjectLocal({ pages })
+        set({ selectedElementIds: [newElement.id] })
       },
 
       /**
