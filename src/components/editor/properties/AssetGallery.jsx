@@ -1,4 +1,5 @@
 import AssetThumbnail from '../ui/AssetThumbnail'
+import { FiInfo } from 'react-icons/fi'
 
 /**
  * AssetGallery Component
@@ -27,9 +28,7 @@ export default function AssetGallery({ imageIds, selectedAssetId, onSelect, onAd
             <AssetThumbnail assetId={id} />
             <div className="absolute inset-0 bg-indigo-500/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
               <div className="bg-indigo-600 p-1.5 rounded-full shadow-lg transform scale-75 group-hover:scale-100 transition-transform">
-                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                </svg>
+                <FiInfo className="w-5 h-5 text-white" />
               </div>
             </div>
           </button>

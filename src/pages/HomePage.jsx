@@ -58,18 +58,6 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* Dev Test Pages */}
-        <div className="mt-8 p-4 bg-slate-800/30 rounded-lg border border-slate-700/50">
-          <h3 className="text-sm font-medium text-slate-400 mb-2">🧪 Development Test Pages</h3>
-          <div className="flex gap-2">
-            <Link 
-              to="/test/file-api" 
-              className="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 rounded text-sm transition-colors"
-            >
-              File System API
-            </Link>
-          </div>
-        </div>
       </div>
     </PublicLayout>
   )

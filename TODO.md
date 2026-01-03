@@ -1,6 +1,6 @@
 ## Current TODOs
 
-- Refactor inputs and other reusables
+- Remove any SVGs and implement icons around the site.
 
 ## Bugs
 
