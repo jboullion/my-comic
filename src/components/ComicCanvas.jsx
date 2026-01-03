@@ -217,6 +217,20 @@ export default function ComicCanvas() {
     }
   }, [isPanningMode])
 
+  /**
+   * Handle zoom reset (100%)
+   */
+  const handleZoomReset = useCallback(() => {
+    setZoom(1)
+    // Center it
+    if (containerRef.current) {
+      setPosition({
+        x: (containerRef.current.offsetWidth - pageWidth) / 2,
+        y: (containerRef.current.offsetHeight - pageHeight) / 2
+      })
+    }
+  }, [pageWidth, pageHeight, setZoom])
+
   if (!currentProject) return null
 
   /**
@@ -245,20 +259,6 @@ export default function ComicCanvas() {
       y: pos.y
     })
   }
-
-  /**
-   * Handle zoom reset (100%)
-   */
-  const handleZoomReset = useCallback(() => {
-    setZoom(1)
-    // Center it
-    if (containerRef.current) {
-      setPosition({
-        x: (containerRef.current.offsetWidth - pageWidth) / 2,
-        y: (containerRef.current.offsetHeight - pageHeight) / 2
-      })
-    }
-  }, [pageWidth, pageHeight, setZoom])
 
   return (
     <div 
