@@ -291,7 +291,7 @@ export default function ProjectPage() {
         {/* Editor Area */}
         <div className="flex-1 flex overflow-hidden">
           {/* Left Sidebar - Page Thumbnails */}
-          <aside className="w-48 border-r border-slate-800 p-3 overflow-y-auto bg-slate-900">
+          <aside className="w-48 flex-shrink-0 border-r border-slate-800 p-3 overflow-y-auto bg-slate-900">
             <div className="flex items-center justify-between mb-3">
               <span className="text-xs font-medium text-slate-400 uppercase">Pages</span>
               <button 
@@ -320,7 +320,7 @@ export default function ProjectPage() {
 
           {/* Main Canvas Area */}
           <main 
-            className="flex-1 relative"
+            className="flex-1 min-w-0 relative"
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
@@ -383,7 +383,7 @@ export default function ProjectPage() {
           </main>
 
           {/* Right Sidebar - Properties Panel */}
-          <aside className="w-72 border-l border-slate-800 flex flex-col bg-slate-900">
+          <aside className="w-72 flex-shrink-0 border-l border-slate-800 flex flex-col bg-slate-900">
             {/* Tabs */}
             <div className="flex border-b border-slate-800">
               <button 
