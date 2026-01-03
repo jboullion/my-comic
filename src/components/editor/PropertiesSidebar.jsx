@@ -72,7 +72,7 @@ export default function PropertiesSidebar({
             </div>
             
             {selectedAssetId && (
-              <div className="mt-4 pt-4 border-t border-slate-800">
+              <div className="mt-4">
                 <AssetPropertiesWidget 
                   assetId={selectedAssetId} 
                   onAdd={onAddAsset}
