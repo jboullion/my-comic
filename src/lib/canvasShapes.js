@@ -72,3 +72,62 @@ export function drawCornerShapePath(ctx, width, height, radius, cornerShape) {
   }
   ctx.closePath()
 }
+
+/**
+ * Draw a speech bubble shape
+ * 
+ * @param {CanvasRenderingContext2D} ctx - Canvas rendering context
+ * @param {number} width - Bubble width
+ * @param {number} height - Bubble height
+ * @param {string} bubbleStyle - Bubble style: 'round' or 'cloud'
+ * @param {number} cornerRadius - Corner radius for round style (default 20)
+ */
+export function drawSpeechBubblePath(ctx, width, height, bubbleStyle = 'round', cornerRadius = 20) {
+  ctx.beginPath()
+  
+  if (bubbleStyle === 'cloud') {
+    // Cloud style: Multiple overlapping circles creating a fluffy cloud shape
+    const numBumps = 12
+    const centerX = width / 2
+    const centerY = height / 2
+    const radiusX = width / 2
+    const radiusY = height / 2
+    
+    for (let i = 0; i < numBumps; i++) {
+      const angle = (i / numBumps) * Math.PI * 2
+      const nextAngle = ((i + 1) / numBumps) * Math.PI * 2
+      
+      // Position on ellipse
+      const x = centerX + Math.cos(angle) * radiusX
+      const y = centerY + Math.sin(angle) * radiusY
+      const nextX = centerX + Math.cos(nextAngle) * radiusX
+      const nextY = centerY + Math.sin(nextAngle) * radiusY
+      
+      // Bump radius (smaller circles that create the cloud effect)
+      const bumpRadius = Math.min(width, height) * 0.1
+      
+      if (i === 0) {
+        ctx.moveTo(x + bumpRadius, y)
+      }
+      
+      // Draw arc to next position with bump
+      const midX = (x + nextX) / 2
+      const midY = (y + nextY) / 2
+      ctx.arc(midX, midY, bumpRadius, angle - Math.PI / 2, nextAngle - Math.PI / 2)
+    }
+  } else {
+    // Round style: Simple rounded rectangle
+    const r = Math.min(cornerRadius, width / 2, height / 2)
+    ctx.moveTo(r, 0)
+    ctx.lineTo(width - r, 0)
+    ctx.arcTo(width, 0, width, r, r)
+    ctx.lineTo(width, height - r)
+    ctx.arcTo(width, height, width - r, height, r)
+    ctx.lineTo(r, height)
+    ctx.arcTo(0, height, 0, height - r, r)
+    ctx.lineTo(0, r)
+    ctx.arcTo(0, 0, r, 0, r)
+  }
+  
+  ctx.closePath()
+}

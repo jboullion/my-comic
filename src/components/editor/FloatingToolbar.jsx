@@ -8,6 +8,7 @@ export default function FloatingToolbar({
   tool, 
   onToolChange, 
   onImageUpload,
+  onAddSpeechBubble,
   fileInputRef 
 }) {
   return (
@@ -30,6 +31,12 @@ export default function FloatingToolbar({
         label="Text (T)" 
         active={tool === 'text'} 
         onClick={() => onToolChange('text')}
+      />
+      <ToolButton 
+        icon="message-circle" 
+        label="Speech Bubble (B)" 
+        active={tool === 'speechBubble'} 
+        onClick={onAddSpeechBubble}
       />
       <input 
         type="file" 

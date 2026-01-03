@@ -17,6 +17,7 @@ export default function ProjectHeader({
   tool,
   onToolChange,
   onImageUpload,
+  onAddSpeechBubble,
   fileInputRef
 }) {
   return (
@@ -50,6 +51,7 @@ export default function ProjectHeader({
             tool={tool}
             onToolChange={onToolChange}
             onImageUpload={onImageUpload}
+            onAddSpeechBubble={onAddSpeechBubble}
             fileInputRef={fileInputRef}
           />
         </div>

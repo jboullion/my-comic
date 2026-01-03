@@ -65,7 +65,7 @@ This document defines the technical implementation of the canvas-based comic edi
 - Delete from canvas (keeps in library)
 - Image metadata (name, size, dimensions)
 
-### Phase 5: Panels (Week 4-5)
+### Phase 5: Panels (Week 4-5) (Deprecated. No longer using panels)
 - Clipping group implementation
 - Preset layouts (2x2, 3-panel, manga)
 - Drag to create panels

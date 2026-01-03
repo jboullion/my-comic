@@ -1,5 +1,6 @@
 import React from 'react'
 import ImageElement from './ImageElement'
+import SpeechBubbleElement from './SpeechBubbleElement'
 
 /**
  * Element Renderer
@@ -13,6 +14,17 @@ export default function ElementRenderer({ element, isSelected, onSelect, onChang
         isSelected={isSelected} 
         onSelect={onSelect} 
         onChange={onChange} 
+      />
+    )
+  }
+  
+  if (element.type === 'speechBubble') {
+    return (
+      <SpeechBubbleElement
+        element={element}
+        isSelected={isSelected}
+        onSelect={onSelect}
+        onChange={onChange}
       />
     )
   }

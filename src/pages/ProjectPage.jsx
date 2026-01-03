@@ -31,6 +31,7 @@ export default function ProjectPage() {
     updateCurrentProjectLocal,
     addImage,
     addAssetToPage,
+    addSpeechBubble,
     selectedElementIds,
     setSelectedElementIds,
     selectedAssetId,
@@ -154,6 +155,14 @@ export default function ProjectPage() {
     }
   }
 
+  const handleAddSpeechBubble = async () => {
+    try {
+      await addSpeechBubble()
+    } catch (error) {
+      console.error('Failed to add speech bubble:', error)
+    }
+  }
+
   const handleDragOver = (e) => {
     e.preventDefault()
     e.stopPropagation()
@@ -239,6 +248,7 @@ export default function ProjectPage() {
           tool={tool}
           onToolChange={setTool}
           onImageUpload={handleImageUpload}
+          onAddSpeechBubble={handleAddSpeechBubble}
           fileInputRef={fileInputRef}
         />
 

@@ -112,6 +112,121 @@ export default function ElementProperties({ element }) {
         </div>
       )}
 
+      {/* Speech Bubble Controls */}
+      {element.type === 'speechBubble' && (
+        <div className="space-y-4 pt-4 border-t border-slate-800">
+          <h4 className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Speech Bubble</h4>
+          
+          <div className="space-y-1.5">
+            <label className="text-[10px] text-slate-500 uppercase font-bold">Style</label>
+            <select 
+              className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all"
+              value={element.bubbleStyle || 'round'}
+              onChange={(e) => updateElement(element.id, { bubbleStyle: e.target.value })}
+            >
+              <option value="round">Round</option>
+              <option value="cloud">Cloud</option>
+            </select>
+          </div>
+
+          {element.bubbleStyle === 'round' && (
+            <div className="space-y-1.5">
+              <label className="text-[10px] text-slate-500 uppercase font-bold">Corner Radius</label>
+              <div className="flex items-center gap-2">
+                <input 
+                  type="range" 
+                  min="0" 
+                  max="50" 
+                  value={element.cornerRadius || 20}
+                  onChange={(e) => updateElement(element.id, { cornerRadius: parseInt(e.target.value) })}
+                  className="flex-1 accent-indigo-500"
+                />
+                <span className="text-xs text-slate-400 w-8">{element.cornerRadius || 20}</span>
+              </div>
+            </div>
+          )}
+
+          <div className="space-y-1.5">
+            <label className="text-[10px] text-slate-500 uppercase font-bold">Fill Color</label>
+            <input 
+              type="color" 
+              value={element.fill || '#FFFFFF'}
+              onChange={(e) => updateElement(element.id, { fill: e.target.value })}
+              className="w-full h-8 bg-slate-900 border border-slate-700 rounded cursor-pointer"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <label className="text-[10px] text-slate-500 uppercase font-bold">Stroke Color</label>
+              <input 
+                type="color" 
+                value={element.stroke || '#000000'}
+                onChange={(e) => updateElement(element.id, { stroke: e.target.value })}
+                className="w-full h-8 bg-slate-900 border border-slate-700 rounded cursor-pointer"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-[10px] text-slate-500 uppercase font-bold">Stroke Width</label>
+              <input 
+                type="number" 
+                min="0"
+                value={element.strokeWidth || 2}
+                onChange={(e) => updateElement(element.id, { strokeWidth: parseInt(e.target.value) || 0 })}
+                className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all"
+              />
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-[10px] text-slate-500 uppercase font-bold">Text</label>
+            <textarea 
+              value={element.text || ''}
+              onChange={(e) => updateElement(element.id, { text: e.target.value })}
+              className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all resize-none"
+              rows={3}
+              placeholder="Enter dialog text..."
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <label className="text-[10px] text-slate-500 uppercase font-bold">Font Size</label>
+              <input 
+                type="number" 
+                min="8"
+                max="72"
+                value={element.fontSize || 16}
+                onChange={(e) => updateElement(element.id, { fontSize: parseInt(e.target.value) || 16 })}
+                className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-[10px] text-slate-500 uppercase font-bold">Text Color</label>
+              <input 
+                type="color" 
+                value={element.textColor || '#000000'}
+                onChange={(e) => updateElement(element.id, { textColor: e.target.value })}
+                className="w-full h-8 bg-slate-900 border border-slate-700 rounded cursor-pointer"
+              />
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-[10px] text-slate-500 uppercase font-bold">Text Alignment</label>
+            <select 
+              className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all"
+              value={element.textAlign || 'center'}
+              onChange={(e) => updateElement(element.id, { textAlign: e.target.value })}
+            >
+              <option value="left">Left</option>
+              <option value="center">Center</option>
+              <option value="right">Right</option>
+            </select>
+          </div>
+        </div>
+      )}
+
       <div className="space-y-2">
         <label className="text-[10px] text-slate-500 uppercase font-bold">Opacity</label>
         <input 
@@ -140,6 +255,7 @@ export default function ElementProperties({ element }) {
         </div>
       </div>
 
+      {element.type === 'image' && (
       <div className="space-y-4 pt-4 border-t border-slate-800">
         <h4 className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Border Shape</h4>
         
@@ -224,6 +340,7 @@ export default function ElementProperties({ element }) {
           </div>
         </div>
       </div>
+      )}
     </div>
   )
 }

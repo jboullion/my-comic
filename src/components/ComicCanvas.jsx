@@ -4,7 +4,6 @@ import useProjectStore from '../stores/useProjectStore'
 import ElementRenderer from './canvas/elements/ElementRenderer'
 import ZoomControls from './canvas/ZoomControls'
 import CanvasContextMenu from './canvas/CanvasContextMenu'
-import { drawCornerShapePath } from '../lib/canvasShapes'
 
 /**
  * ComicCanvas Component

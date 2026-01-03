@@ -495,6 +495,49 @@ export const useProjectStore = create(
       },
 
       /**
+       * Add a speech bubble to the current page
+       */
+      addSpeechBubble: async (position = { x: 200, y: 200 }) => {
+        const { currentProject, activePageIndex } = get()
+        if (!currentProject) return
+
+        const newElement = {
+          type: 'speechBubble',
+          id: `elem-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
+          x: position.x,
+          y: position.y,
+          width: 200,
+          height: 120,
+          rotation: 0,
+          scaleX: 1,
+          scaleY: 1,
+          opacity: 1,
+          fill: '#FFFFFF',
+          stroke: '#000000',
+          strokeWidth: 2,
+          bubbleStyle: 'round',
+          cornerRadius: 20,
+          text: 'Double-click to edit',
+          fontSize: 16,
+          fontFamily: 'Arial, sans-serif',
+          textColor: '#000000',
+          textAlign: 'center',
+          verticalAlign: 'middle',
+          padding: 10,
+          zIndex: (currentProject.pages[activePageIndex].elements?.length || 0) + 1
+        }
+
+        const pages = [...currentProject.pages]
+        const page = { ...pages[activePageIndex] }
+        page.elements = [...(page.elements || []), newElement]
+        pages[activePageIndex] = page
+
+        await get().updateCurrentProject({ pages })
+        set({ selectedElementIds: [newElement.id] })
+        return newElement
+      },
+
+      /**
        * Delete a page from current project
        */
       deletePage: async (pageIndex) => {

@@ -1,4 +1,4 @@
-import { FiMousePointer, FiSquare, FiImage, FiType } from 'react-icons/fi'
+import { FiMousePointer, FiSquare, FiImage, FiType, FiMessageCircle } from 'react-icons/fi'
 
 /**
  * ToolButton Component
@@ -10,6 +10,7 @@ export default function ToolButton({ icon, label, active = false, onClick }) {
     square: <FiSquare className="w-5 h-5" />,
     image: <FiImage className="w-5 h-5" />,
     type: <FiType className="w-5 h-5" />,
+    'message-circle': <FiMessageCircle className="w-5 h-5" />,
   }
 
   return (
