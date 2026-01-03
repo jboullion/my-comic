@@ -12,7 +12,7 @@ export default function FloatingToolbar({
   fileInputRef 
 }) {
   return (
-    <div className="absolute top-4 left-1/2 -translate-x-1/2 flex items-center gap-1 bg-slate-900/90 backdrop-blur border border-slate-700 rounded-xl p-1.5 shadow-2xl z-10">
+    <div className="flex items-center gap-1">
       <ToolButton 
         icon="pointer" 
         label="Select (V)" 

@@ -6,7 +6,6 @@ import useProjectStore from '../stores/useProjectStore'
 import ComicCanvas from '../components/ComicCanvas'
 import ProjectHeader from '../components/editor/ProjectHeader'
 import PagesSidebar from '../components/editor/PagesSidebar'
-import FloatingToolbar from '../components/editor/FloatingToolbar'
 import PropertiesSidebar from '../components/editor/PropertiesSidebar'
 
 export default function ProjectPage() {
@@ -238,6 +237,11 @@ export default function ProjectPage() {
           onTitleChange={handleTitleChange}
           onSave={saveCurrentProject}
           onSaveToFile={handleSaveToFile}
+          tool={tool}
+          onToolChange={setTool}
+          onAddPanel={addPanel}
+          onImageUpload={handleImageUpload}
+          fileInputRef={fileInputRef}
         />
 
         {/* Editor Area */}
@@ -263,15 +267,6 @@ export default function ProjectPage() {
             {isDraggingOver && (
               <DragDropOverlay />
             )}
-            
-            {/* Floating Toolbar */}
-            <FloatingToolbar 
-              tool={tool}
-              onToolChange={setTool}
-              onAddPanel={addPanel}
-              onImageUpload={handleImageUpload}
-              fileInputRef={fileInputRef}
-            />
           </main>
 
           {/* Right Sidebar - Properties Panel */}

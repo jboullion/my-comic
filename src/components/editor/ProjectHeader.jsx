@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { FiChevronLeft, FiCheck, FiDownload } from 'react-icons/fi'
 import EditableTitle from './ui/EditableTitle'
+import FloatingToolbar from './FloatingToolbar'
 
 /**
  * ProjectHeader Component
@@ -11,11 +12,17 @@ export default function ProjectHeader({
   hasUnsavedChanges, 
   isSaving,
   onTitleChange,
-  onSaveToFile
+  onSaveToFile,
+  // Toolbar props
+  tool,
+  onToolChange,
+  onAddPanel,
+  onImageUpload,
+  fileInputRef
 }) {
   return (
-    <div className="border-b border-slate-800 px-4 py-3 flex items-center justify-between bg-slate-900">
-      <div className="flex items-center gap-4">
+    <div className="border-b border-slate-800 px-4 py-2 flex items-center justify-between bg-slate-900">
+      <div className="flex items-center gap-4 min-w-[240px]">
         <Link 
           to="/projects"
           className="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
@@ -37,8 +44,20 @@ export default function ProjectHeader({
           )}
         </div>
       </div>
+
+      <div className="flex-1 flex justify-center">
+        <div className="">
+          <FloatingToolbar 
+            tool={tool}
+            onToolChange={onToolChange}
+            onAddPanel={onAddPanel}
+            onImageUpload={onImageUpload}
+            fileInputRef={fileInputRef}
+          />
+        </div>
+      </div>
       
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 min-w-[240px] justify-end">
         
         <button 
           onClick={onSaveToFile}
