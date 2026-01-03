@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { FiPlus } from 'react-icons/fi'
 import { db } from '../../../lib/db'
 
 /**
@@ -61,9 +62,7 @@ export default function AssetPropertiesWidget({ assetId, onAdd }) {
           onClick={() => onAdd(assetId)}
           className="w-full mt-2 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-lg transition-colors flex items-center justify-center gap-2"
         >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
+          <FiPlus className="w-4 h-4" />
           Add to Canvas
         </button>
       </div>

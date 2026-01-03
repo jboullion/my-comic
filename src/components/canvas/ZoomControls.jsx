@@ -1,4 +1,5 @@
 import React from 'react'
+import { FiMinus, FiPlus } from 'react-icons/fi'
 
 /**
  * Zoom Controls Component
@@ -12,9 +13,7 @@ export default function ZoomControls({ zoom, onZoomChange, onFitToScreen, onRese
         className="p-1 hover:text-indigo-400 transition-colors"
         aria-label="Zoom out"
       >
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
-        </svg>
+        <FiMinus className="w-5 h-5" />
       </button>
       <span className="text-xs font-mono min-w-[4rem] text-center">
         {Math.round(zoom * 100)}%
@@ -24,9 +23,7 @@ export default function ZoomControls({ zoom, onZoomChange, onFitToScreen, onRese
         className="p-1 hover:text-indigo-400 transition-colors"
         aria-label="Zoom in"
       >
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-        </svg>
+        <FiPlus className="w-5 h-5" />
       </button>
       <div className="w-px h-4 bg-slate-700 mx-1" />
       <button 

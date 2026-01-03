@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { FiChevronLeft, FiCheck, FiDownload } from 'react-icons/fi'
 import EditableTitle from './ui/EditableTitle'
 
 /**
@@ -20,9 +21,7 @@ export default function ProjectHeader({
           to="/projects"
           className="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
         >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-          </svg>
+          <FiChevronLeft className="w-5 h-5" />
         </Link>
         <div className="flex items-center gap-2">
           <EditableTitle 
@@ -34,9 +33,7 @@ export default function ProjectHeader({
           )}
           {project.fileHandle && (
             <span className="text-xs text-green-500 flex items-center gap-1">
-              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4" />
-              </svg>
+              <FiCheck className="w-3 h-3" />
               Saved to file
             </span>
           )}
@@ -56,9 +53,7 @@ export default function ProjectHeader({
           disabled={isSaving}
           className="px-3 py-1.5 text-sm text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors disabled:opacity-50 flex items-center gap-1"
         >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
-          </svg>
+          <FiDownload className="w-4 h-4" />
           Save As
         </button>
         <button className="px-4 py-1.5 bg-indigo-500 hover:bg-indigo-600 rounded-lg text-sm font-medium transition-colors">

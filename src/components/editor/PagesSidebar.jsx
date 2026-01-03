@@ -1,3 +1,4 @@
+import { FiPlus } from 'react-icons/fi'
 import PageThumbnail from './ui/PageThumbnail'
 
 /**
@@ -14,9 +15,7 @@ export default function PagesSidebar({ pages, activePageIndex, onPageSelect, onA
           className="p-1 text-slate-500 hover:text-white hover:bg-slate-800 rounded transition-colors"
           title="Add page"
         >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
+          <FiPlus className="w-4 h-4" />
         </button>
       </div>
       

@@ -1,6 +1,7 @@
 ## Current TODOs
 
 - Remove any SVGs and implement icons around the site.
+- Rename Assets and use asset name as layer name
 
 ## Bugs
 

@@ -27,9 +27,9 @@ export default function AssetGallery({ imageIds, selectedAssetId, onSelect, onAd
           >
             <AssetThumbnail assetId={id} />
             <div className="absolute inset-0 bg-indigo-500/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-              <div className="bg-indigo-600 p-1.5 rounded-full shadow-lg transform scale-75 group-hover:scale-100 transition-transform">
-                <FiInfo className="w-5 h-5 text-white" />
-              </div>
+              {/* <div className="absolute top-1 right-1 bg-indigo-600 p-1 rounded-full shadow-lg transform scale-75 group-hover:scale-100 transition-transform">
+                <FiInfo className="w-4 h-4 text-white" />
+              </div> */}
             </div>
           </button>
         ))}

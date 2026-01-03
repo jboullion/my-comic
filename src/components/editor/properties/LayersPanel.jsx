@@ -1,3 +1,4 @@
+import { FiMenu } from 'react-icons/fi'
 import AssetThumbnail from '../ui/AssetThumbnail'
 import useProjectStore from '../../../stores/useProjectStore'
 
@@ -68,9 +69,7 @@ export default function LayersPanel({ currentPage, activePageIndex, selectedElem
                 {el.type.charAt(0).toUpperCase() + el.type.slice(1)} {currentPage.elements.length - idx}
               </span>
             </div>
-            <svg className="w-4 h-4 text-slate-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8h16M4 16h16" />
-            </svg>
+            <FiMenu className="w-4 h-4 text-slate-600 flex-shrink-0" />
           </div>
         )
       })}

@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { FiImage, FiMessageSquare, FiSmartphone } from 'react-icons/fi'
 import PublicLayout from '../layouts/PublicLayout'
 
 export default function HomePage() {
@@ -22,29 +23,17 @@ export default function HomePage() {
         {/* Feature Cards */}
         <div className="grid md:grid-cols-3 gap-6 mb-16">
           <FeatureCard 
-            icon={
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
-            }
+            icon={<FiImage className="w-6 h-6" />}
             title="Drag & Drop Editor"
             description="Intuitive panel layout with drag-and-drop support. Add images, resize, and arrange with ease."
           />
           <FeatureCard 
-            icon={
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-              </svg>
-            }
+            icon={<FiMessageSquare className="w-6 h-6" />}
             title="Speech Bubbles & Text"
             description="Professional speech bubbles, thought clouds, captions, and sound effects with custom styling."
           />
           <FeatureCard 
-            icon={
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
-              </svg>
-            }
+            icon={<FiSmartphone className="w-6 h-6" />}
             title="Works Offline"
             description="Install as an app and work offline. Your projects are saved locally and always accessible."
           />
