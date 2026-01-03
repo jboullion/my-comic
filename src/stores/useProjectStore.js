@@ -29,6 +29,7 @@ export const useProjectStore = create(
       isSaving: false,
       activePageIndex: 0,
       selectedElementIds: [],
+      selectedAssetId: null,
       zoom: 1,
       tool: 'select',
 
@@ -269,6 +270,11 @@ export const useProjectStore = create(
       setSelectedElementIds: (ids) => set({ selectedElementIds: ids }),
 
       /**
+       * Set selected asset
+       */
+      setSelectedAssetId: (id) => set({ selectedAssetId: id }),
+
+      /**
        * Save current project to file system
        */
       saveToFile: async () => {
@@ -381,6 +387,38 @@ export const useProjectStore = create(
           console.error('Failed to add image:', error)
           throw error
         }
+      },
+
+      /**
+       * Add an existing asset to the current page
+       */
+      addAssetToPage: async (assetId, position = { x: 50, y: 50 }) => {
+        const { currentProject, activePageIndex } = get()
+        if (!currentProject) return
+
+        const newElement = {
+          type: 'image',
+          id: `elem-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
+          assetId: assetId,
+          x: position.x,
+          y: position.y,
+          width: 300,
+          height: 300,
+          rotation: 0,
+          scaleX: 1,
+          scaleY: 1,
+          opacity: 1,
+          zIndex: (currentProject.pages[activePageIndex].elements?.length || 0) + 1
+        }
+
+        const pages = [...currentProject.pages]
+        const page = { ...pages[activePageIndex] }
+        page.elements = [...(page.elements || []), newElement]
+        pages[activePageIndex] = page
+
+        await get().updateCurrentProject({ pages })
+        set({ selectedElementIds: [newElement.id] })
+        return newElement
       },
 
       /**

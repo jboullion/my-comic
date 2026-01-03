@@ -21,7 +21,8 @@ export default function ComicCanvas() {
     setZoom,
     selectedElementIds,
     setSelectedElementIds,
-    updateElement
+    updateElement,
+    addAssetToPage
   } = useProjectStore()
 
   const [stageSize, setStageSize] = useState({ width: 0, height: 0 })
@@ -177,11 +178,40 @@ export default function ComicCanvas() {
 
   if (!currentProject) return null
 
+  /**
+   * Handle drop from sidebar
+   */
+  const handleDrop = (e) => {
+    e.preventDefault()
+    const assetId = e.dataTransfer.getData('assetId')
+    if (!assetId || !stageRef.current) return
+
+    e.stopPropagation()
+
+    // Get pointer position relative to stage
+    stageRef.current.setPointersPositions(e)
+    const pointerPos = stageRef.current.getPointerPosition()
+    
+    if (!pointerPos) return
+
+    // Convert screen coordinates to stage coordinates (accounting for zoom and pan)
+    const stage = stageRef.current
+    const transform = stage.getAbsoluteTransform().copy().invert()
+    const pos = transform.point(pointerPos)
+
+    addAssetToPage(Number(assetId), {
+      x: pos.x - 150, // Center the 300px wide image
+      y: pos.y - 150
+    })
+  }
+
   return (
     <div 
       ref={containerRef} 
       className="w-full h-full relative bg-slate-950 overflow-hidden"
       style={{ cursor: isPanningMode ? 'grab' : 'default' }}
+      onDragOver={(e) => e.preventDefault()}
+      onDrop={handleDrop}
     >
       <Stage
         ref={stageRef}

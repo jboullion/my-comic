@@ -4,6 +4,7 @@ import AppLayout from '../layouts/AppLayout'
 import useProjectStore from '../stores/useProjectStore'
 import ComicCanvas from '../components/ComicCanvas'
 import { useImage } from '../hooks/useImage'
+import { db } from '../lib/db'
 
 export default function ProjectPage() {
   const { projectId } = useParams()
@@ -27,13 +28,17 @@ export default function ProjectPage() {
     setTool,
     updateCurrentProjectLocal,
     addImage,
+    addAssetToPage,
     selectedElementIds,
     setSelectedElementIds,
+    selectedAssetId,
+    setSelectedAssetId,
     updateElement,
     addPanel,
   } = useProjectStore()
 
   const [rightSidebarTab, setRightSidebarTab] = useState('properties') // 'properties', 'assets', 'layers'
+  const [isDraggingOver, setIsDraggingOver] = useState(false)
 
   // Load project on mount
   useEffect(() => {
@@ -147,6 +152,41 @@ export default function ProjectPage() {
     } catch (error) {
       console.error('Image upload failed:', error)
       alert('Failed to upload image. Please try again.')
+    }
+  }
+
+  const handleDragOver = (e) => {
+    e.preventDefault()
+    e.stopPropagation()
+    
+    // Only show dropzone for external files
+    if (e.dataTransfer.types.includes('Files')) {
+      setIsDraggingOver(true)
+    }
+  }
+
+  const handleDragLeave = (e) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDraggingOver(false)
+  }
+
+  const handleDrop = async (e) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDraggingOver(false)
+
+    const files = e.dataTransfer.files
+    if (files && files.length > 0) {
+      const file = files[0]
+      if (file.type.startsWith('image/')) {
+        try {
+          await addImage(file)
+        } catch (error) {
+          console.error('Image drop failed:', error)
+          alert('Failed to upload dropped image.')
+        }
+      }
     }
   }
 
@@ -279,8 +319,28 @@ export default function ProjectPage() {
           </aside>
 
           {/* Main Canvas Area */}
-          <main className="flex-1 relative">
+          <main 
+            className="flex-1 relative"
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+          >
             <ComicCanvas />
+            
+            {/* Drag & Drop Overlay */}
+            {isDraggingOver && (
+              <div className="absolute inset-0 z-50 bg-indigo-500/20 backdrop-blur-sm border-4 border-dashed border-indigo-500 flex items-center justify-center pointer-events-none">
+                <div className="bg-slate-900 p-8 rounded-2xl shadow-2xl border border-slate-700 flex flex-col items-center gap-4">
+                  <div className="w-16 h-16 bg-indigo-500 rounded-full flex items-center justify-center animate-bounce">
+                    <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                    </svg>
+                  </div>
+                  <p className="text-xl font-bold text-white">Drop to upload image</p>
+                  <p className="text-slate-400 text-sm">Supports PNG, JPG, WebP</p>
+                </div>
+              </div>
+            )}
             
             {/* Floating Toolbar */}
             <div className="absolute top-4 left-1/2 -translate-x-1/2 flex items-center gap-1 bg-slate-900/90 backdrop-blur border border-slate-700 rounded-xl p-1.5 shadow-2xl z-10">
@@ -513,34 +573,25 @@ export default function ProjectPage() {
               )}
 
               {rightSidebarTab === 'assets' && (
-                <AssetGallery 
-                  imageIds={currentProject.assets?.imageIds || []} 
-                  onSelect={async (assetId) => {
-                    // Add existing asset to page
-                    const newElement = {
-                      type: 'image',
-                      id: `elem-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
-                      assetId: assetId,
-                      x: 50,
-                      y: 50,
-                      width: 300,
-                      height: 300,
-                      rotation: 0,
-                      scaleX: 1,
-                      scaleY: 1,
-                      opacity: 1,
-                      zIndex: (currentPage.elements?.length || 0) + 1
-                    }
-
-                    const pages = [...currentProject.pages]
-                    const page = { ...pages[activePageIndex] }
-                    page.elements = [...page.elements, newElement]
-                    pages[activePageIndex] = page
-
-                    await updateCurrentProject({ pages })
-                    setSelectedElementIds([newElement.id])
-                  }}
-                />
+                <div className="flex flex-col h-full">
+                  <div className="flex-1 overflow-y-auto pr-2">
+                    <AssetGallery 
+                      imageIds={currentProject.assets?.imageIds || []} 
+                      selectedAssetId={selectedAssetId}
+                      onSelect={(id) => setSelectedAssetId(id)}
+                      onAdd={(id) => addAssetToPage(id)}
+                    />
+                  </div>
+                  
+                  {selectedAssetId && (
+                    <div className="mt-4 pt-4 border-t border-slate-800">
+                      <AssetPropertiesWidget 
+                        assetId={selectedAssetId} 
+                        onAdd={(id) => addAssetToPage(id)}
+                      />
+                    </div>
+                  )}
+                </div>
               )}
 
               {rightSidebarTab === 'layers' && (
@@ -606,7 +657,7 @@ function PresetButton({ label, size, onClick }) {
   )
 }
 
-function AssetGallery({ imageIds, onSelect }) {
+function AssetGallery({ imageIds, selectedAssetId, onSelect, onAdd }) {
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-2 gap-2">
@@ -614,13 +665,25 @@ function AssetGallery({ imageIds, onSelect }) {
           <button 
             key={id}
             onClick={() => onSelect(id)}
-            className="aspect-square bg-slate-800 rounded-lg border border-slate-700 overflow-hidden hover:border-indigo-500 transition-colors group relative"
+            onDoubleClick={() => onAdd(id)}
+            draggable="true"
+            onDragStart={(e) => {
+              e.dataTransfer.setData('assetId', id)
+              e.dataTransfer.effectAllowed = 'copy'
+            }}
+            className={`aspect-square bg-slate-800 rounded-lg border overflow-hidden transition-all group relative ${
+              selectedAssetId === id 
+                ? 'border-indigo-500 ring-2 ring-indigo-500/20' 
+                : 'border-slate-700 hover:border-slate-500'
+            }`}
           >
             <AssetThumbnail assetId={id} />
             <div className="absolute inset-0 bg-indigo-500/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-              </svg>
+              <div className="bg-indigo-600 p-1.5 rounded-full shadow-lg transform scale-75 group-hover:scale-100 transition-transform">
+                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+              </div>
             </div>
           </button>
         ))}
@@ -630,6 +693,72 @@ function AssetGallery({ imageIds, onSelect }) {
           <p className="text-sm text-slate-500">No assets uploaded yet.</p>
         </div>
       )}
+    </div>
+  )
+}
+
+function AssetPropertiesWidget({ assetId, onAdd }) {
+  const [asset, setAsset] = useState(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    let isMounted = true
+    const loadAsset = async () => {
+      setLoading(true)
+      try {
+        const data = await db.images.get(assetId)
+        if (isMounted) {
+          setAsset(data)
+          setLoading(false)
+        }
+      } catch (error) {
+        console.error('Failed to load asset metadata:', error)
+        if (isMounted) setLoading(false)
+      }
+    }
+    loadAsset()
+    return () => { isMounted = false }
+  }, [assetId])
+
+  if (loading) return <div className="animate-pulse h-32 bg-slate-800 rounded-lg" />
+  if (!asset) return null
+
+  const fileSize = (asset.size / 1024).toFixed(1) + ' KB'
+
+  return (
+    <div className="bg-slate-900/50 rounded-xl p-4 border border-slate-800">
+      <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Asset Properties</h3>
+      
+      <div className="space-y-3">
+        <div className="flex justify-between items-center">
+          <span className="text-xs text-slate-400">Name</span>
+          <span className="text-xs text-slate-200 font-medium truncate max-w-[120px]" title={asset.name}>{asset.name}</span>
+        </div>
+        <div className="flex justify-between items-center">
+          <span className="text-xs text-slate-400">Size</span>
+          <span className="text-xs text-slate-200 font-medium">{fileSize}</span>
+        </div>
+        <div className="flex justify-between items-center">
+          <span className="text-xs text-slate-400">Type</span>
+          <span className="text-xs text-slate-200 font-medium uppercase">{asset.type.split('/')[1]}</span>
+        </div>
+        <div className="flex justify-between items-center">
+          <span className="text-xs text-slate-400">Added</span>
+          <span className="text-xs text-slate-200 font-medium">
+            {new Date(asset.createdAt).toLocaleDateString()}
+          </span>
+        </div>
+
+        <button 
+          onClick={() => onAdd(assetId)}
+          className="w-full mt-2 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-lg transition-colors flex items-center justify-center gap-2"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+          </svg>
+          Add to Canvas
+        </button>
+      </div>
     </div>
   )
 }
