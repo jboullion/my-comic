@@ -199,9 +199,34 @@ export const useProjectStore = create(
 
         const pages = [...currentProject.pages]
         const page = { ...pages[activePageIndex] }
-        const elements = page.elements.map(el => 
-          el.id === elementId ? { ...el, ...updates } : el
-        )
+        
+        const targetElement = page.elements.find(el => el.id === elementId)
+        if (!targetElement) return
+
+        // If moving a panel, move its children too
+        let elements = page.elements
+        if (targetElement.type === 'panel' && (updates.x !== undefined || updates.y !== undefined)) {
+          const dx = updates.x !== undefined ? updates.x - targetElement.x : 0
+          const dy = updates.y !== undefined ? updates.y - targetElement.y : 0
+          
+          elements = elements.map(el => {
+            if (el.panelId === elementId) {
+              return {
+                ...el,
+                x: (el.x || 0) + dx,
+                y: (el.y || 0) + dy
+              }
+            }
+            if (el.id === elementId) {
+              return { ...el, ...updates }
+            }
+            return el
+          })
+        } else {
+          elements = elements.map(el => 
+            el.id === elementId ? { ...el, ...updates } : el
+          )
+        }
         
         page.elements = elements
         pages[activePageIndex] = page
@@ -264,7 +289,16 @@ export const useProjectStore = create(
 
         const pages = [...currentProject.pages]
         const page = { ...pages[activePageIndex] }
-        const elements = page.elements.filter(el => !selectedElementIds.includes(el.id))
+        
+        // If we are deleting a panel, we should unassign its children
+        const elements = page.elements
+          .filter(el => !selectedElementIds.includes(el.id))
+          .map(el => {
+            if (el.panelId && selectedElementIds.includes(el.panelId)) {
+              return { ...el, panelId: null }
+            }
+            return el
+          })
         
         page.elements = elements
         pages[activePageIndex] = page
@@ -282,8 +316,15 @@ export const useProjectStore = create(
 
         const pages = [...currentProject.pages]
         const page = { ...pages[activePageIndex] }
+        
+        // If we are nudging a panel, we should nudge its children too
+        // unless the children are also selected (to avoid double nudging)
         const elements = page.elements.map(el => {
           if (selectedElementIds.includes(el.id)) {
+            return { ...el, x: (el.x || 0) + dx, y: (el.y || 0) + dy }
+          }
+          // If not selected, but parent panel is selected, nudge it
+          if (el.panelId && selectedElementIds.includes(el.panelId) && !selectedElementIds.includes(el.id)) {
             return { ...el, x: (el.x || 0) + dx, y: (el.y || 0) + dy }
           }
           return el
@@ -450,6 +491,7 @@ export const useProjectStore = create(
           type: 'image',
           id: `elem-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
           assetId: assetId,
+          panelId: null,
           x: position.x,
           y: position.y,
           width: 300,
@@ -499,6 +541,7 @@ export const useProjectStore = create(
         const newElement = {
           type: 'panel',
           id: `elem-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
+          panelId: null,
           x: 300, // Center of 400x300 panel starting at 100,100
           y: 250,
           width: 400,

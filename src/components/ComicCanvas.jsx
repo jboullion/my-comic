@@ -4,6 +4,7 @@ import useProjectStore from '../stores/useProjectStore'
 import ElementRenderer from './canvas/elements/ElementRenderer'
 import ZoomControls from './canvas/ZoomControls'
 import CanvasContextMenu from './canvas/CanvasContextMenu'
+import { drawCornerShapePath } from '../lib/canvasShapes'
 
 /**
  * ComicCanvas Component
@@ -298,15 +299,60 @@ export default function ComicCanvas() {
 
           {/* Elements Layer */}
           <Group>
-            {currentPage?.elements?.map((element) => (
-              <ElementRenderer 
-                key={element.id} 
-                element={element} 
-                isSelected={selectedElementIds.includes(element.id)}
-                onSelect={() => setSelectedElementIds([element.id])}
-                onChange={(updates) => updateElement(element.id, updates)}
-              />
-            ))}
+            {currentPage?.elements?.map((element) => {
+              // If it's a panel, render it as a clipping group
+              if (element.type === 'panel') {
+                const children = currentPage.elements.filter(el => el.panelId === element.id)
+                
+                return (
+                  <Group 
+                    key={element.id}
+                    clipFunc={(ctx) => {
+                      ctx.save()
+                      ctx.translate(element.x, element.y)
+                      ctx.rotate((element.rotation || 0) * Math.PI / 180)
+                      ctx.scale(element.scaleX || 1, element.scaleY || 1)
+                      ctx.translate(-element.width / 2, -element.height / 2)
+                      drawCornerShapePath(ctx, element.width, element.height, element.cornerRadius || 0, element.cornerShape)
+                      ctx.restore()
+                    }}
+                  >
+                    {/* The panel itself (background/border) */}
+                    <ElementRenderer 
+                      element={element} 
+                      isSelected={selectedElementIds.includes(element.id)}
+                      onSelect={() => setSelectedElementIds([element.id])}
+                      onChange={(updates) => updateElement(element.id, updates)}
+                    />
+                    
+                    {/* Elements inside this panel */}
+                    {children.map((child) => (
+                      <ElementRenderer 
+                        key={child.id} 
+                        element={child} 
+                        isSelected={selectedElementIds.includes(child.id)}
+                        onSelect={() => setSelectedElementIds([child.id])}
+                        onChange={(updates) => updateElement(child.id, updates)}
+                      />
+                    ))}
+                  </Group>
+                )
+              }
+
+              // If it's an element that belongs to a panel, skip it (it's rendered inside the panel group)
+              if (element.panelId) return null
+
+              // Otherwise render as base element
+              return (
+                <ElementRenderer 
+                  key={element.id} 
+                  element={element} 
+                  isSelected={selectedElementIds.includes(element.id)}
+                  onSelect={() => setSelectedElementIds([element.id])}
+                  onChange={(updates) => updateElement(element.id, updates)}
+                />
+              )
+            })}
           </Group>
 
           {/* Transformer Layer */}

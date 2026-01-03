@@ -7,7 +7,9 @@ import useProjectStore from '../../../stores/useProjectStore'
  * Properties panel for selected element
  */
 export default function ElementProperties({ element }) {
-  const { updateElement } = useProjectStore()
+  const { currentProject, activePageIndex, updateElement } = useProjectStore()
+  const currentPage = currentProject?.pages[activePageIndex]
+  const panels = currentPage?.elements?.filter(el => el.type === 'panel' && el.id !== element.id) || []
 
   return (
     <div className="space-y-4">
@@ -45,6 +47,23 @@ export default function ElementProperties({ element }) {
           value={Math.round(element.height)} 
           onChange={(val) => updateElement(element.id, { height: val })}
         />
+      </div>
+
+      {/* Panel Assignment */}
+      <div className="space-y-2 pt-4 border-t border-slate-800">
+        <label className="text-[10px] text-slate-500 uppercase font-bold">Parent Panel</label>
+        <select 
+          className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all"
+          value={element.panelId || ''}
+          onChange={(e) => updateElement(element.id, { panelId: e.target.value || null })}
+        >
+          <option value="">None (Base Layer)</option>
+          {panels.map(panel => (
+            <option key={panel.id} value={panel.id}>
+              Panel ({Math.round(panel.x)}, {Math.round(panel.y)})
+            </option>
+          ))}
+        </select>
       </div>
 
       <div className="space-y-2">
