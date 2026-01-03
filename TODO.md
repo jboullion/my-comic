@@ -48,12 +48,25 @@ We need to make sure to save these images locally for users so they are not auto
 
 #### Prompt Helps
 
+While Civitai is great for images with Fal.ai and Replicate we could also use LLM models for prompts and stories
+
 Prompt agent which focuses on helping the user create consistant and useful prompts to generate images from
 
 
 #### Story / Dialog
 
 Story agent to be able to read / "see" a page or otherwise know about script / story and can help a user generate scripts and dialog or suggest other industry related things.
+
+
+#### Character Prompts
+
+For image consistance and Dialog consistancy.
+
+
+#### Voice?!?
+
+Could we set up the comic to "read"
+
 
 
 ## Marketing
