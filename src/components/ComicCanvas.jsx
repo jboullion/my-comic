@@ -87,12 +87,15 @@ export default function ComicCanvas() {
     selectedElementIds,
     setSelectedElementIds,
     updateElement,
-    addAssetToPage
+    addAssetToPage,
+    reorderElements,
+    deleteSelectedElements
   } = useProjectStore()
 
   const [stageSize, setStageSize] = useState({ width: 0, height: 0 })
   const [position, setPosition] = useState({ x: 0, y: 0 })
   const [isPanning, setIsPanning] = useState(false)
+  const [contextMenu, setContextMenu] = useState({ visible: false, x: 0, y: 0 })
 
   const currentPage = currentProject?.pages[activePageIndex]
   const projectSettings = currentProject?.settings || { width: 800, height: 1200 }
@@ -111,6 +114,17 @@ export default function ComicCanvas() {
       transformerRef.current.getLayer().batchDraw()
     }
   }, [selectedElementIds, activePageIndex])
+
+  // Close context menu on click elsewhere
+  useEffect(() => {
+    const handleClick = () => setContextMenu({ visible: false, x: 0, y: 0 })
+    window.addEventListener('click', handleClick)
+    window.addEventListener('wheel', handleClick)
+    return () => {
+      window.removeEventListener('click', handleClick)
+      window.removeEventListener('wheel', handleClick)
+    }
+  }, [])
 
   /**
    * Fit the page to the available screen space
@@ -205,6 +219,31 @@ export default function ComicCanvas() {
     }
   }
 
+  /**
+   * Handle context menu (right click)
+   */
+  const handleContextMenu = (e) => {
+    e.evt.preventDefault()
+    
+    // If clicking on empty area, don't show menu
+    if (e.target === stageRef.current || e.target.name() === 'page-bg') {
+      setContextMenu({ visible: false, x: 0, y: 0 })
+      return
+    }
+
+    // Select the element if not already selected
+    const id = e.target.id()
+    if (id && !selectedElementIds.includes(id)) {
+      setSelectedElementIds([id])
+    }
+
+    setContextMenu({
+      visible: true,
+      x: e.evt.clientX,
+      y: e.evt.clientY
+    })
+  }
+
   const handleMouseMove = (e) => {
     if (!isPanning) return
     
@@ -286,6 +325,7 @@ export default function ComicCanvas() {
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
+        onContextMenu={handleContextMenu}
         x={position.x}
         y={position.y}
         scaleX={zoom}
@@ -383,7 +423,68 @@ export default function ComicCanvas() {
           100%
         </button>
       </div>
+
+      {/* Context Menu */}
+      {contextMenu.visible && (
+        <div 
+          className="fixed z-50 bg-slate-800 border border-slate-700 rounded-lg shadow-2xl py-1.5 w-30 overflow-hidden"
+          style={{ left: contextMenu.x, top: contextMenu.y }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <ContextMenuItem 
+            label="Bring to Front" 
+            onClick={() => {
+              reorderElements(selectedElementIds, 'front')
+              setContextMenu({ visible: false, x: 0, y: 0 })
+            }}
+          />
+          <ContextMenuItem 
+            label="Bring Forward" 
+            onClick={() => {
+              reorderElements(selectedElementIds, 'forward')
+              setContextMenu({ visible: false, x: 0, y: 0 })
+            }}
+          />
+          <ContextMenuItem 
+            label="Send Backward" 
+            onClick={() => {
+              reorderElements(selectedElementIds, 'backward')
+              setContextMenu({ visible: false, x: 0, y: 0 })
+            }}
+          />
+          <ContextMenuItem 
+            label="Send to Back" 
+            onClick={() => {
+              reorderElements(selectedElementIds, 'back')
+              setContextMenu({ visible: false, x: 0, y: 0 })
+            }}
+          />
+          <div className="h-px bg-slate-700 my-1" />
+          <ContextMenuItem 
+            label="Delete" 
+            className="text-red-400 hover:bg-red-500 hover:text-white"
+            onClick={() => {
+              deleteSelectedElements()
+              setContextMenu({ visible: false, x: 0, y: 0 })
+            }}
+          />
+        </div>
+      )}
     </div>
+  )
+}
+
+/**
+ * Context Menu Item Component
+ */
+function ContextMenuItem({ label, onClick, className = '' }) {
+  return (
+    <button 
+      className={`w-full text-left px-3 py-1.5 text-xs font-medium text-slate-300 hover:bg-indigo-600 hover:text-white active:bg-indigo-700 active:scale-95 transition-all duration-150 ${className}`}
+      onClick={onClick}
+    >
+      {label}
+    </button>
   )
 }
 
@@ -441,6 +542,10 @@ const PanelElement = React.memo(({ element, onSelect, onChange }) => {
       onClick={onSelect}
       onTap={onSelect}
       sceneFunc={(ctx, shape) => {
+        drawCornerShapePath(ctx, element.width, element.height, element.cornerRadius || 0, element.cornerShape)
+        ctx.fillStrokeShape(shape)
+      }}
+      hitFunc={(ctx, shape) => {
         drawCornerShapePath(ctx, element.width, element.height, element.cornerRadius || 0, element.cornerShape)
         ctx.fillStrokeShape(shape)
       }}
@@ -524,6 +629,10 @@ const ImageElement = React.memo(({ element, onSelect, onChange }) => {
         }
         ctx.restore()
         ctx.strokeShape(shape)
+      }}
+      hitFunc={(ctx, shape) => {
+        drawCornerShapePath(ctx, element.width, element.height, element.cornerRadius || 0, element.cornerShape)
+        ctx.fillStrokeShape(shape)
       }}
       onDragEnd={(e) => {
         onChange({

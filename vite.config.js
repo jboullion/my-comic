@@ -11,7 +11,7 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg'],
       devOptions: {
-        enabled: true, // Enable PWA in dev mode for testing
+        enabled: false,
       },
       manifest: {
         name: 'Comic Book Maker',

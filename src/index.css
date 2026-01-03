@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+/* Override default hover variant to work without media query check */
+@custom-variant hover (&:hover);
+
 /* Global button styles for consistent UX */
 button,
 [role="button"] {

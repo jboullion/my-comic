@@ -210,6 +210,52 @@ export const useProjectStore = create(
       },
 
       /**
+       * Reorder elements (Z-index)
+       */
+      reorderElements: (elementIds, direction) => {
+        const { currentProject, activePageIndex } = get()
+        if (!currentProject) return
+
+        const pages = [...currentProject.pages]
+        const page = { ...pages[activePageIndex] }
+        const elements = [...page.elements]
+        
+        // Sort selected IDs by their current index to maintain relative order
+        const sortedIds = [...elementIds].sort((a, b) => {
+          return elements.findIndex(el => el.id === a) - elements.findIndex(el => el.id === b)
+        })
+
+        if (direction === 'front') {
+          const moving = elements.filter(el => sortedIds.includes(el.id))
+          const remaining = elements.filter(el => !sortedIds.includes(el.id))
+          page.elements = [...remaining, ...moving]
+        } else if (direction === 'back') {
+          const moving = elements.filter(el => sortedIds.includes(el.id))
+          const remaining = elements.filter(el => !sortedIds.includes(el.id))
+          page.elements = [...moving, ...remaining]
+        } else if (direction === 'forward') {
+          // Move each element one step forward if possible
+          for (let i = elements.length - 2; i >= 0; i--) {
+            if (sortedIds.includes(elements[i].id) && !sortedIds.includes(elements[i + 1].id)) {
+              [elements[i], elements[i + 1]] = [elements[i + 1], elements[i]]
+            }
+          }
+          page.elements = elements
+        } else if (direction === 'backward') {
+          // Move each element one step backward if possible
+          for (let i = 1; i < elements.length; i++) {
+            if (sortedIds.includes(elements[i].id) && !sortedIds.includes(elements[i - 1].id)) {
+              [elements[i], elements[i - 1]] = [elements[i - 1], elements[i]]
+            }
+          }
+          page.elements = elements
+        }
+
+        pages[activePageIndex] = page
+        get().updateCurrentProjectLocal({ pages })
+      },
+
+      /**
        * Delete selected elements
        */
       deleteSelectedElements: () => {
