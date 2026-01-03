@@ -7,7 +7,6 @@ import ToolButton from './ui/ToolButton'
 export default function FloatingToolbar({ 
   tool, 
   onToolChange, 
-  onAddPanel,
   onImageUpload,
   fileInputRef 
 }) {
@@ -20,15 +19,6 @@ export default function FloatingToolbar({
         onClick={() => onToolChange('select')}
       />
       <div className="w-px h-6 bg-slate-700 mx-1" />
-      <ToolButton 
-        icon="square" 
-        label="Panel (P)" 
-        active={tool === 'panel'} 
-        onClick={() => {
-          onToolChange('panel')
-          onAddPanel()
-        }}
-      />
       <ToolButton 
         icon="image" 
         label="Image (I)" 

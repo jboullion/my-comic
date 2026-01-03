@@ -49,7 +49,13 @@ const ImageElement = React.memo(({ element, onSelect, onChange }) => {
         ctx.save()
         ctx.clip()
         if (image) {
-          ctx.drawImage(image, 0, 0, element.width, element.height)
+          // Use normalized crop coordinates (0-1)
+          const cx = (element.cropX || 0) * image.width
+          const cy = (element.cropY || 0) * image.height
+          const cw = (element.cropWidth || 1) * image.width
+          const ch = (element.cropHeight || 1) * image.height
+          
+          ctx.drawImage(image, cx, cy, cw, ch, 0, 0, element.width, element.height)
         }
         ctx.restore()
         ctx.strokeShape(shape)

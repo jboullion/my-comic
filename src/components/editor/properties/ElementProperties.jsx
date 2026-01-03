@@ -7,9 +7,7 @@ import useProjectStore from '../../../stores/useProjectStore'
  * Properties panel for selected element
  */
 export default function ElementProperties({ element }) {
-  const { currentProject, activePageIndex, updateElement } = useProjectStore()
-  const currentPage = currentProject?.pages[activePageIndex]
-  const panels = currentPage?.elements?.filter(el => el.type === 'panel' && el.id !== element.id) || []
+  const { updateElement } = useProjectStore()
 
   return (
     <div className="space-y-4">
@@ -49,22 +47,70 @@ export default function ElementProperties({ element }) {
         />
       </div>
 
-      {/* Panel Assignment */}
-      <div className="space-y-2 pt-4 border-t border-slate-800">
-        <label className="text-[10px] text-slate-500 uppercase font-bold">Parent Panel</label>
-        <select 
-          className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all"
-          value={element.panelId || ''}
-          onChange={(e) => updateElement(element.id, { panelId: e.target.value || null })}
-        >
-          <option value="">None (Base Layer)</option>
-          {panels.map(panel => (
-            <option key={panel.id} value={panel.id}>
-              Panel ({Math.round(panel.x)}, {Math.round(panel.y)})
-            </option>
-          ))}
-        </select>
-      </div>
+      {/* Cropping Controls for Images */}
+      {element.type === 'image' && (
+        <div className="space-y-4 pt-4 border-t border-slate-800">
+          <h4 className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Image Crop</h4>
+          
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <label className="text-[10px] text-slate-500 uppercase font-bold">Crop X</label>
+              <input 
+                type="range" 
+                min="0" 
+                max="1" 
+                step="0.01" 
+                value={element.cropX || 0}
+                onChange={(e) => updateElement(element.id, { cropX: parseFloat(e.target.value) })}
+                className="w-full accent-indigo-500"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-[10px] text-slate-500 uppercase font-bold">Crop Y</label>
+              <input 
+                type="range" 
+                min="0" 
+                max="1" 
+                step="0.01" 
+                value={element.cropY || 0}
+                onChange={(e) => updateElement(element.id, { cropY: parseFloat(e.target.value) })}
+                className="w-full accent-indigo-500"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-[10px] text-slate-500 uppercase font-bold">Crop Width</label>
+              <input 
+                type="range" 
+                min="0.1" 
+                max="1" 
+                step="0.01" 
+                value={element.cropWidth || 1}
+                onChange={(e) => updateElement(element.id, { cropWidth: parseFloat(e.target.value) })}
+                className="w-full accent-indigo-500"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-[10px] text-slate-500 uppercase font-bold">Crop Height</label>
+              <input 
+                type="range" 
+                min="0.1" 
+                max="1" 
+                step="0.01" 
+                value={element.cropHeight || 1}
+                onChange={(e) => updateElement(element.id, { cropHeight: parseFloat(e.target.value) })}
+                className="w-full accent-indigo-500"
+              />
+            </div>
+          </div>
+          
+          <button 
+            onClick={() => updateElement(element.id, { cropX: 0, cropY: 0, cropWidth: 1, cropHeight: 1 })}
+            className="w-full py-1.5 text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 rounded transition-colors"
+          >
+            Reset Crop
+          </button>
+        </div>
+      )}
 
       <div className="space-y-2">
         <label className="text-[10px] text-slate-500 uppercase font-bold">Opacity</label>
@@ -178,22 +224,6 @@ export default function ElementProperties({ element }) {
           </div>
         </div>
       </div>
-
-      {element.type === 'panel' && (
-        <div className="space-y-4 pt-4 border-t border-slate-800">
-          <div className="space-y-1.5">
-            <label className="text-[10px] text-slate-500 uppercase font-bold">Fill Color</label>
-            <div className="flex items-center gap-2">
-              <input 
-                type="color" 
-                value={element.fill || '#ffffff'}
-                onChange={(e) => updateElement(element.id, { fill: e.target.value })}
-                className="w-full h-8 bg-slate-900 border border-slate-700 rounded cursor-pointer"
-              />
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   )
 }

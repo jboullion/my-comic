@@ -1,8 +1,12 @@
 ## Current TODOs
 
-- A
+- "kitchen sink" above selected image? Toggle clip or resize. Default clip.
+- - Could eventually be used for adding "text bubbles" which would be "attached" to the image.
+- - Reset Image (size and clip)
 
 ## Bugs
+
+- Debounce saving
 
 ## Ideas and Brainstorming
 

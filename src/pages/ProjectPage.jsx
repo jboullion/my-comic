@@ -35,7 +35,6 @@ export default function ProjectPage() {
     setSelectedElementIds,
     selectedAssetId,
     setSelectedAssetId,
-    addPanel,
   } = useProjectStore()
 
   const [isDraggingOver, setIsDraggingOver] = useState(false)
@@ -239,7 +238,6 @@ export default function ProjectPage() {
           onSaveToFile={handleSaveToFile}
           tool={tool}
           onToolChange={setTool}
-          onAddPanel={addPanel}
           onImageUpload={handleImageUpload}
           fileInputRef={fileInputRef}
         />

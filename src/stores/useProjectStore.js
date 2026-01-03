@@ -199,34 +199,9 @@ export const useProjectStore = create(
 
         const pages = [...currentProject.pages]
         const page = { ...pages[activePageIndex] }
-        
-        const targetElement = page.elements.find(el => el.id === elementId)
-        if (!targetElement) return
-
-        // If moving a panel, move its children too
-        let elements = page.elements
-        if (targetElement.type === 'panel' && (updates.x !== undefined || updates.y !== undefined)) {
-          const dx = updates.x !== undefined ? updates.x - targetElement.x : 0
-          const dy = updates.y !== undefined ? updates.y - targetElement.y : 0
-          
-          elements = elements.map(el => {
-            if (el.panelId === elementId) {
-              return {
-                ...el,
-                x: (el.x || 0) + dx,
-                y: (el.y || 0) + dy
-              }
-            }
-            if (el.id === elementId) {
-              return { ...el, ...updates }
-            }
-            return el
-          })
-        } else {
-          elements = elements.map(el => 
-            el.id === elementId ? { ...el, ...updates } : el
-          )
-        }
+        const elements = page.elements.map(el => 
+          el.id === elementId ? { ...el, ...updates } : el
+        )
         
         page.elements = elements
         pages[activePageIndex] = page
@@ -289,16 +264,7 @@ export const useProjectStore = create(
 
         const pages = [...currentProject.pages]
         const page = { ...pages[activePageIndex] }
-        
-        // If we are deleting a panel, we should unassign its children
-        const elements = page.elements
-          .filter(el => !selectedElementIds.includes(el.id))
-          .map(el => {
-            if (el.panelId && selectedElementIds.includes(el.panelId)) {
-              return { ...el, panelId: null }
-            }
-            return el
-          })
+        const elements = page.elements.filter(el => !selectedElementIds.includes(el.id))
         
         page.elements = elements
         pages[activePageIndex] = page
@@ -317,14 +283,8 @@ export const useProjectStore = create(
         const pages = [...currentProject.pages]
         const page = { ...pages[activePageIndex] }
         
-        // If we are nudging a panel, we should nudge its children too
-        // unless the children are also selected (to avoid double nudging)
         const elements = page.elements.map(el => {
           if (selectedElementIds.includes(el.id)) {
-            return { ...el, x: (el.x || 0) + dx, y: (el.y || 0) + dy }
-          }
-          // If not selected, but parent panel is selected, nudge it
-          if (el.panelId && selectedElementIds.includes(el.panelId) && !selectedElementIds.includes(el.id)) {
             return { ...el, x: (el.x || 0) + dx, y: (el.y || 0) + dy }
           }
           return el
@@ -491,11 +451,14 @@ export const useProjectStore = create(
           type: 'image',
           id: `elem-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
           assetId: assetId,
-          panelId: null,
           x: position.x,
           y: position.y,
           width: 300,
           height: 300,
+          cropX: 0,
+          cropY: 0,
+          cropWidth: 1, // Normalized 0-1
+          cropHeight: 1, // Normalized 0-1
           rotation: 0,
           scaleX: 1,
           scaleY: 1,
@@ -529,42 +492,6 @@ export const useProjectStore = create(
           console.error('Failed to rename asset:', error)
           throw error
         }
-      },
-
-      /**
-       * Add a panel (rectangle) to the current page
-       */
-      addPanel: () => {
-        const { currentProject, activePageIndex } = get()
-        if (!currentProject) return
-
-        const newElement = {
-          type: 'panel',
-          id: `elem-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
-          panelId: null,
-          x: 300, // Center of 400x300 panel starting at 100,100
-          y: 250,
-          width: 400,
-          height: 300,
-          fill: '#ffffff',
-          stroke: '#000000',
-          strokeWidth: 2,
-          cornerRadius: 0,
-          cornerShape: 'round',
-          rotation: 0,
-          scaleX: 1,
-          scaleY: 1,
-          opacity: 1,
-          zIndex: (currentProject.pages[activePageIndex].elements?.length || 0) + 1
-        }
-
-        const pages = [...currentProject.pages]
-        const page = { ...pages[activePageIndex] }
-        page.elements = [...(page.elements || []), newElement]
-        pages[activePageIndex] = page
-
-        get().updateCurrentProjectLocal({ pages })
-        set({ selectedElementIds: [newElement.id] })
       },
 
       /**

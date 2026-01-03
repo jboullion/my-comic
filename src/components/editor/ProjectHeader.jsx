@@ -16,7 +16,6 @@ export default function ProjectHeader({
   // Toolbar props
   tool,
   onToolChange,
-  onAddPanel,
   onImageUpload,
   fileInputRef
 }) {
@@ -50,7 +49,6 @@ export default function ProjectHeader({
           <FloatingToolbar 
             tool={tool}
             onToolChange={onToolChange}
-            onAddPanel={onAddPanel}
             onImageUpload={onImageUpload}
             fileInputRef={fileInputRef}
           />
