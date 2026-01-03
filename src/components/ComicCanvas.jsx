@@ -1,7 +1,72 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react'
-import { Stage, Layer, Rect, Group, Image, Transformer } from 'react-konva'
+import { Stage, Layer, Rect, Group, Image, Transformer, Shape } from 'react-konva'
 import useProjectStore from '../stores/useProjectStore'
 import { useImage } from '../hooks/useImage'
+
+/**
+ * Helper to draw corner shapes (CSS corner-shape property)
+ */
+const drawCornerShapePath = (ctx, width, height, radius, cornerShape) => {
+  const r = Math.min(radius, width / 2, height / 2)
+  ctx.beginPath()
+  
+  if (cornerShape === 'round' || !cornerShape || r <= 0) {
+    ctx.moveTo(r, 0)
+    ctx.lineTo(width - r, 0)
+    ctx.arcTo(width, 0, width, r, r)
+    ctx.lineTo(width, height - r)
+    ctx.arcTo(width, height, width - r, height, r)
+    ctx.lineTo(r, height)
+    ctx.arcTo(0, height, 0, height - r, r)
+    ctx.lineTo(0, r)
+    ctx.arcTo(0, 0, r, 0, r)
+  } else if (cornerShape === 'bevel') {
+    ctx.moveTo(r, 0)
+    ctx.lineTo(width - r, 0)
+    ctx.lineTo(width, r)
+    ctx.lineTo(width, height - r)
+    ctx.lineTo(width - r, height)
+    ctx.lineTo(r, height)
+    ctx.lineTo(0, height - r)
+    ctx.lineTo(0, r)
+  } else if (cornerShape === 'notch') {
+    ctx.moveTo(r, 0)
+    ctx.lineTo(width - r, 0)
+    ctx.lineTo(width - r, r)
+    ctx.lineTo(width, r)
+    ctx.lineTo(width, height - r)
+    ctx.lineTo(width - r, height - r)
+    ctx.lineTo(width - r, height)
+    ctx.lineTo(r, height)
+    ctx.lineTo(r, height - r)
+    ctx.lineTo(0, height - r)
+    ctx.lineTo(0, r)
+    ctx.lineTo(r, r)
+  } else if (cornerShape === 'scoop') {
+    ctx.moveTo(r, 0)
+    ctx.lineTo(width - r, 0)
+    ctx.arc(width, 0, r, Math.PI, Math.PI / 2, true)
+    ctx.lineTo(width, height - r)
+    ctx.arc(width, height, r, -Math.PI / 2, Math.PI, true)
+    ctx.lineTo(r, height)
+    ctx.arc(0, height, r, 0, -Math.PI / 2, true)
+    ctx.lineTo(0, r)
+    ctx.arc(0, 0, r, Math.PI / 2, 0, true)
+  } else if (cornerShape === 'squircle') {
+    // Approximation of a squircle (superellipse n=4)
+    const cp = r * 0.8 
+    ctx.moveTo(r, 0)
+    ctx.lineTo(width - r, 0)
+    ctx.bezierCurveTo(width - (r - cp), 0, width, r - cp, width, r)
+    ctx.lineTo(width, height - r)
+    ctx.bezierCurveTo(width, height - (r - cp), width - (r - cp), height, width - r, height)
+    ctx.lineTo(r, height)
+    ctx.bezierCurveTo(r - cp, height, 0, height - (r - cp), 0, height - r)
+    ctx.lineTo(0, r)
+    ctx.bezierCurveTo(0, r - cp, r - cp, 0, r, 0)
+  }
+  ctx.closePath()
+}
 
 /**
  * ComicCanvas Component
@@ -200,8 +265,8 @@ export default function ComicCanvas() {
     const pos = transform.point(pointerPos)
 
     addAssetToPage(Number(assetId), {
-      x: pos.x - 150, // Center the 300px wide image
-      y: pos.y - 150
+      x: pos.x,
+      y: pos.y
     })
   }
 
@@ -356,16 +421,18 @@ const PanelElement = React.memo(({ element, onSelect, onChange }) => {
   const shapeRef = useRef(null)
 
   return (
-    <Rect
+    <Shape
       id={element.id}
       ref={shapeRef}
       x={element.x}
       y={element.y}
       width={element.width}
       height={element.height}
+      offsetX={element.width / 2}
+      offsetY={element.height / 2}
       fill={element.fill || '#ffffff'}
       stroke={element.stroke || '#000000'}
-      strokeWidth={element.strokeWidth || 2}
+      strokeWidth={element.strokeWidth || 0}
       rotation={element.rotation}
       scaleX={element.scaleX}
       scaleY={element.scaleY}
@@ -373,6 +440,10 @@ const PanelElement = React.memo(({ element, onSelect, onChange }) => {
       draggable
       onClick={onSelect}
       onTap={onSelect}
+      sceneFunc={(ctx, shape) => {
+        drawCornerShapePath(ctx, element.width, element.height, element.cornerRadius || 0, element.cornerShape)
+        ctx.fillStrokeShape(shape)
+      }}
       onDragEnd={(e) => {
         onChange({
           x: e.target.x(),
@@ -387,11 +458,14 @@ const PanelElement = React.memo(({ element, onSelect, onChange }) => {
         node.scaleX(1)
         node.scaleY(1)
 
+        const newWidth = Math.max(5, node.width() * scaleX)
+        const newHeight = Math.max(5, node.height() * scaleY)
+
         onChange({
           x: node.x(),
           y: node.y(),
-          width: Math.max(5, node.width() * scaleX),
-          height: Math.max(5, node.height() * scaleY),
+          width: newWidth,
+          height: newHeight,
           rotation: node.rotation(),
         })
       }}
@@ -422,14 +496,17 @@ const ImageElement = React.memo(({ element, onSelect, onChange }) => {
   }, [image, element.widthSet, onChange])
 
   return (
-    <Image
+    <Shape
       id={element.id}
       ref={imageRef}
-      image={image}
       x={element.x}
       y={element.y}
       width={element.width}
       height={element.height}
+      offsetX={element.width / 2}
+      offsetY={element.height / 2}
+      stroke={element.stroke || '#000000'}
+      strokeWidth={element.strokeWidth || 0}
       rotation={element.rotation}
       scaleX={element.scaleX}
       scaleY={element.scaleY}
@@ -437,6 +514,17 @@ const ImageElement = React.memo(({ element, onSelect, onChange }) => {
       draggable
       onClick={onSelect}
       onTap={onSelect}
+      sceneFunc={(ctx, shape) => {
+        drawCornerShapePath(ctx, element.width, element.height, element.cornerRadius || 0, element.cornerShape)
+        ctx.fillShape(shape)
+        ctx.save()
+        ctx.clip()
+        if (image) {
+          ctx.drawImage(image, 0, 0, element.width, element.height)
+        }
+        ctx.restore()
+        ctx.strokeShape(shape)
+      }}
       onDragEnd={(e) => {
         onChange({
           x: e.target.x(),
@@ -452,11 +540,14 @@ const ImageElement = React.memo(({ element, onSelect, onChange }) => {
         node.scaleX(1)
         node.scaleY(1)
 
+        const newWidth = Math.max(5, node.width() * scaleX)
+        const newHeight = Math.max(5, node.height() * scaleY)
+
         onChange({
           x: node.x(),
           y: node.y(),
-          width: Math.max(5, node.width() * scaleX),
-          height: Math.max(5, node.height() * scaleY),
+          width: newWidth,
+          height: newHeight,
           rotation: node.rotation(),
         })
       }}

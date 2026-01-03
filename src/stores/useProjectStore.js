@@ -360,14 +360,18 @@ export const useProjectStore = create(
             type: 'image',
             id: `elem-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
             assetId: asset.id,
-            x: 50,
-            y: 50,
-            width: 300, // Default width, will be adjusted by Konva
+            x: 200, // Center of 300x300 image starting at 50,50
+            y: 200,
+            width: 300,
             height: 300,
             rotation: 0,
             scaleX: 1,
             scaleY: 1,
             opacity: 1,
+            stroke: '#000000',
+            strokeWidth: 0,
+            cornerRadius: 0,
+            cornerShape: 'round',
             zIndex: (currentProject.pages[activePageIndex].elements?.length || 0) + 1
           }
 
@@ -392,7 +396,7 @@ export const useProjectStore = create(
       /**
        * Add an existing asset to the current page
        */
-      addAssetToPage: async (assetId, position = { x: 50, y: 50 }) => {
+      addAssetToPage: async (assetId, position = { x: 200, y: 200 }) => {
         const { currentProject, activePageIndex } = get()
         if (!currentProject) return
 
@@ -408,6 +412,10 @@ export const useProjectStore = create(
           scaleX: 1,
           scaleY: 1,
           opacity: 1,
+          stroke: '#000000',
+          strokeWidth: 0,
+          cornerRadius: 0,
+          cornerShape: 'round',
           zIndex: (currentProject.pages[activePageIndex].elements?.length || 0) + 1
         }
 
@@ -431,13 +439,15 @@ export const useProjectStore = create(
         const newElement = {
           type: 'panel',
           id: `elem-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
-          x: 100,
-          y: 100,
+          x: 300, // Center of 400x300 panel starting at 100,100
+          y: 250,
           width: 400,
           height: 300,
           fill: '#ffffff',
           stroke: '#000000',
-          strokeWidth: 4,
+          strokeWidth: 2,
+          cornerRadius: 0,
+          cornerShape: 'round',
           rotation: 0,
           scaleX: 1,
           scaleY: 1,

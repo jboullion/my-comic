@@ -1,5 +1,6 @@
 ## Current TODOs
 
+- Refactor inputs and other reusables
 
 ## Bugs
 
@@ -7,6 +8,11 @@
 
 ## Ideas and Brainstorming
 
+- Lots of project default settings
+- - Default font
+- - Page type
+- - Image Border color and size
+- - Page background color (can probably edit per page if needed)
 
 
 - Have an alternate "Korean" aspect ratio / style which is essentially one long comic where the page transitions are vertical instead of page to page. Meant for digital and scrolling platforms.
