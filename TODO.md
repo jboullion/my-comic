@@ -1,11 +1,6 @@
 ## Current TODOs
 
-- Clean up the properties panel
-- - Create collapsable sections similar to blender / unity?
-- - Create components out of range slides and number inputs
-- - - Add a text input to range sliders so users can set exact amount
-- - - Update number and other input styles similar to the scrollbar to match the site theme
-
+- Add the same context menu to the text elements as we have for the image elements.
 
 - Image Previews
 

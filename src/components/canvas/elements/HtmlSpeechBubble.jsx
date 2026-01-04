@@ -8,7 +8,7 @@ import React, { useRef, useEffect, useState, useCallback } from 'react'
  * 2. SVG element - renders the bubble shape (100% of wrapper size)
  * 3. Text div - contenteditable for inline text editing
  */
-export default function HtmlSpeechBubble({ element, onSelect, onChange, isSelected, zoom = 1 }) {
+export default function HtmlSpeechBubble({ element, onSelect, onChange, onContextMenu, isSelected, zoom = 1 }) {
   const wrapperRef = useRef(null)
   const textRef = useRef(null)
 
@@ -440,6 +440,12 @@ export default function HtmlSpeechBubble({ element, onSelect, onChange, isSelect
       style={wrapperStyle}
       onClick={handleWrapperClick}
       onMouseDown={handleDragStart}
+      onContextMenu={(e) => {
+        e.preventDefault()
+        e.stopPropagation()
+        onSelect()
+        onContextMenu?.(e)
+      }}
     >
       {/* Selection border */}
       {isSelected && <div style={selectionBorderStyle} />}
