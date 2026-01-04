@@ -241,14 +241,19 @@ export default function ProjectPage() {
 
     const files = e.dataTransfer.files
     if (files && files.length > 0) {
-      const file = files[0]
-      if (file.type.startsWith('image/')) {
-        try {
+      // Process all dropped image files
+      const imageFiles = Array.from(files).filter(file => file.type.startsWith('image/'))
+
+      if (imageFiles.length === 0) return
+
+      try {
+        // Add all images (sequentially to avoid race conditions)
+        for (const file of imageFiles) {
           await addImage(file)
-        } catch (error) {
-          console.error('Image drop failed:', error)
-          alert('Failed to upload dropped image.')
         }
+      } catch (error) {
+        console.error('Image drop failed:', error)
+        alert('Failed to upload one or more dropped images.')
       }
     }
   }
@@ -363,8 +368,8 @@ function DragDropOverlay() {
         <div className="w-16 h-16 bg-indigo-500 rounded-full flex items-center justify-center animate-bounce">
           <FiUploadCloud className="w-8 h-8 text-white" />
         </div>
-        <p className="text-xl font-bold text-white">Drop to upload image</p>
-        <p className="text-slate-400 text-sm">Supports PNG, JPG, WebP</p>
+        <p className="text-xl font-bold text-white">Drop to upload images</p>
+        <p className="text-slate-400 text-sm">Supports PNG, JPG, WebP • Drop multiple at once</p>
       </div>
     </div>
   )

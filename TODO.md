@@ -6,25 +6,16 @@
 
 - Add basic instructions somewhere. And / or add a link to the docs and the top of the app nav
 
-- add a `delete` button to our assets. 
-- - If we delete an asset we will need to remove it from all pages.
-
 ## Bugs
 
-- Resizing from corners should preserve aspect ratio.
-- - Images being dragged onto work area are square. Should retain aspect ratio / size.
-- - Image size property panel should have a toggle "lock aspect ratio"
 - App header should expand full screen. No container.
 - Ratio lock on page size
 - Remove the image icon from the floating menu.
-- HTMLSpeechBubble drag and rotate should look and work very similarly to kanva
 - - Cloud SVG is overflowing container.
 - Fix the projects page. Broken layout.
 - - Could probably just do a general refactor.
 - - Setup project settings page. Including Thumbnail / cover
 - Some actions don't seem to get caught in the undo. Is there a redo?
-
-
 
 
 ## Ideas and Brainstorming
@@ -49,14 +40,14 @@
 
 ### Assets
 
-Need a search system.
-
+- Show original size in properties
+- Need a search system.
 - Search by name. Filter by pages placed on and date added
 
 ### Canvas
 
-- Clipping groups / panels (Do we still want this? Fairly tricky)
-
+- Increase drag handle size
+- 
 - Chat Bubbles
 - Customizable chat bubbles.
 - Text
