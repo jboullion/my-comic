@@ -1,20 +1,19 @@
 ## Current TODOs
 
-- Image Previews
-
 - Text bubble font. Set up google font selection for bubble and regular text elements
 
 - Separate non bubble text. Both for dialog but also for effects?
 
 - Add basic instructions somewhere. And / or add a link to the docs and the top of the app nav
 
-
+- add a `delete` button to our assets. 
+- - If we delete an asset we will need to remove it from all pages.
 
 ## Bugs
 
-- Debounce saving
 - Resizing from corners should preserve aspect ratio.
-- Images being dragged onto work area are square. Should retain aspect ratio / size.
+- - Images being dragged onto work area are square. Should retain aspect ratio / size.
+- - Image size property panel should have a toggle "lock aspect ratio"
 - App header should expand full screen. No container.
 - Ratio lock on page size
 - Remove the image icon from the floating menu.
@@ -32,6 +31,7 @@
 ### UI / UX
 
 - Allow page settings to have rounded edges? Same with export?
+- Form field name / id for a11y purposes
 
 ### Projects
 - Lots of project default settings
@@ -45,6 +45,12 @@
 - Have an alternate "Korean" aspect ratio / style which is essentially one long comic where the page transitions are vertical instead of page to page. Meant for digital and scrolling platforms.
 - - I think we could still probably use the page concepts except ther would bea "preview" section where we could see the whole comic? Or at least scroll through it?
 - - Perhaps we do only have one long panel and one long page? Ask AI
+
+### Assets
+
+Need a search system.
+
+- Search by name. Filter by pages placed on and date added
 
 ### Canvas
 

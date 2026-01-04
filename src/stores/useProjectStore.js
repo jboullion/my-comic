@@ -392,22 +392,32 @@ export const useProjectStore = create(
         try {
           // 1. Upload to IndexedDB
           const asset = await imageAssets.upload(currentProject.id, file)
-          
+
           // 2. Add to project assets if not already there
           const imageIds = [...(currentProject.assets?.imageIds || [])]
           if (!imageIds.includes(asset.id)) {
             imageIds.push(asset.id)
           }
 
-          // 3. Create element on current page
+          // 3. Calculate element size maintaining aspect ratio (max 400px on longest side)
+          const maxSize = 400
+          let width = asset.width || 300
+          let height = asset.height || 300
+          if (width > maxSize || height > maxSize) {
+            const scale = maxSize / Math.max(width, height)
+            width = Math.round(width * scale)
+            height = Math.round(height * scale)
+          }
+
+          // 4. Create element on current page (x,y is center point)
           const newElement = {
             type: 'image',
             id: `elem-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
             assetId: asset.id,
-            x: 200, // Center of 300x300 image starting at 50,50
+            x: 200,
             y: 200,
-            width: 300,
-            height: 300,
+            width,
+            height,
             rotation: 0,
             scaleX: 1,
             scaleY: 1,
@@ -416,6 +426,7 @@ export const useProjectStore = create(
             strokeWidth: 0,
             cornerRadius: 0,
             cornerShape: 'round',
+            lockAspectRatio: true,
             zIndex: (currentProject.pages[activePageIndex].elements?.length || 0) + 1
           }
 
@@ -424,11 +435,11 @@ export const useProjectStore = create(
           page.elements = [...(page.elements || []), newElement]
           pages[activePageIndex] = page
 
-          await get().updateCurrentProject({ 
+          await get().updateCurrentProject({
             assets: { ...currentProject.assets, imageIds },
-            pages 
+            pages
           })
-          
+
           set({ selectedElementIds: [newElement.id] })
           return newElement
         } catch (error) {
@@ -444,14 +455,27 @@ export const useProjectStore = create(
         const { currentProject, activePageIndex } = get()
         if (!currentProject) return
 
+        // Get asset to retrieve dimensions
+        const asset = await imageAssets.get(assetId)
+
+        // Calculate element size maintaining aspect ratio (max 400px on longest side)
+        const maxSize = 400
+        let width = asset?.width || 300
+        let height = asset?.height || 300
+        if (width > maxSize || height > maxSize) {
+          const scale = maxSize / Math.max(width, height)
+          width = Math.round(width * scale)
+          height = Math.round(height * scale)
+        }
+
         const newElement = {
           type: 'image',
           id: `elem-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
           assetId: assetId,
           x: position.x,
           y: position.y,
-          width: 300,
-          height: 300,
+          width,
+          height,
           cropX: 0,
           cropY: 0,
           cropWidth: 1, // Normalized 0-1
@@ -464,6 +488,7 @@ export const useProjectStore = create(
           strokeWidth: 0,
           cornerRadius: 0,
           cornerShape: 'round',
+          lockAspectRatio: true,
           zIndex: (currentProject.pages[activePageIndex].elements?.length || 0) + 1
         }
 

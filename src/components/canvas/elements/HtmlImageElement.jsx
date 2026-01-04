@@ -135,30 +135,70 @@ export default function HtmlImageElement({ element, onSelect, onChange, onContex
       let localOffsetX = 0
       let localOffsetY = 0
 
-      // Apply resize based on handle
-      if (resizeHandle.includes('e')) {
-        const widthDelta = localDx
-        newWidth = Math.max(50, startWidth + widthDelta)
-        const actualDelta = newWidth - startWidth
-        localOffsetX += actualDelta / 2
-      }
-      if (resizeHandle.includes('w')) {
-        const widthDelta = -localDx
-        newWidth = Math.max(50, startWidth + widthDelta)
-        const actualDelta = newWidth - startWidth
-        localOffsetX -= actualDelta / 2
-      }
-      if (resizeHandle.includes('s')) {
-        const heightDelta = localDy
-        newHeight = Math.max(50, startHeight + heightDelta)
-        const actualDelta = newHeight - startHeight
-        localOffsetY += actualDelta / 2
-      }
-      if (resizeHandle.includes('n')) {
-        const heightDelta = -localDy
-        newHeight = Math.max(50, startHeight + heightDelta)
-        const actualDelta = newHeight - startHeight
-        localOffsetY -= actualDelta / 2
+      // Check if this is a corner resize with aspect ratio lock
+      const isCorner = (resizeHandle.includes('n') || resizeHandle.includes('s')) &&
+                       (resizeHandle.includes('e') || resizeHandle.includes('w'))
+      const lockAspect = element.lockAspectRatio && isCorner
+
+      if (lockAspect) {
+        // Calculate aspect ratio
+        const aspectRatio = startWidth / startHeight
+
+        // Determine which axis moved more (scaled by aspect ratio)
+        const absLocalDx = Math.abs(localDx)
+        const absLocalDy = Math.abs(localDy) * aspectRatio
+
+        // Use the larger movement to drive the resize
+        if (absLocalDx >= absLocalDy) {
+          // Width-driven resize
+          const sign = resizeHandle.includes('e') ? 1 : -1
+          const widthDelta = sign * localDx
+          newWidth = Math.max(50, startWidth + widthDelta)
+          newHeight = Math.max(50, newWidth / aspectRatio)
+          newWidth = newHeight * aspectRatio // Ensure consistency
+        } else {
+          // Height-driven resize
+          const sign = resizeHandle.includes('s') ? 1 : -1
+          const heightDelta = sign * localDy
+          newHeight = Math.max(50, startHeight + heightDelta)
+          newWidth = Math.max(50, newHeight * aspectRatio)
+          newHeight = newWidth / aspectRatio // Ensure consistency
+        }
+
+        // Calculate center offset based on which corner
+        const widthChange = newWidth - startWidth
+        const heightChange = newHeight - startHeight
+
+        if (resizeHandle.includes('e')) localOffsetX += widthChange / 2
+        if (resizeHandle.includes('w')) localOffsetX -= widthChange / 2
+        if (resizeHandle.includes('s')) localOffsetY += heightChange / 2
+        if (resizeHandle.includes('n')) localOffsetY -= heightChange / 2
+      } else {
+        // Original non-locked resize logic
+        if (resizeHandle.includes('e')) {
+          const widthDelta = localDx
+          newWidth = Math.max(50, startWidth + widthDelta)
+          const actualDelta = newWidth - startWidth
+          localOffsetX += actualDelta / 2
+        }
+        if (resizeHandle.includes('w')) {
+          const widthDelta = -localDx
+          newWidth = Math.max(50, startWidth + widthDelta)
+          const actualDelta = newWidth - startWidth
+          localOffsetX -= actualDelta / 2
+        }
+        if (resizeHandle.includes('s')) {
+          const heightDelta = localDy
+          newHeight = Math.max(50, startHeight + heightDelta)
+          const actualDelta = newHeight - startHeight
+          localOffsetY += actualDelta / 2
+        }
+        if (resizeHandle.includes('n')) {
+          const heightDelta = -localDy
+          newHeight = Math.max(50, startHeight + heightDelta)
+          const actualDelta = newHeight - startHeight
+          localOffsetY -= actualDelta / 2
+        }
       }
 
       // Transform local offset back to world coordinates
@@ -187,7 +227,7 @@ export default function HtmlImageElement({ element, onSelect, onChange, onContex
     }
 
     return null
-  }, [interactionMode, zoom, snapValue])
+  }, [interactionMode, zoom, snapValue, element.lockAspectRatio])
 
   // Handle mouse move - update local state only for smooth visuals
   const handleMouseMove = useCallback((e) => {
