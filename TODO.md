@@ -1,14 +1,14 @@
 ## Current TODOs
 
-- Add the same context menu to the text elements as we have for the image elements.
-
 - Image Previews
 
-- Text bubble font
+- Text bubble font. Set up google font selection for bubble and regular text elements
 
 - Separate non bubble text. Both for dialog but also for effects?
 
 - Add basic instructions somewhere. And / or add a link to the docs and the top of the app nav
+
+
 
 ## Bugs
 
@@ -29,7 +29,7 @@
 
 ### UI / UX
 
-- Should we use a daisy theme? Perhaps at least a light and dark theme? Using daisy we no longer need the 'dark:' for dark mode I think. Although I might not want to complicate things like that. I don't LOVE any of the daisy themes. So I think maybe stick with default tailwind and maybe set up a custom style later.
+- Allow page settings to have rounded edges? Same with export?
 
 ### Projects
 - Lots of project default settings
@@ -46,9 +46,7 @@
 
 ### Canvas
 
-- Canvas might want a "snap" grid. Perhaps a user could toggle snapping and set up the snapping for adjustible increments? (epx, 5px, 10px, etc)
-
-- Clipping groups / panels
+- Clipping groups / panels (Do we still want this? Fairly tricky)
 
 - Chat Bubbles
 - Customizable chat bubbles.
@@ -58,6 +56,7 @@
 - Text elements
 - - Should be highly customizable SVG elements. Not standard text.
   
+Ruler on left and top of page to show pixel positions? Perhaps a toggle in the interaction menu?
 
 ### Tools
 

@@ -1,9 +1,9 @@
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, useCallback } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { FiLoader, FiFrown, FiUploadCloud } from 'react-icons/fi'
 import AppLayout from '../layouts/AppLayout'
 import useProjectStore from '../stores/useProjectStore'
-import ComicCanvas from '../components/ComicCanvas'
+import HtmlCanvas from '../components/HtmlCanvas'
 import ProjectHeader from '../components/editor/ProjectHeader'
 import PagesSidebar from '../components/editor/PagesSidebar'
 import PropertiesSidebar from '../components/editor/PropertiesSidebar'
@@ -11,7 +11,9 @@ import PropertiesSidebar from '../components/editor/PropertiesSidebar'
 export default function ProjectPage() {
   const { projectId } = useParams()
   const fileInputRef = useRef(null)
-  
+  const canvasRef = useRef(null)
+  const isUpdatingThumbnailRef = useRef(false)
+
   const { 
     currentProject,
     currentProjectLoading,
@@ -40,6 +42,26 @@ export default function ProjectPage() {
 
   const [isDraggingOver, setIsDraggingOver] = useState(false)
 
+  // Generate and save thumbnail for the current page
+  const updateCurrentPageThumbnail = useCallback(async () => {
+    if (!canvasRef.current || !currentProject || isUpdatingThumbnailRef.current) return
+
+    isUpdatingThumbnailRef.current = true
+    const thumbnail = await canvasRef.current.generateThumbnail()
+    if (thumbnail) {
+      const pages = [...currentProject.pages]
+      pages[activePageIndex] = {
+        ...pages[activePageIndex],
+        thumbnail
+      }
+      updateCurrentProjectLocal({ pages })
+    }
+    // Reset after a short delay to allow the state to settle
+    setTimeout(() => {
+      isUpdatingThumbnailRef.current = false
+    }, 500)
+  }, [currentProject, activePageIndex, updateCurrentProjectLocal])
+
   // Load project on mount
   useEffect(() => {
     loadProject(projectId)
@@ -57,6 +79,24 @@ export default function ProjectPage() {
     window.addEventListener('beforeunload', handleBeforeUnload)
     return () => window.removeEventListener('beforeunload', handleBeforeUnload)
   }, [hasUnsavedChanges])
+
+  // Generate thumbnail for current page after elements change
+  const currentPageElementsJson = JSON.stringify(
+    currentProject?.pages?.[activePageIndex]?.elements?.map(el => ({
+      id: el.id, x: el.x, y: el.y, width: el.width, height: el.height, rotation: el.rotation
+    })) || []
+  )
+  useEffect(() => {
+    if (!currentProject || !canvasRef.current) return
+
+    // Generate thumbnail after a delay (e.g., after user stops editing)
+    const timer = setTimeout(() => {
+      updateCurrentPageThumbnail()
+    }, 2000) // 2 second delay after last change
+
+    return () => clearTimeout(timer)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentPageElementsJson, activePageIndex])
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -269,7 +309,7 @@ export default function ProjectPage() {
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
           >
-            <ComicCanvas />
+            <HtmlCanvas ref={canvasRef} />
             
             {/* Drag & Drop Overlay */}
             {isDraggingOver && (
