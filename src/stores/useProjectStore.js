@@ -383,9 +383,12 @@ export const useProjectStore = create(
       },
 
       /**
-       * Add an image to the project assets and current page
+       * Add an image to the project assets and optionally to the current page
+       * @param {File} file - The image file to upload
+       * @param {Object} options - Options
+       * @param {boolean} options.addToCanvas - Whether to add to canvas (default: true)
        */
-      addImage: async (file) => {
+      addImage: async (file, { addToCanvas = true } = {}) => {
         const { currentProject, activePageIndex } = get()
         if (!currentProject) return
 
@@ -397,6 +400,14 @@ export const useProjectStore = create(
           const imageIds = [...(currentProject.assets?.imageIds || [])]
           if (!imageIds.includes(asset.id)) {
             imageIds.push(asset.id)
+          }
+
+          // If not adding to canvas, just update assets
+          if (!addToCanvas) {
+            await get().updateCurrentProject({
+              assets: { ...currentProject.assets, imageIds }
+            })
+            return asset
           }
 
           // 3. Calculate element size maintaining aspect ratio (max 400px on longest side)

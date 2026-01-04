@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { FiUploadCloud } from 'react-icons/fi'
 import AssetThumbnail from '../ui/AssetThumbnail'
 import { useAsset } from '../../../hooks/useAsset'
 import useProjectStore from '../../../stores/useProjectStore'
@@ -8,11 +9,63 @@ import useProjectStore from '../../../stores/useProjectStore'
  * Grid of asset thumbnails with drag-and-drop support
  */
 export default function AssetGallery({ imageIds, selectedAssetId, onSelect, onAdd }) {
+  const [isDraggingOver, setIsDraggingOver] = useState(false)
+  const { addImage } = useProjectStore()
+
+  const handleDragOver = (e) => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (e.dataTransfer.types.includes('Files')) {
+      setIsDraggingOver(true)
+    }
+  }
+
+  const handleDragLeave = (e) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDraggingOver(false)
+  }
+
+  const handleDrop = async (e) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDraggingOver(false)
+
+    const files = e.dataTransfer.files
+    if (files && files.length > 0) {
+      const imageFiles = Array.from(files).filter(file => file.type.startsWith('image/'))
+
+      for (const file of imageFiles) {
+        try {
+          // Only add to assets, not to canvas
+          await addImage(file, { addToCanvas: false })
+        } catch (error) {
+          console.error('Failed to upload image:', error)
+        }
+      }
+    }
+  }
+
   return (
-    <div className="space-y-4">
+    <div
+      className="space-y-4 relative"
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+    >
+      {/* Drop zone overlay */}
+      {isDraggingOver && (
+        <div className="absolute inset-0 z-10 bg-indigo-500/20 border-2 border-dashed border-indigo-500 rounded-lg flex items-center justify-center pointer-events-none">
+          <div className="text-center">
+            <FiUploadCloud className="w-8 h-8 text-indigo-400 mx-auto mb-2" />
+            <p className="text-sm text-indigo-300 font-medium">Drop images here</p>
+          </div>
+        </div>
+      )}
+
       <div className="grid grid-cols-2 gap-3">
         {imageIds.map(id => (
-          <AssetItem 
+          <AssetItem
             key={id}
             id={id}
             selected={selectedAssetId === id}
@@ -23,7 +76,9 @@ export default function AssetGallery({ imageIds, selectedAssetId, onSelect, onAd
       </div>
       {imageIds.length === 0 && (
         <div className="text-center py-8 px-4 border-2 border-dashed border-slate-800 rounded-xl">
-          <p className="text-sm text-slate-500">No assets uploaded yet.</p>
+          <FiUploadCloud className="w-8 h-8 text-slate-600 mx-auto mb-2" />
+          <p className="text-sm text-slate-500">Drop images here</p>
+          <p className="text-xs text-slate-600 mt-1">or drag onto the canvas</p>
         </div>
       )}
     </div>

@@ -46,6 +46,8 @@
 
 ### Canvas
 
+- What "paper" is "beneath" the black background? The drage handles and images are hidden on overflow. We should allow images to overflow the white area.
+
 - Increase drag handle size
 - 
 - Chat Bubbles

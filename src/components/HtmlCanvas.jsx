@@ -190,6 +190,15 @@ const HtmlCanvas = forwardRef(function HtmlCanvas(props, ref) {
     }
   }, [isPanningMode])
 
+  // Attach wheel listener with passive: false to allow preventDefault
+  useEffect(() => {
+    const container = containerRef.current
+    if (!container) return
+
+    container.addEventListener('wheel', handleWheel, { passive: false })
+    return () => container.removeEventListener('wheel', handleWheel)
+  }, [handleWheel])
+
   /**
    * Handle context menu (right click)
    */
@@ -300,7 +309,6 @@ const HtmlCanvas = forwardRef(function HtmlCanvas(props, ref) {
       ref={containerRef}
       className="w-full h-full relative bg-slate-950 overflow-hidden"
       style={{ cursor: isPanningMode ? (isPanning ? 'grabbing' : 'grab') : 'default' }}
-      onWheel={handleWheel}
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
@@ -326,8 +334,7 @@ const HtmlCanvas = forwardRef(function HtmlCanvas(props, ref) {
             height: pageHeight,
             backgroundColor: currentPage?.backgroundColor || projectSettings.backgroundColor || '#ffffff',
             position: 'relative',
-            boxShadow: '5px 5px 20px rgba(0,0,0,0.5)',
-            overflow: 'hidden'
+            boxShadow: '5px 5px 20px rgba(0,0,0,0.5)'
           }}
           onClick={(e) => {
             if (e.target === pageRef.current) {
