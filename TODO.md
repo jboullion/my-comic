@@ -1,12 +1,20 @@
 ## Current TODOs
 
 - Clean up the properties panel
+- - Create collapsable sections similar to blender / unity?
 
 ## Bugs
 
 - Debounce saving
 - Ratio lock on page size
 - HTMLSpeechBubble drag and rotate should look and work very similarly to kanva
+- - Cloud SVG is overflowing container.
+- Fix the projects page. Broken layout.
+- - Could probably just do a general refactor.
+- - Setup project settings page. Including Thumbnail / cover
+
+
+
 
 ## Ideas and Brainstorming
 

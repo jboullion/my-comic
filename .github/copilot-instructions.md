@@ -107,15 +107,14 @@ PWA manifest configured in [vite.config.js](vite.config.js) with `registerType: 
 
 ## Planned Features (Roadmap Priority)
 
-**Canvas Implementation (Phase 5 - In Progress):**
+**Canvas Implementation (Phase 6 - In Progress):**
 - ✅ Konva.js canvas with zoom, pan, undo/redo
 - ✅ Image elements with rotation, opacity, borders, corner shapes
 - ✅ Panel elements with custom corner geometries (bevel, notch, scoop, squircle)
 - ✅ Asset gallery with IndexedDB storage and drag-and-drop
 - ✅ Z-order management via right-click context menu
 - ✅ Drag-and-drop layer reordering in layers panel
-- 🔄 Panel clipping (images contained within panel boundaries)
-- 🔄 Speech bubbles with editable text
+- ✅ Speech bubbles with editable text
 
 When implementing new features, refer to the [tech spec](docs/Comic_Book_Maker_Tech_Spec.md).
 
