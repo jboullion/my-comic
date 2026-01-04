@@ -239,6 +239,11 @@ const HtmlCanvas = forwardRef(function HtmlCanvas(props, ref) {
     generateThumbnail: async () => {
       if (!pageRef.current) return null
 
+      // Hide selection handles via CSS class (no state change = no flash)
+      pageRef.current.classList.add('capturing')
+      // Wait for browser to apply the style
+      await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))
+
       try {
         const dataUrl = await toPng(pageRef.current, {
           width: pageWidth,
@@ -255,13 +260,19 @@ const HtmlCanvas = forwardRef(function HtmlCanvas(props, ref) {
       } catch (error) {
         console.error('Failed to generate thumbnail:', error)
         return null
+      } finally {
+        pageRef.current?.classList.remove('capturing')
       }
     },
     captureFullPage: async () => {
       if (!pageRef.current) return null
 
+      // Hide selection handles via CSS class (no state change = no flash)
+      pageRef.current.classList.add('capturing')
+      await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))
+
       try {
-        return await toPng(pageRef.current, {
+        const result = await toPng(pageRef.current, {
           width: pageWidth,
           height: pageHeight,
           pixelRatio: 2,
@@ -270,9 +281,13 @@ const HtmlCanvas = forwardRef(function HtmlCanvas(props, ref) {
             transformOrigin: 'top left'
           }
         })
+
+        return result
       } catch (error) {
         console.error('Failed to capture full page:', error)
         return null
+      } finally {
+        pageRef.current?.classList.remove('capturing')
       }
     },
     getPageRef: () => pageRef.current

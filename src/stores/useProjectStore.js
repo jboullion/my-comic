@@ -1,6 +1,5 @@
 import { create } from 'zustand'
 import { temporal } from 'zundo'
-import { debounce } from 'lodash-es'
 import { projectsDb, createBlankPage } from '../lib/db'
 import { imageAssets } from '../lib/images'
 
@@ -135,6 +134,7 @@ export const useProjectStore = create(
 
       /**
        * Update current project in memory only (for frequent updates like canvas changes)
+       * Does NOT auto-save - ProjectPage handles debounced save with thumbnail generation
        */
       updateCurrentProjectLocal: (updates) => {
         const { currentProject } = get()
@@ -144,30 +144,7 @@ export const useProjectStore = create(
           currentProject: { ...currentProject, ...updates },
           hasUnsavedChanges: true,
         })
-
-        // Debounced save to IndexedDB
-        get().debouncedSave()
       },
-
-      /**
-       * Debounced save to IndexedDB
-       */
-      debouncedSave: debounce(async () => {
-        const { currentProject, hasUnsavedChanges } = get()
-        if (!currentProject || !hasUnsavedChanges) return
-
-        try {
-          await projectsDb.update(currentProject.id, {
-            title: currentProject.title,
-            settings: currentProject.settings,
-            pages: currentProject.pages,
-            assets: currentProject.assets,
-          })
-          set({ hasUnsavedChanges: false })
-        } catch (error) {
-          console.error('Auto-save failed:', error)
-        }
-      }, 1000),
 
       /**
        * Save current project to IndexedDB immediately

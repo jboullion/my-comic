@@ -119,3 +119,8 @@ a:focus-visible {
     transform: rotate(45deg);
   }
 }
+
+/* Hide selection UI during thumbnail/export capture */
+.capturing .selection-ui {
+  display: none !important;
+}

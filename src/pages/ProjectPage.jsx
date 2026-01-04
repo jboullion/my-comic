@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, useCallback } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { FiLoader, FiFrown, FiUploadCloud } from 'react-icons/fi'
 import AppLayout from '../layouts/AppLayout'
@@ -12,7 +12,8 @@ export default function ProjectPage() {
   const { projectId } = useParams()
   const fileInputRef = useRef(null)
   const canvasRef = useRef(null)
-  const isUpdatingThumbnailRef = useRef(false)
+  const autoSaveTimerRef = useRef(null)
+  const isSavingRef = useRef(false)
 
   const { 
     currentProject,
@@ -42,26 +43,6 @@ export default function ProjectPage() {
 
   const [isDraggingOver, setIsDraggingOver] = useState(false)
 
-  // Generate and save thumbnail for the current page
-  const updateCurrentPageThumbnail = useCallback(async () => {
-    if (!canvasRef.current || !currentProject || isUpdatingThumbnailRef.current) return
-
-    isUpdatingThumbnailRef.current = true
-    const thumbnail = await canvasRef.current.generateThumbnail()
-    if (thumbnail) {
-      const pages = [...currentProject.pages]
-      pages[activePageIndex] = {
-        ...pages[activePageIndex],
-        thumbnail
-      }
-      updateCurrentProjectLocal({ pages })
-    }
-    // Reset after a short delay to allow the state to settle
-    setTimeout(() => {
-      isUpdatingThumbnailRef.current = false
-    }, 500)
-  }, [currentProject, activePageIndex, updateCurrentProjectLocal])
-
   // Load project on mount
   useEffect(() => {
     loadProject(projectId)
@@ -80,23 +61,57 @@ export default function ProjectPage() {
     return () => window.removeEventListener('beforeunload', handleBeforeUnload)
   }, [hasUnsavedChanges])
 
-  // Generate thumbnail for current page after elements change
-  const currentPageElementsJson = JSON.stringify(
-    currentProject?.pages?.[activePageIndex]?.elements?.map(el => ({
-      id: el.id, x: el.x, y: el.y, width: el.width, height: el.height, rotation: el.rotation
-    })) || []
-  )
+  // Combined auto-save + thumbnail generation (debounced 3 seconds)
   useEffect(() => {
-    if (!currentProject || !canvasRef.current) return
+    // Skip if no unsaved changes or currently saving
+    if (!hasUnsavedChanges || isSavingRef.current) return
 
-    // Generate thumbnail after a delay (e.g., after user stops editing)
-    const timer = setTimeout(() => {
-      updateCurrentPageThumbnail()
-    }, 2000) // 2 second delay after last change
+    // Clear any existing timer
+    if (autoSaveTimerRef.current) {
+      clearTimeout(autoSaveTimerRef.current)
+    }
 
-    return () => clearTimeout(timer)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentPageElementsJson, activePageIndex])
+    // Set a new timer - generate thumbnail and save after 3 seconds of inactivity
+    autoSaveTimerRef.current = setTimeout(async () => {
+      if (isSavingRef.current) return
+      isSavingRef.current = true
+
+      try {
+        const state = useProjectStore.getState()
+        const project = state.currentProject
+        if (!project) return
+
+        const pageIndex = state.activePageIndex
+
+        // Generate thumbnail if canvas is available
+        let updatedPages = project.pages
+        if (canvasRef.current) {
+          const thumbnail = await canvasRef.current.generateThumbnail()
+          if (thumbnail) {
+            updatedPages = [...project.pages]
+            updatedPages[pageIndex] = {
+              ...updatedPages[pageIndex],
+              thumbnail
+            }
+          }
+        }
+
+        // Update state with thumbnail and save
+        useProjectStore.setState({
+          currentProject: { ...project, pages: updatedPages }
+        })
+        await state.saveCurrentProject()
+      } finally {
+        isSavingRef.current = false
+      }
+    }, 2000)
+
+    return () => {
+      if (autoSaveTimerRef.current) {
+        clearTimeout(autoSaveTimerRef.current)
+      }
+    }
+  }, [hasUnsavedChanges, currentProject])
 
   // Keyboard shortcuts
   useEffect(() => {

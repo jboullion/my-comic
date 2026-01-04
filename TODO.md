@@ -13,6 +13,8 @@
 ## Bugs
 
 - Debounce saving
+- Resizing from corners should preserve aspect ratio.
+- Images being dragged onto work area are square. Should retain aspect ratio / size.
 - App header should expand full screen. No container.
 - Ratio lock on page size
 - Remove the image icon from the floating menu.

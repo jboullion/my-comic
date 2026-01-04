@@ -360,7 +360,7 @@ export default function HtmlImageElement({ element, onSelect, onChange, onContex
       )}
 
       {/* Selection border */}
-      {isSelected && <div style={selectionBorderStyle} />}
+      {isSelected && <div className="selection-ui" style={selectionBorderStyle} />}
 
       {/* Image */}
       {imageUrl ? (
@@ -388,7 +388,7 @@ export default function HtmlImageElement({ element, onSelect, onChange, onContex
 
       {/* Interaction Handles - only show when selected */}
       {isSelected && (
-        <>
+        <div className="selection-ui">
           {/* Rotate handle */}
           <div style={rotateLineStyle} />
           <div
@@ -410,7 +410,7 @@ export default function HtmlImageElement({ element, onSelect, onChange, onContex
               onMouseDown={(e) => handleResizeStart(e, handle.id)}
             />
           ))}
-        </>
+        </div>
       )}
     </div>
   )
