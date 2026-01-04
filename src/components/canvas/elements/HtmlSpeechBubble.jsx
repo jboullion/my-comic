@@ -127,34 +127,49 @@ export default function HtmlSpeechBubble({ element, onSelect, onChange, isSelect
 
       let newWidth = startWidth
       let newHeight = startHeight
-      let offsetX = 0
-      let offsetY = 0
+      // Offset in local (rotated) coordinates - how much to move the center
+      let localOffsetX = 0
+      let localOffsetY = 0
 
       // Apply resize based on handle
+      // East handle: grow right, center moves right by half the growth
       if (resizeHandle.includes('e')) {
-        newWidth = Math.max(50, startWidth + localDx)
+        const widthDelta = localDx
+        newWidth = Math.max(50, startWidth + widthDelta)
+        const actualDelta = newWidth - startWidth
+        localOffsetX += actualDelta / 2
       }
+      // West handle: grow left, center moves left by half the growth
       if (resizeHandle.includes('w')) {
-        newWidth = Math.max(50, startWidth - localDx)
-        offsetX = (startWidth - newWidth) / 2
+        const widthDelta = -localDx
+        newWidth = Math.max(50, startWidth + widthDelta)
+        const actualDelta = newWidth - startWidth
+        localOffsetX -= actualDelta / 2
       }
+      // South handle: grow down, center moves down by half the growth
       if (resizeHandle.includes('s')) {
-        newHeight = Math.max(30, startHeight + localDy)
+        const heightDelta = localDy
+        newHeight = Math.max(30, startHeight + heightDelta)
+        const actualDelta = newHeight - startHeight
+        localOffsetY += actualDelta / 2
       }
+      // North handle: grow up, center moves up by half the growth
       if (resizeHandle.includes('n')) {
-        newHeight = Math.max(30, startHeight - localDy)
-        offsetY = (startHeight - newHeight) / 2
+        const heightDelta = -localDy
+        newHeight = Math.max(30, startHeight + heightDelta)
+        const actualDelta = newHeight - startHeight
+        localOffsetY -= actualDelta / 2
       }
 
-      // Calculate position offset in world coordinates
-      const worldOffsetX = offsetX * Math.cos(rotation) - offsetY * Math.sin(rotation)
-      const worldOffsetY = offsetX * Math.sin(rotation) + offsetY * Math.cos(rotation)
+      // Transform local offset back to world coordinates
+      const worldOffsetX = localOffsetX * Math.cos(rotation) - localOffsetY * Math.sin(rotation)
+      const worldOffsetY = localOffsetX * Math.sin(rotation) + localOffsetY * Math.cos(rotation)
 
       return {
         width: newWidth,
         height: newHeight,
-        x: startElemX - worldOffsetX,
-        y: startElemY - worldOffsetY,
+        x: startElemX + worldOffsetX,
+        y: startElemY + worldOffsetY,
       }
     } else if (interactionMode === 'rotate') {
       // Calculate angle from center to mouse

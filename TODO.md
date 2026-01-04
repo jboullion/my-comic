@@ -6,6 +6,7 @@
 
 - Debounce saving
 - Ratio lock on page size
+- HTMLSpeechBubble drag and rotate should look and work very similarly to kanva
 
 ## Ideas and Brainstorming
 
