@@ -359,6 +359,13 @@ export default function ComicCanvas() {
                 isSelected={selectedElementIds.includes(element.id)}
                 onSelect={() => setSelectedElementIds([element.id])}
                 onChange={(updates) => updateElement(element.id, updates)}
+                onContextMenu={(e) => {
+                  setContextMenu({
+                    visible: true,
+                    x: e.clientX,
+                    y: e.clientY
+                  })
+                }}
                 zoom={zoom}
               />
             ))}

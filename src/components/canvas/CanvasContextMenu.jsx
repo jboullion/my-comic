@@ -69,8 +69,8 @@ export default function CanvasContextMenu({
  */
 function ContextMenuItem({ label, onClick, className = '' }) {
   return (
-    <button 
-      className={`w-full text-left px-3 py-1.5 text-xs font-medium text-slate-300 hover:bg-indigo-600 hover:text-white active:bg-indigo-700 active:scale-95 transition-all duration-150 ${className}`}
+    <button
+      className={`w-full text-left px-3 py-1.5 text-xs font-medium text-slate-300 hover:bg-slate-700 hover:text-white transition-colors ${className}`}
       onClick={onClick}
     >
       {label}

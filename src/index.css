@@ -77,3 +77,45 @@ a:focus-visible {
     background-color: #3f3f3f; /* slate-600 (new gray) */
   }
 }
+
+/* Custom Checkbox Styles */
+@layer base {
+  input[type="checkbox"] {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 1rem;
+    height: 1rem;
+    background-color: #121212; /* slate-900 */
+    border: 1.5px solid #3f3f3f; /* slate-600 */
+    border-radius: 4px;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.15s ease;
+  }
+
+  input[type="checkbox"]:hover {
+    border-color: #525252; /* slate-500 */
+  }
+
+  input[type="checkbox"]:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(76, 105, 246, 0.3); /* indigo-500 with opacity */
+  }
+
+  input[type="checkbox"]:checked {
+    background-color: #4c69f6; /* indigo-500 */
+    border-color: #4c69f6;
+  }
+
+  input[type="checkbox"]:checked::after {
+    content: '';
+    position: absolute;
+    left: 4px;
+    top: 1px;
+    width: 5px;
+    height: 9px;
+    border: solid white;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+  }
+}

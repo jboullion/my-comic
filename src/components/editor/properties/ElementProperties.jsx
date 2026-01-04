@@ -1,346 +1,102 @@
 import { FiTrash2 } from 'react-icons/fi'
-import PropertyInput from '../ui/PropertyInput'
 import useProjectStore from '../../../stores/useProjectStore'
+import CollapsibleSection from './sections/CollapsibleSection'
+import SizeSection from './sections/SizeSection'
+import BorderShapeSection from './sections/BorderShapeSection'
+import BubbleStyleSection from './sections/BubbleStyleSection'
+import TextSection from './sections/TextSection'
+import TransformSection from './sections/TransformSection'
 
 /**
  * ElementProperties Component
- * Properties panel for selected element
+ * Properties panel for selected element - orchestrates section components
  */
 export default function ElementProperties({ element }) {
   const { updateElement } = useProjectStore()
 
+  const handleUpdate = (updates) => {
+    updateElement(element.id, updates)
+  }
+
+  // Map element type to display name
+  const getDisplayName = (type) => {
+    const names = {
+      image: 'Image',
+      speechBubble: 'Speech Bubble',
+      text: 'Text'
+    }
+    return names[type] || type.charAt(0).toUpperCase() + type.slice(1)
+  }
+
   return (
     <div className="space-y-4">
+      {/* Header with element type and delete button */}
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold text-white">
-          {element.type.charAt(0).toUpperCase() + element.type.slice(1)}
+          {getDisplayName(element.type)}
         </h3>
-        <button 
+        <button
           onClick={() => useProjectStore.getState().deleteSelectedElements()}
           className="text-slate-500 hover:text-red-400 transition-colors"
           title="Delete element"
+          type="button"
         >
           <FiTrash2 className="w-4 h-4" />
         </button>
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
-        <PropertyInput 
-          label="X" 
-          value={Math.round(element.x)} 
-          onChange={(val) => updateElement(element.id, { x: val })}
-        />
-        <PropertyInput 
-          label="Y" 
-          value={Math.round(element.y)} 
-          onChange={(val) => updateElement(element.id, { y: val })}
-        />
-        <PropertyInput 
-          label="Width" 
-          value={Math.round(element.width)} 
-          onChange={(val) => updateElement(element.id, { width: val })}
-        />
-        <PropertyInput 
-          label="Height" 
-          value={Math.round(element.height)} 
-          onChange={(val) => updateElement(element.id, { height: val })}
-        />
-      </div>
-
-      {/* Cropping Controls for Images */}
+      {/* Image-specific sections */}
       {element.type === 'image' && (
-        <div className="space-y-4 pt-4 border-t border-slate-800">
-          <h4 className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Image Crop</h4>
-          
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <label className="text-[10px] text-slate-500 uppercase font-bold">Crop X</label>
-              <input 
-                type="range" 
-                min="0" 
-                max="1" 
-                step="0.01" 
-                value={element.cropX || 0}
-                onChange={(e) => updateElement(element.id, { cropX: parseFloat(e.target.value) })}
-                className="w-full accent-indigo-500"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <label className="text-[10px] text-slate-500 uppercase font-bold">Crop Y</label>
-              <input 
-                type="range" 
-                min="0" 
-                max="1" 
-                step="0.01" 
-                value={element.cropY || 0}
-                onChange={(e) => updateElement(element.id, { cropY: parseFloat(e.target.value) })}
-                className="w-full accent-indigo-500"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <label className="text-[10px] text-slate-500 uppercase font-bold">Crop Width</label>
-              <input 
-                type="range" 
-                min="0.1" 
-                max="1" 
-                step="0.01" 
-                value={element.cropWidth || 1}
-                onChange={(e) => updateElement(element.id, { cropWidth: parseFloat(e.target.value) })}
-                className="w-full accent-indigo-500"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <label className="text-[10px] text-slate-500 uppercase font-bold">Crop Height</label>
-              <input 
-                type="range" 
-                min="0.1" 
-                max="1" 
-                step="0.01" 
-                value={element.cropHeight || 1}
-                onChange={(e) => updateElement(element.id, { cropHeight: parseFloat(e.target.value) })}
-                className="w-full accent-indigo-500"
-              />
-            </div>
-          </div>
-          
-          <button 
-            onClick={() => updateElement(element.id, { cropX: 0, cropY: 0, cropWidth: 1, cropHeight: 1 })}
-            className="w-full py-1.5 text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 rounded transition-colors"
+        <>
+          <CollapsibleSection
+            title="Image Size"
+            storageKey="image-size"
           >
-            Reset Crop
-          </button>
-        </div>
+            <SizeSection element={element} onUpdate={handleUpdate} />
+          </CollapsibleSection>
+
+          <CollapsibleSection
+            title="Border Shape"
+            storageKey="image-border"
+          >
+            <BorderShapeSection element={element} onUpdate={handleUpdate} />
+          </CollapsibleSection>
+        </>
       )}
 
-      {/* Speech Bubble Controls */}
+      {/* Speech Bubble-specific sections */}
       {element.type === 'speechBubble' && (
-        <div className="space-y-4 pt-4 border-t border-slate-800">
-          <h4 className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Speech Bubble</h4>
-          
-          <div className="space-y-1.5">
-            <label className="text-[10px] text-slate-500 uppercase font-bold">Style</label>
-            <select 
-              className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all"
-              value={element.bubbleStyle || 'round'}
-              onChange={(e) => updateElement(element.id, { bubbleStyle: e.target.value })}
-            >
-              <option value="round">Round</option>
-              <option value="cloud">Cloud</option>
-            </select>
-          </div>
+        <>
+          <CollapsibleSection
+            title="Size"
+            storageKey="bubble-size"
+          >
+            <SizeSection element={element} onUpdate={handleUpdate} />
+          </CollapsibleSection>
 
-          {element.bubbleStyle === 'round' && (
-            <div className="space-y-1.5">
-              <label className="text-[10px] text-slate-500 uppercase font-bold">Corner Radius</label>
-              <div className="flex items-center gap-2">
-                <input 
-                  type="range" 
-                  min="0" 
-                  max="50" 
-                  value={element.cornerRadius || 20}
-                  onChange={(e) => updateElement(element.id, { cornerRadius: parseInt(e.target.value) })}
-                  className="flex-1 accent-indigo-500"
-                />
-                <span className="text-xs text-slate-400 w-8">{element.cornerRadius || 20}</span>
-              </div>
-            </div>
-          )}
+          <CollapsibleSection
+            title="Bubble Style"
+            storageKey="bubble-style"
+          >
+            <BubbleStyleSection element={element} onUpdate={handleUpdate} />
+          </CollapsibleSection>
 
-          <div className="space-y-1.5">
-            <label className="text-[10px] text-slate-500 uppercase font-bold">Fill Color</label>
-            <input 
-              type="color" 
-              value={element.fill || '#FFFFFF'}
-              onChange={(e) => updateElement(element.id, { fill: e.target.value })}
-              className="w-full h-8 bg-slate-900 border border-slate-700 rounded cursor-pointer"
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <label className="text-[10px] text-slate-500 uppercase font-bold">Stroke Color</label>
-              <input 
-                type="color" 
-                value={element.stroke || '#000000'}
-                onChange={(e) => updateElement(element.id, { stroke: e.target.value })}
-                className="w-full h-8 bg-slate-900 border border-slate-700 rounded cursor-pointer"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <label className="text-[10px] text-slate-500 uppercase font-bold">Stroke Width</label>
-              <input 
-                type="number" 
-                min="0"
-                value={element.strokeWidth || 2}
-                onChange={(e) => updateElement(element.id, { strokeWidth: parseInt(e.target.value) || 0 })}
-                className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all"
-              />
-            </div>
-          </div>
-
-          <div className="space-y-1.5">
-            <label className="text-[10px] text-slate-500 uppercase font-bold">Text</label>
-            <textarea 
-              value={element.text || ''}
-              onChange={(e) => updateElement(element.id, { text: e.target.value })}
-              className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all resize-none"
-              rows={3}
-              placeholder="Enter dialog text..."
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <label className="text-[10px] text-slate-500 uppercase font-bold">Font Size</label>
-              <input 
-                type="number" 
-                min="8"
-                max="72"
-                value={element.fontSize || 16}
-                onChange={(e) => updateElement(element.id, { fontSize: parseInt(e.target.value) || 16 })}
-                className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <label className="text-[10px] text-slate-500 uppercase font-bold">Text Color</label>
-              <input 
-                type="color" 
-                value={element.textColor || '#000000'}
-                onChange={(e) => updateElement(element.id, { textColor: e.target.value })}
-                className="w-full h-8 bg-slate-900 border border-slate-700 rounded cursor-pointer"
-              />
-            </div>
-          </div>
-
-          <div className="space-y-1.5">
-            <label className="text-[10px] text-slate-500 uppercase font-bold">Text Alignment</label>
-            <select 
-              className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all"
-              value={element.textAlign || 'center'}
-              onChange={(e) => updateElement(element.id, { textAlign: e.target.value })}
-            >
-              <option value="left">Left</option>
-              <option value="center">Center</option>
-              <option value="right">Right</option>
-            </select>
-          </div>
-        </div>
+          <CollapsibleSection
+            title="Text"
+            storageKey="bubble-text"
+          >
+            <TextSection element={element} onUpdate={handleUpdate} />
+          </CollapsibleSection>
+        </>
       )}
 
-      <div className="space-y-2">
-        <label className="text-[10px] text-slate-500 uppercase font-bold">Opacity</label>
-        <input 
-          type="range" 
-          min="0" 
-          max="1" 
-          step="0.01" 
-          value={element.opacity ?? 1}
-          onChange={(e) => updateElement(element.id, { opacity: parseFloat(e.target.value) })}
-          className="w-full accent-indigo-500"
-        />
-      </div>
-
-      <div className="space-y-2">
-        <label className="text-[10px] text-slate-500 uppercase font-bold">Rotation</label>
-        <div className="flex items-center gap-2">
-          <input 
-            type="range" 
-            min="0" 
-            max="360" 
-            value={element.rotation || 0}
-            onChange={(e) => updateElement(element.id, { rotation: parseInt(e.target.value) })}
-            className="flex-1 accent-indigo-500"
-          />
-          <span className="text-xs text-slate-400 w-8">{Math.round(element.rotation || 0)}°</span>
-        </div>
-      </div>
-
-      {element.type === 'image' && (
-      <div className="space-y-4 pt-4 border-t border-slate-800">
-        <h4 className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Border Shape</h4>
-        
-        <div className="grid grid-cols-2 gap-3">
-          <div className="space-y-1.5">
-            <label className="text-[10px] text-slate-500 uppercase font-bold">Color</label>
-            <input 
-              type="color" 
-              value={element.stroke || '#000000'}
-              onChange={(e) => updateElement(element.id, { stroke: e.target.value })}
-              className="w-full h-8 bg-slate-900 border border-slate-700 rounded cursor-pointer"
-            />
-          </div>
-          <div className="space-y-1.5">
-            <label className="text-[10px] text-slate-500 uppercase font-bold">Width</label>
-            <input 
-              type="number" 
-              min="0"
-              value={element.strokeWidth || 0}
-              onChange={(e) => updateElement(element.id, { strokeWidth: parseInt(e.target.value) || 0 })}
-              className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all"
-            />
-          </div>
-        </div>
-
-        <div className="space-y-1.5">
-          <label className="text-[10px] text-slate-500 uppercase font-bold">Corner Radius</label>
-          <div className="flex items-center gap-2">
-            <input 
-              type="range" 
-              min="0" 
-              max={Math.min(element.width, element.height) / 2} 
-              value={element.cornerRadius || 0}
-              onChange={(e) => updateElement(element.id, { cornerRadius: parseInt(e.target.value) })}
-              className="flex-1 accent-indigo-500"
-            />
-            <span className="text-xs text-slate-400 w-8">{element.cornerRadius || 0}</span>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-3">
-          <div className="space-y-1.5">
-            <label className="text-[10px] text-slate-500 uppercase font-bold">Corner Style</label>
-            <select 
-              className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all"
-              value={
-                element.cornerRadius === 0 ? 'square' :
-                element.cornerRadius === 8 ? 'rounded' :
-                element.cornerRadius === 24 ? 'extra-rounded' :
-                element.cornerRadius >= Math.min(element.width, element.height) / 2 ? 'pill' : 'custom'
-              }
-              onChange={(e) => {
-                const val = e.target.value
-                const maxRadius = Math.min(element.width, element.height) / 2
-                if (val === 'square') updateElement(element.id, { cornerRadius: 0 })
-                if (val === 'rounded') updateElement(element.id, { cornerRadius: 8 })
-                if (val === 'extra-rounded') updateElement(element.id, { cornerRadius: 24 })
-                if (val === 'pill') updateElement(element.id, { cornerRadius: maxRadius })
-              }}
-            >
-              <option value="custom">Custom</option>
-              <option value="square">Square</option>
-              <option value="rounded">Rounded</option>
-              <option value="extra-rounded">Extra Rounded</option>
-              <option value="pill">Pill / Circle</option>
-            </select>
-          </div>
-
-          <div className="space-y-1.5">
-            <label className="text-[10px] text-slate-500 uppercase font-bold">Corner Shape</label>
-            <select 
-              className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all"
-              value={element.cornerShape || 'round'}
-              onChange={(e) => updateElement(element.id, { cornerShape: e.target.value })}
-            >
-              <option value="round">Round</option>
-              <option value="bevel">Bevel</option>
-              <option value="notch">Notch</option>
-              <option value="scoop">Scoop</option>
-              <option value="squircle">Squircle</option>
-            </select>
-          </div>
-        </div>
-      </div>
-      )}
+      {/* Transform section - shared across all element types */}
+      <CollapsibleSection
+        title="Transform"
+        storageKey={`${element.type}-transform`}
+      >
+        <TransformSection element={element} onUpdate={handleUpdate} />
+      </CollapsibleSection>
     </div>
   )
 }

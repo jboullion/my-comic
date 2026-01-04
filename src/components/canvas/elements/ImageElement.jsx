@@ -1,7 +1,8 @@
-import React, { useRef, useEffect } from 'react'
+import React, { useRef, useEffect, useCallback } from 'react'
 import { Shape } from 'react-konva'
 import { useImage } from '../../../hooks/useImage'
 import { drawCornerShapePath } from '../../../lib/canvasShapes'
+import useProjectStore from '../../../stores/useProjectStore'
 
 /**
  * Image Element Component
@@ -10,6 +11,13 @@ import { drawCornerShapePath } from '../../../lib/canvasShapes'
 const ImageElement = React.memo(({ element, onSelect, onChange }) => {
   const image = useImage(element.assetId)
   const imageRef = useRef(null)
+  const { snapToGrid, snapGridSize } = useProjectStore()
+
+  // Snap value to grid if snapping is enabled
+  const snapValue = useCallback((value) => {
+    if (!snapToGrid) return value
+    return Math.round(value / snapGridSize) * snapGridSize
+  }, [snapToGrid, snapGridSize])
 
   // Set initial size based on image dimensions if not set
   useEffect(() => {
@@ -41,6 +49,13 @@ const ImageElement = React.memo(({ element, onSelect, onChange }) => {
       scaleY={element.scaleY}
       opacity={element.opacity}
       draggable
+      dragBoundFunc={(pos) => {
+        if (!snapToGrid) return pos
+        return {
+          x: Math.round(pos.x / snapGridSize) * snapGridSize,
+          y: Math.round(pos.y / snapGridSize) * snapGridSize,
+        }
+      }}
       onClick={onSelect}
       onTap={onSelect}
       sceneFunc={(ctx, shape) => {
@@ -49,13 +64,13 @@ const ImageElement = React.memo(({ element, onSelect, onChange }) => {
         ctx.save()
         ctx.clip()
         if (image) {
-          // Use normalized crop coordinates (0-1)
-          const cx = (element.cropX || 0) * image.width
-          const cy = (element.cropY || 0) * image.height
-          const cw = (element.cropWidth || 1) * image.width
-          const ch = (element.cropHeight || 1) * image.height
-          
-          ctx.drawImage(image, cx, cy, cw, ch, 0, 0, element.width, element.height)
+          // Use normalized crop coordinates (-1 to 1) as offset
+          // Positive cropX shifts image left (shows more of right side)
+          // Positive cropY shifts image up (shows more of bottom)
+          const offsetX = (element.cropX || 0) * element.width
+          const offsetY = (element.cropY || 0) * element.height
+
+          ctx.drawImage(image, -offsetX, -offsetY, element.width, element.height)
         }
         ctx.restore()
         ctx.strokeShape(shape)
@@ -66,8 +81,8 @@ const ImageElement = React.memo(({ element, onSelect, onChange }) => {
       }}
       onDragEnd={(e) => {
         onChange({
-          x: e.target.x(),
-          y: e.target.y(),
+          x: snapValue(e.target.x()),
+          y: snapValue(e.target.y()),
         })
       }}
       onTransformEnd={() => {
@@ -83,8 +98,8 @@ const ImageElement = React.memo(({ element, onSelect, onChange }) => {
         const newHeight = Math.max(5, node.height() * scaleY)
 
         onChange({
-          x: node.x(),
-          y: node.y(),
+          x: snapValue(node.x()),
+          y: snapValue(node.y()),
           width: newWidth,
           height: newHeight,
           rotation: node.rotation(),

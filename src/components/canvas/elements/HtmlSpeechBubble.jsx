@@ -1,4 +1,5 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react'
+import useProjectStore from '../../../stores/useProjectStore'
 
 /**
  * HTML Speech Bubble Component
@@ -8,7 +9,14 @@ import React, { useRef, useEffect, useState, useCallback } from 'react'
  * 2. SVG element - renders the bubble shape (100% of wrapper size)
  * 3. Text div - contenteditable for inline text editing
  */
-export default function HtmlSpeechBubble({ element, onSelect, onChange, isSelected, zoom = 1 }) {
+export default function HtmlSpeechBubble({ element, onSelect, onChange, onContextMenu, isSelected, zoom = 1 }) {
+  const { snapToGrid, snapGridSize } = useProjectStore()
+
+  // Snap value to grid if snapping is enabled
+  const snapValue = useCallback((value) => {
+    if (!snapToGrid) return value
+    return Math.round(value / snapGridSize) * snapGridSize
+  }, [snapToGrid, snapGridSize])
   const wrapperRef = useRef(null)
   const textRef = useRef(null)
 
@@ -110,8 +118,8 @@ export default function HtmlSpeechBubble({ element, onSelect, onChange, isSelect
       const dy = (e.clientY - startY) / zoom
 
       return {
-        x: startElemX + dx,
-        y: startElemY + dy,
+        x: snapValue(startElemX + dx),
+        y: snapValue(startElemY + dy),
       }
     } else if (interactionMode === 'resize') {
       // Calculate mouse delta in rotated coordinate space
@@ -188,7 +196,7 @@ export default function HtmlSpeechBubble({ element, onSelect, onChange, isSelect
     }
 
     return null
-  }, [interactionMode, zoom])
+  }, [interactionMode, zoom, snapValue])
 
   // Handle mouse move - update local state only for smooth visuals
   const handleMouseMove = useCallback((e) => {
@@ -262,9 +270,38 @@ export default function HtmlSpeechBubble({ element, onSelect, onChange, isSelect
   const currentHeight = localTransform?.height ?? element.height
   const currentRotation = localTransform?.rotation ?? element.rotation ?? 0
 
+  /**
+   * Generate SVG path for corner shape
+   */
+  const getCornerShapePath = (width, height, radius, cornerShape, strokeWidth) => {
+    const sw = strokeWidth / 2
+    const w = width - strokeWidth
+    const h = height - strokeWidth
+    const r = Math.min(radius, w / 2, h / 2)
+
+    if (cornerShape === 'bevel') {
+      return `M ${sw + r} ${sw} L ${sw + w - r} ${sw} L ${sw + w} ${sw + r} L ${sw + w} ${sw + h - r} L ${sw + w - r} ${sw + h} L ${sw + r} ${sw + h} L ${sw} ${sw + h - r} L ${sw} ${sw + r} Z`
+    } else if (cornerShape === 'notch') {
+      return `M ${sw + r} ${sw} L ${sw + w - r} ${sw} L ${sw + w - r} ${sw + r} L ${sw + w} ${sw + r} L ${sw + w} ${sw + h - r} L ${sw + w - r} ${sw + h - r} L ${sw + w - r} ${sw + h} L ${sw + r} ${sw + h} L ${sw + r} ${sw + h - r} L ${sw} ${sw + h - r} L ${sw} ${sw + r} L ${sw + r} ${sw + r} Z`
+    } else if (cornerShape === 'scoop') {
+      // Scoop uses arcs that curve inward
+      return `M ${sw + r} ${sw} L ${sw + w - r} ${sw} A ${r} ${r} 0 0 0 ${sw + w} ${sw + r} L ${sw + w} ${sw + h - r} A ${r} ${r} 0 0 0 ${sw + w - r} ${sw + h} L ${sw + r} ${sw + h} A ${r} ${r} 0 0 0 ${sw} ${sw + h - r} L ${sw} ${sw + r} A ${r} ${r} 0 0 0 ${sw + r} ${sw} Z`
+    } else if (cornerShape === 'squircle') {
+      // Squircle uses bezier curves for smoother corners
+      const cp = r * 0.8
+      return `M ${sw + r} ${sw} L ${sw + w - r} ${sw} C ${sw + w - (r - cp)} ${sw} ${sw + w} ${sw + r - cp} ${sw + w} ${sw + r} L ${sw + w} ${sw + h - r} C ${sw + w} ${sw + h - (r - cp)} ${sw + w - (r - cp)} ${sw + h} ${sw + w - r} ${sw + h} L ${sw + r} ${sw + h} C ${sw + r - cp} ${sw + h} ${sw} ${sw + h - (r - cp)} ${sw} ${sw + h - r} L ${sw} ${sw + r} C ${sw} ${sw + r - cp} ${sw + r - cp} ${sw} ${sw + r} ${sw} Z`
+    } else {
+      // Round (default) - standard rounded rectangle using arcs
+      if (r <= 0) {
+        return `M ${sw} ${sw} L ${sw + w} ${sw} L ${sw + w} ${sw + h} L ${sw} ${sw + h} Z`
+      }
+      return `M ${sw + r} ${sw} L ${sw + w - r} ${sw} A ${r} ${r} 0 0 1 ${sw + w} ${sw + r} L ${sw + w} ${sw + h - r} A ${r} ${r} 0 0 1 ${sw + w - r} ${sw + h} L ${sw + r} ${sw + h} A ${r} ${r} 0 0 1 ${sw} ${sw + h - r} L ${sw} ${sw + r} A ${r} ${r} 0 0 1 ${sw + r} ${sw} Z`
+    }
+  }
+
   // Render SVG bubble shape
   const renderBubbleSvg = () => {
-    const { bubbleStyle, cornerRadius = 20, fill = '#FFFFFF', stroke = '#000000', strokeWidth = 2 } = element
+    const { bubbleStyle, cornerRadius = 20, cornerShape = 'round', fill = '#FFFFFF', stroke = '#000000', strokeWidth = 2 } = element
     const width = currentWidth
     const height = currentHeight
 
@@ -310,7 +347,9 @@ export default function HtmlSpeechBubble({ element, onSelect, onChange, isSelect
         </svg>
       )
     } else {
-      // Round bubble - rounded rectangle
+      // Round bubble with corner shape support
+      const shapePath = getCornerShapePath(width, height, cornerRadius, cornerShape, strokeWidth)
+
       return (
         <svg
           width="100%"
@@ -319,17 +358,7 @@ export default function HtmlSpeechBubble({ element, onSelect, onChange, isSelect
           preserveAspectRatio="none"
           style={{ position: 'absolute', top: 0, left: 0, pointerEvents: 'none' }}
         >
-          <rect
-            x={strokeWidth / 2}
-            y={strokeWidth / 2}
-            width={width - strokeWidth}
-            height={height - strokeWidth}
-            rx={cornerRadius}
-            ry={cornerRadius}
-            fill={fill}
-            stroke={stroke}
-            strokeWidth={strokeWidth}
-          />
+          <path d={shapePath} fill={fill} stroke={stroke} strokeWidth={strokeWidth} />
         </svg>
       )
     }
@@ -440,6 +469,12 @@ export default function HtmlSpeechBubble({ element, onSelect, onChange, isSelect
       style={wrapperStyle}
       onClick={handleWrapperClick}
       onMouseDown={handleDragStart}
+      onContextMenu={(e) => {
+        e.preventDefault()
+        e.stopPropagation()
+        onSelect()
+        onContextMenu?.(e)
+      }}
     >
       {/* Selection border */}
       {isSelected && <div style={selectionBorderStyle} />}

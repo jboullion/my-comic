@@ -32,6 +32,8 @@ export const useProjectStore = create(
       selectedAssetId: null,
       zoom: 1,
       tool: 'select',
+      snapToGrid: false,
+      snapGridSize: 20,
 
       // ==================
       // Project List Actions
@@ -211,6 +213,7 @@ export const useProjectStore = create(
 
       /**
        * Reorder elements (Z-index)
+       * Updates both array order (for Konva) and zIndex property (for HTML overlays)
        */
       reorderElements: (elementIds, direction) => {
         const { currentProject, activePageIndex } = get()
@@ -219,7 +222,7 @@ export const useProjectStore = create(
         const pages = [...currentProject.pages]
         const page = { ...pages[activePageIndex] }
         const elements = [...page.elements]
-        
+
         // Sort selected IDs by their current index to maintain relative order
         const sortedIds = [...elementIds].sort((a, b) => {
           return elements.findIndex(el => el.id === a) - elements.findIndex(el => el.id === b)
@@ -250,6 +253,13 @@ export const useProjectStore = create(
           }
           page.elements = elements
         }
+
+        // Update zIndex property based on new array order
+        // This ensures HTML overlays (speech bubbles) respect the same order
+        page.elements = page.elements.map((el, index) => ({
+          ...el,
+          zIndex: index + 1
+        }))
 
         pages[activePageIndex] = page
         get().updateCurrentProjectLocal({ pages })
@@ -310,6 +320,16 @@ export const useProjectStore = create(
        * Set current tool
        */
       setTool: (tool) => set({ tool }),
+
+      /**
+       * Set snap to grid
+       */
+      setSnapToGrid: (snapToGrid) => set({ snapToGrid }),
+
+      /**
+       * Set snap grid size
+       */
+      setSnapGridSize: (snapGridSize) => set({ snapGridSize }),
 
       /**
        * Set selected elements
