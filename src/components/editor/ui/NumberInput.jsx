@@ -43,7 +43,7 @@ export default function NumberInput({
           onChange={handleInputChange}
           className="flex-1 min-w-0 bg-slate-900 border border-slate-700 rounded-l px-3 py-1.5 text-sm text-center focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all"
         />
-        <div className="flex-shrink-0 flex flex-col border border-l-0 border-slate-700 rounded-r overflow-hidden">
+        <div className="shrink-0 flex flex-col border border-l-0 border-slate-700 rounded-r overflow-hidden">
           <button
             type="button"
             onClick={increment}

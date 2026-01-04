@@ -20,10 +20,9 @@ export default function TransformSection({ element, onUpdate }) {
         label="Rotation"
         value={element.rotation || 0}
         onChange={(val) => onUpdate({ rotation: val })}
-        min={0}
-        max={360}
+        min={-180}
+        max={180}
         step={1}
-        suffix=""
       />
     </>
   )
