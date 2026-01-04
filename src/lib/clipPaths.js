@@ -96,16 +96,17 @@ export function getScoopSvgPath(r, width, height) {
   }
 
   // Scoop uses arcs that curve inward (into the corners)
+  // sweep-flag=1 makes the arc curve inward (clockwise direction)
   return `
     M ${clampedR} 0
     L ${width - clampedR} 0
-    A ${clampedR} ${clampedR} 0 0 0 ${width} ${clampedR}
+    A ${clampedR} ${clampedR} 0 0 1 ${width} ${clampedR}
     L ${width} ${height - clampedR}
-    A ${clampedR} ${clampedR} 0 0 0 ${width - clampedR} ${height}
+    A ${clampedR} ${clampedR} 0 0 1 ${width - clampedR} ${height}
     L ${clampedR} ${height}
-    A ${clampedR} ${clampedR} 0 0 0 0 ${height - clampedR}
+    A ${clampedR} ${clampedR} 0 0 1 0 ${height - clampedR}
     L 0 ${clampedR}
-    A ${clampedR} ${clampedR} 0 0 0 ${clampedR} 0
+    A ${clampedR} ${clampedR} 0 0 1 ${clampedR} 0
     Z
   `.replace(/\s+/g, ' ').trim()
 }

@@ -23,11 +23,11 @@ export default function BubbleStyleSection({ element, onUpdate }) {
       {element.bubbleStyle !== 'cloud' && (
         <>
           <RangeInput
-            label="Corner Radius"
-            value={element.cornerRadius || 20}
+            label="Corner Radius %"
+            value={element.cornerRadius || 0}
             onChange={(val) => onUpdate({ cornerRadius: val })}
             min={0}
-            max={Math.min(element.width, element.height) / 2}
+            max={50}
             step={1}
           />
 
@@ -38,17 +38,16 @@ export default function BubbleStyleSection({ element, onUpdate }) {
                 className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all"
                 value={
                   element.cornerRadius === 0 ? 'square' :
-                  element.cornerRadius === 8 ? 'rounded' :
-                  element.cornerRadius === 24 ? 'extra-rounded' :
-                  element.cornerRadius >= Math.min(element.width, element.height) / 2 ? 'pill' : 'custom'
+                  element.cornerRadius === 5 ? 'rounded' :
+                  element.cornerRadius === 15 ? 'extra-rounded' :
+                  element.cornerRadius >= 50 ? 'pill' : 'custom'
                 }
                 onChange={(e) => {
                   const val = e.target.value
-                  const maxRadius = Math.min(element.width, element.height) / 2
                   if (val === 'square') onUpdate({ cornerRadius: 0 })
-                  if (val === 'rounded') onUpdate({ cornerRadius: 8 })
-                  if (val === 'extra-rounded') onUpdate({ cornerRadius: 24 })
-                  if (val === 'pill') onUpdate({ cornerRadius: maxRadius })
+                  if (val === 'rounded') onUpdate({ cornerRadius: 5 })
+                  if (val === 'extra-rounded') onUpdate({ cornerRadius: 15 })
+                  if (val === 'pill') onUpdate({ cornerRadius: 50 })
                 }}
               >
                 <option value="custom">Custom</option>

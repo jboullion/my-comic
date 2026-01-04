@@ -22,6 +22,8 @@
 
 ### UI / UX
 
+- On image import use the page size to set the image resize. So if a user imports a 2000 pixel wide image and we have a max page size of 800 px set to 800 px.
+
 - Allow page settings to have rounded edges? Same with export?
 - Form field name / id for a11y purposes
 
@@ -33,6 +35,8 @@
 - - Page background color (can probably edit per page if needed)
 
 - Page Previews
+
+- Reorder pages
 
 - Have an alternate "Korean" aspect ratio / style which is essentially one long comic where the page transitions are vertical instead of page to page. Meant for digital and scrolling platforms.
 - - I think we could still probably use the page concepts except ther would bea "preview" section where we could see the whole comic? Or at least scroll through it?
@@ -49,7 +53,9 @@
 - What "paper" is "beneath" the black background? The drage handles and images are hidden on overflow. We should allow images to overflow the white area.
 
 - Increase drag handle size
-- 
+
+- Toggle / Checkbox each corner for rounding. Users might only want to have one corner "rounded". We could even do each corner with separate rounding in an "advanced" mode.
+
 - Chat Bubbles
 - Customizable chat bubbles.
 - Text
@@ -59,6 +65,13 @@
 - - Should be highly customizable SVG elements. Not standard text.
   
 Ruler on left and top of page to show pixel positions? Perhaps a toggle in the interaction menu?
+
+
+### Export
+
+-Static Webp export and html export
+- HTML export could have a "read" mode if wanted where each click shows the next panel? Or there is a next page button. The comic might have a button for how to read
+- 
 
 ### Tools
 

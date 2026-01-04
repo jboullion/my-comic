@@ -35,7 +35,7 @@ export default function ProjectHeader({
             onSave={onTitleChange}
           />
           {hasUnsavedChanges && (
-            <span className="text-xs text-amber-500">Saving...</span>
+            <span className="text-xs text-amber-500">Saving</span>
           )}
           {!hasUnsavedChanges && project.fileHandle && (
             <span className="text-xs text-green-500 flex items-center gap-1">

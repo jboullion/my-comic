@@ -1,5 +1,6 @@
-import { FiLock, FiUnlock } from 'react-icons/fi'
+import { FiLock, FiUnlock, FiRotateCcw } from 'react-icons/fi'
 import NumberInput from '../../ui/NumberInput'
+import { useAsset } from '../../../../hooks/useAsset'
 
 /**
  * SizeSection Component
@@ -9,6 +10,9 @@ export default function SizeSection({ element, onUpdate }) {
   const isImage = element.type === 'image'
   const lockAspectRatio = element.lockAspectRatio ?? false
   const aspectRatio = element.width / element.height
+
+  // Get original asset dimensions for reset
+  const asset = useAsset(element.assetId)
 
   const handleWidthChange = (val) => {
     if (lockAspectRatio && isImage) {
@@ -32,42 +36,81 @@ export default function SizeSection({ element, onUpdate }) {
     onUpdate({ lockAspectRatio: !lockAspectRatio })
   }
 
+  const handleReset = () => {
+    if (asset?.width && asset?.height) {
+      onUpdate({ width: asset.width, height: asset.height })
+    }
+  }
+
   return (
     <div className="space-y-3">
-      <div className="grid grid-cols-2 gap-3">
-        <NumberInput
-          label="Width"
-          value={Math.round(element.width)}
-          onChange={handleWidthChange}
-          min={1}
-          step={1}
-        />
-        <NumberInput
-          label="Height"
-          value={Math.round(element.height)}
-          onChange={handleHeightChange}
-          min={1}
-          step={1}
-        />
-      </div>
+      {isImage ? (
+        // Image layout: Width - Lock - Height in a row
+        <div className="flex items-end  gap-2">
+          <div className="w-26">
+            <NumberInput
+              label="Width"
+              value={Math.round(element.width)}
+              onChange={handleWidthChange}
+              min={1}
+              step={1}
+            />
+          </div>
+          <button
+            onClick={toggleLock}
+            className={`flex items-center justify-center w-8 h-8 mb-0.5 rounded transition-colors ${
+              lockAspectRatio
+                ? 'text-indigo-400 bg-indigo-500/20 hover:bg-indigo-500/30'
+                : 'text-slate-500 bg-slate-700/50 hover:bg-slate-700'
+            }`}
+            type="button"
+            title={lockAspectRatio ? 'Unlock aspect ratio' : 'Lock aspect ratio'}
+          >
+            {lockAspectRatio ? (
+              <FiLock className="w-4 h-4" />
+            ) : (
+              <FiUnlock className="w-4 h-4" />
+            )}
+          </button>
+          <div className="w-26">
+            <NumberInput
+              label="Height"
+              value={Math.round(element.height)}
+              onChange={handleHeightChange}
+              min={1}
+              step={1}
+            />
+          </div>
+        </div>
+      ) : (
+        // Non-image layout: standard 2-column grid
+        <div className="grid grid-cols-2 gap-3">
+          <NumberInput
+            label="Width"
+            value={Math.round(element.width)}
+            onChange={handleWidthChange}
+            min={1}
+            step={1}
+          />
+          <NumberInput
+            label="Height"
+            value={Math.round(element.height)}
+            onChange={handleHeightChange}
+            min={1}
+            step={1}
+          />
+        </div>
+      )}
 
-      {/* Lock aspect ratio toggle - only for images */}
-      {isImage && (
+      {/* Reset button - only for images with original dimensions */}
+      {isImage && asset?.width && asset?.height && (
         <button
-          onClick={toggleLock}
-          className={`flex items-center gap-2 text-xs transition-colors ${
-            lockAspectRatio
-              ? 'text-indigo-400 hover:text-indigo-300'
-              : 'text-slate-500 hover:text-slate-300'
-          }`}
+          onClick={handleReset}
+          className="flex items-center gap-2 text-xs text-slate-500 hover:text-slate-300 transition-colors"
           type="button"
         >
-          {lockAspectRatio ? (
-            <FiLock className="w-3.5 h-3.5" />
-          ) : (
-            <FiUnlock className="w-3.5 h-3.5" />
-          )}
-          {lockAspectRatio ? 'Aspect ratio locked' : 'Lock aspect ratio'}
+          <FiRotateCcw className="w-3.5 h-3.5" />
+          Reset size ({asset.width} × {asset.height})
         </button>
       )}
     </div>
