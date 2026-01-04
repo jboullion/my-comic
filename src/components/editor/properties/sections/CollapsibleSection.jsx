@@ -7,7 +7,7 @@ import { FiChevronDown, FiChevronRight } from 'react-icons/fi'
  */
 export default function CollapsibleSection({
   title,
-  defaultExpanded = true,
+  defaultExpanded = false,
   children,
   storageKey = null
 }) {
