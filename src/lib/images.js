@@ -35,8 +35,12 @@ export async function optimizeImage(file, quality = 0.85, maxWidth = 1920) {
 
         canvas.toBlob(
           (blob) => {
-            if (blob) resolve(blob)
-            else reject(new Error('Canvas toBlob failed'))
+            if (blob) {
+              // Return blob with dimensions
+              resolve({ blob, width, height })
+            } else {
+              reject(new Error('Canvas toBlob failed'))
+            }
           },
           'image/webp',
           quality
@@ -70,22 +74,22 @@ export const imageAssets = {
    * Upload and store an image
    */
   async upload(projectId, file) {
-    // 1. Optimize
-    const optimizedBlob = await optimizeImage(file)
-    
+    // 1. Optimize (returns { blob, width, height })
+    const { blob: optimizedBlob, width, height } = await optimizeImage(file)
+
     // 2. Hash for deduplication
     const hash = await generateHash(optimizedBlob)
-    
+
     // 3. Check if already exists in this project
     const existing = await db.images
       .where({ projectId, hash })
       .first()
-    
+
     if (existing) {
       return existing
     }
 
-    // 4. Store in IndexedDB
+    // 4. Store in IndexedDB with dimensions
     const imageAsset = {
       projectId,
       hash,
@@ -93,6 +97,8 @@ export const imageAssets = {
       size: optimizedBlob.size,
       type: 'image/webp',
       blob: optimizedBlob,
+      width,
+      height,
       createdAt: new Date()
     }
 

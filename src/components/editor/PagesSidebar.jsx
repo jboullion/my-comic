@@ -22,11 +22,12 @@ export default function PagesSidebar({ pages, activePageIndex, onPageSelect, onA
       {/* Page Thumbnails */}
       <div className="space-y-2">
         {pages.map((page, index) => (
-          <PageThumbnail 
+          <PageThumbnail
             key={page.id || index}
-            pageNumber={index + 1} 
+            pageNumber={index + 1}
             isActive={activePageIndex === index}
             onClick={() => onPageSelect(index)}
+            thumbnail={page.thumbnail}
           />
         ))}
       </div>

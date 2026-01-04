@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { FiPlus, FiEdit2, FiCheck } from 'react-icons/fi'
+import { FiPlus, FiEdit2, FiCheck, FiTrash2 } from 'react-icons/fi'
 import { useAsset } from '../../../hooks/useAsset'
 import useProjectStore from '../../../stores/useProjectStore'
 
@@ -9,9 +9,10 @@ import useProjectStore from '../../../stores/useProjectStore'
  */
 export default function AssetPropertiesWidget({ assetId, onAdd }) {
   const asset = useAsset(assetId)
-  const { renameAsset } = useProjectStore()
+  const { renameAsset, deleteAsset, isAssetUsed } = useProjectStore()
   const [isEditing, setIsEditing] = useState(false)
   const [tempName, setTempName] = useState('')
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
 
   useEffect(() => {
     if (asset) setTempName(asset.name)
@@ -26,12 +27,27 @@ export default function AssetPropertiesWidget({ assetId, onAdd }) {
     setIsEditing(false)
   }
 
+  const handleDeleteClick = () => {
+    const inUse = isAssetUsed(assetId)
+    if (inUse) {
+      setShowDeleteConfirm(true)
+    } else {
+      // Not in use, delete directly
+      deleteAsset(assetId)
+    }
+  }
+
+  const handleConfirmDelete = async () => {
+    setShowDeleteConfirm(false)
+    await deleteAsset(assetId)
+  }
+
   const fileSize = (asset.size / 1024).toFixed(1) + ' KB'
 
   return (
     <div className="bg-slate-900/50 rounded-xl p-4 border border-slate-800">
       <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Asset Properties</h3>
-      
+
       <div className="space-y-3">
         <div className="flex justify-between items-start">
           <span className="text-xs text-slate-400 mt-1">Name</span>
@@ -45,7 +61,7 @@ export default function AssetPropertiesWidget({ assetId, onAdd }) {
                   onKeyDown={(e) => e.key === 'Enter' && handleRename()}
                   className="flex-1 bg-slate-900 border border-indigo-500 rounded px-2 py-1 text-xs text-white focus:outline-none"
                 />
-                <button 
+                <button
                   onClick={handleRename}
                   className="p-1 text-green-500 hover:bg-green-500/10 rounded"
                 >
@@ -77,14 +93,49 @@ export default function AssetPropertiesWidget({ assetId, onAdd }) {
           </span>
         </div>
 
-        <button 
-          onClick={() => onAdd(assetId)}
-          className="w-full mt-2 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-lg transition-colors flex items-center justify-center gap-2"
-        >
-          <FiPlus className="w-4 h-4" />
-          Add to Canvas
-        </button>
+        <div className="flex gap-2 mt-2">
+          <button
+            onClick={() => onAdd(assetId)}
+            className="flex-1 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-lg transition-colors flex items-center justify-center gap-2"
+          >
+            <FiPlus className="w-4 h-4" />
+            Add to Canvas
+          </button>
+          <button
+            onClick={handleDeleteClick}
+            className="px-3 py-2 bg-slate-800 hover:bg-red-600 text-slate-400 hover:text-white text-xs font-bold rounded-lg transition-colors"
+            title="Delete asset"
+          >
+            <FiTrash2 className="w-4 h-4" />
+          </button>
+        </div>
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-slate-900 border border-slate-700 rounded-xl p-6 max-w-sm mx-4 shadow-2xl">
+            <h3 className="text-lg font-bold text-white mb-2">Delete Asset?</h3>
+            <p className="text-sm text-slate-400 mb-4">
+              Are you sure? This will remove this asset from all pages where it is used.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowDeleteConfirm(false)}
+                className="flex-1 py-2 px-4 bg-slate-800 hover:bg-slate-700 text-white text-sm font-medium rounded-lg transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmDelete}
+                className="flex-1 py-2 px-4 bg-red-600 hover:bg-red-500 text-white text-sm font-medium rounded-lg transition-colors"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

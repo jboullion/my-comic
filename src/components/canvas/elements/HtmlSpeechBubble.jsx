@@ -477,7 +477,7 @@ export default function HtmlSpeechBubble({ element, onSelect, onChange, onContex
       }}
     >
       {/* Selection border */}
-      {isSelected && <div style={selectionBorderStyle} />}
+      {isSelected && <div className="selection-ui" style={selectionBorderStyle} />}
 
       {/* SVG Bubble Shape */}
       {renderBubbleSvg()}
@@ -503,7 +503,7 @@ export default function HtmlSpeechBubble({ element, onSelect, onChange, onContex
 
       {/* Interaction Handles - only show when selected and not editing */}
       {isSelected && !isEditing && (
-        <>
+        <div className="selection-ui">
           {/* Rotate handle */}
           <div style={rotateLineStyle} />
           <div
@@ -525,7 +525,7 @@ export default function HtmlSpeechBubble({ element, onSelect, onChange, onContex
               onMouseDown={(e) => handleResizeStart(e, handle.id)}
             />
           ))}
-        </>
+        </div>
       )}
     </div>
   )

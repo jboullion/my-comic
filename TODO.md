@@ -1,10 +1,6 @@
 ## Current TODOs
 
-- Add the same context menu to the text elements as we have for the image elements.
-
-- Image Previews
-
-- Text bubble font
+- Text bubble font. Set up google font selection for bubble and regular text elements
 
 - Separate non bubble text. Both for dialog but also for effects?
 
@@ -12,24 +8,22 @@
 
 ## Bugs
 
-- Debounce saving
 - App header should expand full screen. No container.
 - Ratio lock on page size
 - Remove the image icon from the floating menu.
-- HTMLSpeechBubble drag and rotate should look and work very similarly to kanva
 - - Cloud SVG is overflowing container.
 - Fix the projects page. Broken layout.
 - - Could probably just do a general refactor.
 - - Setup project settings page. Including Thumbnail / cover
-
-
+- Some actions don't seem to get caught in the undo. Is there a redo?
 
 
 ## Ideas and Brainstorming
 
 ### UI / UX
 
-- Should we use a daisy theme? Perhaps at least a light and dark theme? Using daisy we no longer need the 'dark:' for dark mode I think. Although I might not want to complicate things like that. I don't LOVE any of the daisy themes. So I think maybe stick with default tailwind and maybe set up a custom style later.
+- Allow page settings to have rounded edges? Same with export?
+- Form field name / id for a11y purposes
 
 ### Projects
 - Lots of project default settings
@@ -44,12 +38,18 @@
 - - I think we could still probably use the page concepts except ther would bea "preview" section where we could see the whole comic? Or at least scroll through it?
 - - Perhaps we do only have one long panel and one long page? Ask AI
 
+### Assets
+
+- Show original size in properties
+- Need a search system.
+- Search by name. Filter by pages placed on and date added
+
 ### Canvas
 
-- Canvas might want a "snap" grid. Perhaps a user could toggle snapping and set up the snapping for adjustible increments? (epx, 5px, 10px, etc)
+- What "paper" is "beneath" the black background? The drage handles and images are hidden on overflow. We should allow images to overflow the white area.
 
-- Clipping groups / panels
-
+- Increase drag handle size
+- 
 - Chat Bubbles
 - Customizable chat bubbles.
 - Text
@@ -58,6 +58,7 @@
 - Text elements
 - - Should be highly customizable SVG elements. Not standard text.
   
+Ruler on left and top of page to show pixel positions? Perhaps a toggle in the interaction menu?
 
 ### Tools
 

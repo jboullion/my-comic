@@ -1,6 +1,5 @@
 import { create } from 'zustand'
 import { temporal } from 'zundo'
-import { debounce } from 'lodash-es'
 import { projectsDb, createBlankPage } from '../lib/db'
 import { imageAssets } from '../lib/images'
 
@@ -135,6 +134,7 @@ export const useProjectStore = create(
 
       /**
        * Update current project in memory only (for frequent updates like canvas changes)
+       * Does NOT auto-save - ProjectPage handles debounced save with thumbnail generation
        */
       updateCurrentProjectLocal: (updates) => {
         const { currentProject } = get()
@@ -144,30 +144,7 @@ export const useProjectStore = create(
           currentProject: { ...currentProject, ...updates },
           hasUnsavedChanges: true,
         })
-
-        // Debounced save to IndexedDB
-        get().debouncedSave()
       },
-
-      /**
-       * Debounced save to IndexedDB
-       */
-      debouncedSave: debounce(async () => {
-        const { currentProject, hasUnsavedChanges } = get()
-        if (!currentProject || !hasUnsavedChanges) return
-
-        try {
-          await projectsDb.update(currentProject.id, {
-            title: currentProject.title,
-            settings: currentProject.settings,
-            pages: currentProject.pages,
-            assets: currentProject.assets,
-          })
-          set({ hasUnsavedChanges: false })
-        } catch (error) {
-          console.error('Auto-save failed:', error)
-        }
-      }, 1000),
 
       /**
        * Save current project to IndexedDB immediately
@@ -406,31 +383,52 @@ export const useProjectStore = create(
       },
 
       /**
-       * Add an image to the project assets and current page
+       * Add an image to the project assets and optionally to the current page
+       * @param {File} file - The image file to upload
+       * @param {Object} options - Options
+       * @param {boolean} options.addToCanvas - Whether to add to canvas (default: true)
        */
-      addImage: async (file) => {
+      addImage: async (file, { addToCanvas = true } = {}) => {
         const { currentProject, activePageIndex } = get()
         if (!currentProject) return
 
         try {
           // 1. Upload to IndexedDB
           const asset = await imageAssets.upload(currentProject.id, file)
-          
+
           // 2. Add to project assets if not already there
           const imageIds = [...(currentProject.assets?.imageIds || [])]
           if (!imageIds.includes(asset.id)) {
             imageIds.push(asset.id)
           }
 
-          // 3. Create element on current page
+          // If not adding to canvas, just update assets
+          if (!addToCanvas) {
+            await get().updateCurrentProject({
+              assets: { ...currentProject.assets, imageIds }
+            })
+            return asset
+          }
+
+          // 3. Calculate element size maintaining aspect ratio (max 400px on longest side)
+          const maxSize = 400
+          let width = asset.width || 300
+          let height = asset.height || 300
+          if (width > maxSize || height > maxSize) {
+            const scale = maxSize / Math.max(width, height)
+            width = Math.round(width * scale)
+            height = Math.round(height * scale)
+          }
+
+          // 4. Create element on current page (x,y is center point)
           const newElement = {
             type: 'image',
             id: `elem-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
             assetId: asset.id,
-            x: 200, // Center of 300x300 image starting at 50,50
+            x: 200,
             y: 200,
-            width: 300,
-            height: 300,
+            width,
+            height,
             rotation: 0,
             scaleX: 1,
             scaleY: 1,
@@ -439,6 +437,7 @@ export const useProjectStore = create(
             strokeWidth: 0,
             cornerRadius: 0,
             cornerShape: 'round',
+            lockAspectRatio: true,
             zIndex: (currentProject.pages[activePageIndex].elements?.length || 0) + 1
           }
 
@@ -447,11 +446,11 @@ export const useProjectStore = create(
           page.elements = [...(page.elements || []), newElement]
           pages[activePageIndex] = page
 
-          await get().updateCurrentProject({ 
+          await get().updateCurrentProject({
             assets: { ...currentProject.assets, imageIds },
-            pages 
+            pages
           })
-          
+
           set({ selectedElementIds: [newElement.id] })
           return newElement
         } catch (error) {
@@ -467,14 +466,27 @@ export const useProjectStore = create(
         const { currentProject, activePageIndex } = get()
         if (!currentProject) return
 
+        // Get asset to retrieve dimensions
+        const asset = await imageAssets.get(assetId)
+
+        // Calculate element size maintaining aspect ratio (max 400px on longest side)
+        const maxSize = 400
+        let width = asset?.width || 300
+        let height = asset?.height || 300
+        if (width > maxSize || height > maxSize) {
+          const scale = maxSize / Math.max(width, height)
+          width = Math.round(width * scale)
+          height = Math.round(height * scale)
+        }
+
         const newElement = {
           type: 'image',
           id: `elem-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
           assetId: assetId,
           x: position.x,
           y: position.y,
-          width: 300,
-          height: 300,
+          width,
+          height,
           cropX: 0,
           cropY: 0,
           cropWidth: 1, // Normalized 0-1
@@ -487,6 +499,7 @@ export const useProjectStore = create(
           strokeWidth: 0,
           cornerRadius: 0,
           cornerShape: 'round',
+          lockAspectRatio: true,
           zIndex: (currentProject.pages[activePageIndex].elements?.length || 0) + 1
         }
 
@@ -510,6 +523,60 @@ export const useProjectStore = create(
           window.dispatchEvent(new CustomEvent('asset-updated', { detail: { assetId } }))
         } catch (error) {
           console.error('Failed to rename asset:', error)
+          throw error
+        }
+      },
+
+      /**
+       * Check if an asset is used on any page
+       */
+      isAssetUsed: (assetId) => {
+        const { currentProject } = get()
+        if (!currentProject) return false
+
+        for (const page of currentProject.pages) {
+          if (page.elements?.some(el => el.assetId === assetId)) {
+            return true
+          }
+        }
+        return false
+      },
+
+      /**
+       * Delete an asset and remove it from all pages
+       */
+      deleteAsset: async (assetId) => {
+        const { currentProject, selectedAssetId } = get()
+        if (!currentProject) return
+
+        try {
+          // 1. Remove from all page elements
+          const pages = currentProject.pages.map(page => ({
+            ...page,
+            elements: (page.elements || []).filter(el => el.assetId !== assetId)
+          }))
+
+          // 2. Remove from project asset list
+          const imageIds = (currentProject.assets?.imageIds || []).filter(id => id !== assetId)
+
+          // 3. Update project
+          await get().updateCurrentProject({
+            pages,
+            assets: { ...currentProject.assets, imageIds }
+          })
+
+          // 4. Delete from IndexedDB
+          await imageAssets.delete(assetId)
+
+          // 5. Clear selection if this asset was selected
+          if (selectedAssetId === assetId) {
+            set({ selectedAssetId: null })
+          }
+
+          // Dispatch event to notify hooks/components
+          window.dispatchEvent(new CustomEvent('asset-deleted', { detail: { assetId } }))
+        } catch (error) {
+          console.error('Failed to delete asset:', error)
           throw error
         }
       },

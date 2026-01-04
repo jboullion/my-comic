@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom'
 import { FiLoader, FiFrown, FiUploadCloud } from 'react-icons/fi'
 import AppLayout from '../layouts/AppLayout'
 import useProjectStore from '../stores/useProjectStore'
-import ComicCanvas from '../components/ComicCanvas'
+import HtmlCanvas from '../components/HtmlCanvas'
 import ProjectHeader from '../components/editor/ProjectHeader'
 import PagesSidebar from '../components/editor/PagesSidebar'
 import PropertiesSidebar from '../components/editor/PropertiesSidebar'
@@ -11,7 +11,10 @@ import PropertiesSidebar from '../components/editor/PropertiesSidebar'
 export default function ProjectPage() {
   const { projectId } = useParams()
   const fileInputRef = useRef(null)
-  
+  const canvasRef = useRef(null)
+  const autoSaveTimerRef = useRef(null)
+  const isSavingRef = useRef(false)
+
   const { 
     currentProject,
     currentProjectLoading,
@@ -57,6 +60,58 @@ export default function ProjectPage() {
     window.addEventListener('beforeunload', handleBeforeUnload)
     return () => window.removeEventListener('beforeunload', handleBeforeUnload)
   }, [hasUnsavedChanges])
+
+  // Combined auto-save + thumbnail generation (debounced 3 seconds)
+  useEffect(() => {
+    // Skip if no unsaved changes or currently saving
+    if (!hasUnsavedChanges || isSavingRef.current) return
+
+    // Clear any existing timer
+    if (autoSaveTimerRef.current) {
+      clearTimeout(autoSaveTimerRef.current)
+    }
+
+    // Set a new timer - generate thumbnail and save after 3 seconds of inactivity
+    autoSaveTimerRef.current = setTimeout(async () => {
+      if (isSavingRef.current) return
+      isSavingRef.current = true
+
+      try {
+        const state = useProjectStore.getState()
+        const project = state.currentProject
+        if (!project) return
+
+        const pageIndex = state.activePageIndex
+
+        // Generate thumbnail if canvas is available
+        let updatedPages = project.pages
+        if (canvasRef.current) {
+          const thumbnail = await canvasRef.current.generateThumbnail()
+          if (thumbnail) {
+            updatedPages = [...project.pages]
+            updatedPages[pageIndex] = {
+              ...updatedPages[pageIndex],
+              thumbnail
+            }
+          }
+        }
+
+        // Update state with thumbnail and save
+        useProjectStore.setState({
+          currentProject: { ...project, pages: updatedPages }
+        })
+        await state.saveCurrentProject()
+      } finally {
+        isSavingRef.current = false
+      }
+    }, 2000)
+
+    return () => {
+      if (autoSaveTimerRef.current) {
+        clearTimeout(autoSaveTimerRef.current)
+      }
+    }
+  }, [hasUnsavedChanges, currentProject])
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -186,14 +241,19 @@ export default function ProjectPage() {
 
     const files = e.dataTransfer.files
     if (files && files.length > 0) {
-      const file = files[0]
-      if (file.type.startsWith('image/')) {
-        try {
+      // Process all dropped image files
+      const imageFiles = Array.from(files).filter(file => file.type.startsWith('image/'))
+
+      if (imageFiles.length === 0) return
+
+      try {
+        // Add all images (sequentially to avoid race conditions)
+        for (const file of imageFiles) {
           await addImage(file)
-        } catch (error) {
-          console.error('Image drop failed:', error)
-          alert('Failed to upload dropped image.')
         }
+      } catch (error) {
+        console.error('Image drop failed:', error)
+        alert('Failed to upload one or more dropped images.')
       }
     }
   }
@@ -269,7 +329,7 @@ export default function ProjectPage() {
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
           >
-            <ComicCanvas />
+            <HtmlCanvas ref={canvasRef} />
             
             {/* Drag & Drop Overlay */}
             {isDraggingOver && (
@@ -308,8 +368,8 @@ function DragDropOverlay() {
         <div className="w-16 h-16 bg-indigo-500 rounded-full flex items-center justify-center animate-bounce">
           <FiUploadCloud className="w-8 h-8 text-white" />
         </div>
-        <p className="text-xl font-bold text-white">Drop to upload image</p>
-        <p className="text-slate-400 text-sm">Supports PNG, JPG, WebP</p>
+        <p className="text-xl font-bold text-white">Drop to upload images</p>
+        <p className="text-slate-400 text-sm">Supports PNG, JPG, WebP • Drop multiple at once</p>
       </div>
     </div>
   )
