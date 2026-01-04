@@ -6,6 +6,7 @@
 ## Bugs
 
 - Debounce saving
+- App header should expand full screen. No container.
 - Ratio lock on page size
 - HTMLSpeechBubble drag and rotate should look and work very similarly to kanva
 - - Cloud SVG is overflowing container.
