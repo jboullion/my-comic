@@ -1,3 +1,4 @@
+/* global Buffer */
 import sharp from 'sharp';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';

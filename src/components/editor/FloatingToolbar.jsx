@@ -1,0 +1,50 @@
+import ToolButton from './ui/ToolButton'
+
+/**
+ * FloatingToolbar Component
+ * Floating toolbar with drawing and selection tools
+ */
+export default function FloatingToolbar({ 
+  tool, 
+  onToolChange, 
+  onImageUpload,
+  onAddSpeechBubble,
+  fileInputRef 
+}) {
+  return (
+    <div className="flex items-center gap-1">
+      <ToolButton 
+        icon="pointer" 
+        label="Select (V)" 
+        active={tool === 'select'} 
+        onClick={() => onToolChange('select')}
+      />
+      <div className="w-px h-6 bg-slate-700 mx-1" />
+      <ToolButton 
+        icon="image" 
+        label="Image (I)" 
+        active={tool === 'image'} 
+        onClick={() => fileInputRef.current?.click()}
+      />
+      <ToolButton 
+        icon="type" 
+        label="Text (T)" 
+        active={tool === 'text'} 
+        onClick={() => onToolChange('text')}
+      />
+      <ToolButton 
+        icon="message-circle" 
+        label="Speech Bubble (B)" 
+        active={tool === 'speechBubble'} 
+        onClick={onAddSpeechBubble}
+      />
+      <input 
+        type="file" 
+        ref={fileInputRef} 
+        className="hidden" 
+        accept="image/*" 
+        onChange={onImageUpload}
+      />
+    </div>
+  )
+}

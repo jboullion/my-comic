@@ -4,7 +4,7 @@
 
 A Progressive Web App (PWA) for creating digital comic books. Client-centric architecture where all creative work happens in the browser—no backend storage for user content (user data sovereignty).
 
-**Current State:** MVP with project management, IndexedDB storage, and PWA functionality. Users can create/save projects, work offline. Canvas editor is placeholder (Konva integration pending).
+**Current State:** Phase 5 of canvas implementation. Full Konva.js editor with zoom, pan, undo/redo (Zundo), image/panel elements with advanced properties (rotation, opacity, borders, corner shapes), asset gallery with IndexedDB storage, and Z-order management via context menu and drag-and-drop layers panel.
 
 ## Tech Stack & Patterns
 
@@ -15,7 +15,8 @@ A Progressive Web App (PWA) for creating digital comic books. Client-centric arc
 - **vite-plugin-pwa** with Workbox for offline support, configured in [vite.config.js](vite.config.js)
 - **Dexie.js** for IndexedDB operations ([src/lib/db.js](src/lib/db.js))
 - **Zustand** for global state management ([src/stores/useProjectStore.js](src/stores/useProjectStore.js))
-- **Konva.js** via `react-konva` for canvas rendering (planned, not yet integrated)
+- **Zundo** for undo/redo functionality (temporal store wrapper)
+- **Konva.js** via `react-konva` for canvas rendering ([src/components/ComicCanvas.jsx](src/components/ComicCanvas.jsx))
 
 ## Commands
 
@@ -69,8 +70,10 @@ Per the [tech spec](docs/Comic_Book_Maker_Tech_Spec.md):
 - Tailwind utility classes only (no CSS modules)
 - Dark theme: `bg-slate-900`, `text-white`, accents with `indigo-500`
 - Use `@import "tailwindcss"` in CSS files
+- **Tailwind v4 hover fix:** Custom `@custom-variant hover (&:hover)` in [src/index.css](src/index.css) to override default media query restriction
 - **Avoid transparency/opacity on backgrounds** — Use solid colors (`bg-slate-900` not `bg-slate-900/50`) to prevent GPU rendering artifacts (diagonal scratch lines)
 - **Avoid `backdrop-blur`** — Can cause visual artifacts on some GPUs
+- **Layout flex-shrink:** Use `flex-shrink-0` on fixed-width sidebars, `min-w-0` on flexible canvas areas
 
 ### User Menus
 - Both **PublicNav** and **AppNav** use dropdown menus on user avatar click
@@ -104,12 +107,16 @@ PWA manifest configured in [vite.config.js](vite.config.js) with `registerType: 
 
 ## Planned Features (Roadmap Priority)
 
-When implementing new features, refer to Phase 1 in the tech spec:
-1. ✅ IndexedDB setup with Dexie.js wrapper
-2. ✅ File System Access API with fallback
-3. Canvas workspace (Konva.js via `react-konva`)
-4. Panel manipulation, image upload, text tools
-5. Export as PNG/JPG
+**Canvas Implementation (Phase 6 - In Progress):**
+- ✅ Konva.js canvas with zoom, pan, undo/redo
+- ✅ Image elements with rotation, opacity, borders, corner shapes
+- ✅ Panel elements with custom corner geometries (bevel, notch, scoop, squircle)
+- ✅ Asset gallery with IndexedDB storage and drag-and-drop
+- ✅ Z-order management via right-click context menu
+- ✅ Drag-and-drop layer reordering in layers panel
+- ✅ Speech bubbles with editable text
+
+When implementing new features, refer to the [tech spec](docs/Comic_Book_Maker_Tech_Spec.md).
 
 ## Authentication (Supabase)
 
@@ -151,9 +158,11 @@ When adding features, include tests for:
 | [src/App.jsx](src/App.jsx) | Route definitions |
 | [src/pages/HomePage.jsx](src/pages/HomePage.jsx) | Landing page |
 | [src/pages/ProjectsPage.jsx](src/pages/ProjectsPage.jsx) | Project list with cards, create/open/delete |
-| [src/pages/ProjectPage.jsx](src/pages/ProjectPage.jsx) | Main editor workspace with canvas placeholder |
+| [src/pages/ProjectPage.jsx](src/pages/ProjectPage.jsx) | Main editor workspace with three-panel layout (pages, canvas, properties) |
+| [src/components/ComicCanvas.jsx](src/components/ComicCanvas.jsx) | Konva.js canvas with zoom, pan, element rendering, and context menu |
 | [src/lib/db.js](src/lib/db.js) | Dexie.js IndexedDB wrapper with CRUD operations |
 | [src/stores/useProjectStore.js](src/stores/useProjectStore.js) | Zustand store for project state management |
+| [src/hooks/useImage.js](src/hooks/useImage.js) | Asset loading and caching hook |
 | [src/components/NewProjectModal.jsx](src/components/NewProjectModal.jsx) | Modal for creating new projects |
 | [src/components/PWAUpdatePrompt.jsx](src/components/PWAUpdatePrompt.jsx) | Service worker update notification |
 | [src/components/OfflineIndicator.jsx](src/components/OfflineIndicator.jsx) | Online/offline status banner |

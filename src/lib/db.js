@@ -9,11 +9,12 @@ import Dexie from 'dexie'
 export const db = new Dexie('ComicBookMaker')
 
 // Database schema
-db.version(1).stores({
+db.version(3).stores({
   // Projects table - stores project metadata and content
   projects: '++id, title, createdAt, updatedAt, fileHandle',
-  // Pages table - stores individual comic pages (for large projects)
-  pages: '++id, projectId, pageNumber, content, createdAt, updatedAt',
+  // Images table - stores heavy binary data separately for performance
+  // Added compound index [projectId+hash] for faster deduplication checks
+  images: '++id, projectId, hash, [projectId+hash], name, size, type, createdAt',
 })
 
 /**
@@ -29,18 +30,19 @@ db.version(1).stores({
  *     height: number (default 1200)
  *     backgroundColor: string
  *   }
- *   pages: Page[] (embedded for small projects, or reference pages table)
+ *   assets: {
+ *     imageIds: string[]
+ *   }
+ *   pages: Page[]
  * }
  * 
  * Page schema:
  * {
- *   id: number
- *   projectId: number
+ *   id: string
  *   pageNumber: number
- *   content: {
- *     panels: Panel[]
- *     layers: Layer[]
- *   }
+ *   backgroundColor: string | null
+ *   panels: Panel[]
+ *   elements: Element[]
  *   createdAt: Date
  *   updatedAt: Date
  * }
@@ -56,11 +58,11 @@ export const DEFAULT_PROJECT_SETTINGS = {
 // Create a new blank page
 export function createBlankPage(pageNumber = 1) {
   return {
+    id: `page-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
     pageNumber,
-    content: {
-      panels: [],
-      layers: [],
-    },
+    backgroundColor: null,
+    panels: [],
+    elements: [],
     createdAt: new Date(),
     updatedAt: new Date(),
   }
@@ -79,6 +81,9 @@ export const projectsDb = {
       updatedAt: now,
       fileHandle: null,
       settings: { ...DEFAULT_PROJECT_SETTINGS, ...settings },
+      assets: {
+        imageIds: []
+      },
       pages: [createBlankPage(1)],
     }
     

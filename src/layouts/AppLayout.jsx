@@ -1,7 +1,6 @@
 import { Navigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import AppNav from '../components/AppNav'
-import AppFooter from '../components/AppFooter'
 
 export default function AppLayout({ children }) {
   const { user, loading } = useAuth()
@@ -28,8 +27,6 @@ export default function AppLayout({ children }) {
       <main className="flex-1">
         {children}
       </main>
-
-      <AppFooter />
     </div>
   )
 }
