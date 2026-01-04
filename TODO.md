@@ -22,6 +22,7 @@
 - Fix the projects page. Broken layout.
 - - Could probably just do a general refactor.
 - - Setup project settings page. Including Thumbnail / cover
+- Some actions don't seem to get caught in the undo. Is there a redo?
 
 
 

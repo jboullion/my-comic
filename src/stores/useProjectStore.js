@@ -517,6 +517,60 @@ export const useProjectStore = create(
       },
 
       /**
+       * Check if an asset is used on any page
+       */
+      isAssetUsed: (assetId) => {
+        const { currentProject } = get()
+        if (!currentProject) return false
+
+        for (const page of currentProject.pages) {
+          if (page.elements?.some(el => el.assetId === assetId)) {
+            return true
+          }
+        }
+        return false
+      },
+
+      /**
+       * Delete an asset and remove it from all pages
+       */
+      deleteAsset: async (assetId) => {
+        const { currentProject, selectedAssetId } = get()
+        if (!currentProject) return
+
+        try {
+          // 1. Remove from all page elements
+          const pages = currentProject.pages.map(page => ({
+            ...page,
+            elements: (page.elements || []).filter(el => el.assetId !== assetId)
+          }))
+
+          // 2. Remove from project asset list
+          const imageIds = (currentProject.assets?.imageIds || []).filter(id => id !== assetId)
+
+          // 3. Update project
+          await get().updateCurrentProject({
+            pages,
+            assets: { ...currentProject.assets, imageIds }
+          })
+
+          // 4. Delete from IndexedDB
+          await imageAssets.delete(assetId)
+
+          // 5. Clear selection if this asset was selected
+          if (selectedAssetId === assetId) {
+            set({ selectedAssetId: null })
+          }
+
+          // Dispatch event to notify hooks/components
+          window.dispatchEvent(new CustomEvent('asset-deleted', { detail: { assetId } }))
+        } catch (error) {
+          console.error('Failed to delete asset:', error)
+          throw error
+        }
+      },
+
+      /**
        * Add a speech bubble to the current page
        */
       addSpeechBubble: async (position = { x: 200, y: 200 }) => {
