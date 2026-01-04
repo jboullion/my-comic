@@ -4,13 +4,18 @@
 
 - Image Previews
 
+- Text bubble font
 
+- Separate non bubble text. Both for dialog but also for effects?
+
+- Add basic instructions somewhere. And / or add a link to the docs and the top of the app nav
 
 ## Bugs
 
 - Debounce saving
 - App header should expand full screen. No container.
 - Ratio lock on page size
+- Remove the image icon from the floating menu.
 - HTMLSpeechBubble drag and rotate should look and work very similarly to kanva
 - - Cloud SVG is overflowing container.
 - Fix the projects page. Broken layout.

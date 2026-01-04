@@ -32,6 +32,8 @@ export const useProjectStore = create(
       selectedAssetId: null,
       zoom: 1,
       tool: 'select',
+      snapToGrid: false,
+      snapGridSize: 20,
 
       // ==================
       // Project List Actions
@@ -318,6 +320,16 @@ export const useProjectStore = create(
        * Set current tool
        */
       setTool: (tool) => set({ tool }),
+
+      /**
+       * Set snap to grid
+       */
+      setSnapToGrid: (snapToGrid) => set({ snapToGrid }),
+
+      /**
+       * Set snap grid size
+       */
+      setSnapGridSize: (snapGridSize) => set({ snapGridSize }),
 
       /**
        * Set selected elements
