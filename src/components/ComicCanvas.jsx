@@ -2,6 +2,7 @@ import React, { useRef, useEffect, useState, useCallback } from 'react'
 import { Stage, Layer, Rect, Group, Transformer } from 'react-konva'
 import useProjectStore from '../stores/useProjectStore'
 import ElementRenderer from './canvas/elements/ElementRenderer'
+import HtmlSpeechBubble from './canvas/elements/HtmlSpeechBubble'
 import ZoomControls from './canvas/ZoomControls'
 import CanvasContextMenu from './canvas/CanvasContextMenu'
 
@@ -43,8 +44,13 @@ export default function ComicCanvas() {
   useEffect(() => {
     if (transformerRef.current) {
       const stage = stageRef.current
+      // Only select non-speech-bubble elements for transformer
       const selectedNodes = selectedElementIds
-        .map(id => stage.findOne(`#${id}`))
+        .map(id => {
+          const element = currentPage?.elements?.find(el => el.id === id)
+          if (element?.type === 'speechBubble') return null // Skip speech bubbles
+          return stage.findOne(`#${id}`)
+        })
         .filter(Boolean)
       
       transformerRef.current.nodes(selectedNodes)
@@ -298,15 +304,17 @@ export default function ComicCanvas() {
 
           {/* Elements Layer */}
           <Group>
-            {currentPage?.elements?.map((element) => (
-              <ElementRenderer 
-                key={element.id} 
-                element={element} 
-                isSelected={selectedElementIds.includes(element.id)}
-                onSelect={() => setSelectedElementIds([element.id])}
-                onChange={(updates) => updateElement(element.id, updates)}
-              />
-            ))}
+            {currentPage?.elements
+              ?.filter(element => element.type !== 'speechBubble') // Render non-speech-bubble elements in Konva
+              .map((element) => (
+                <ElementRenderer 
+                  key={element.id} 
+                  element={element} 
+                  isSelected={selectedElementIds.includes(element.id)}
+                  onSelect={() => setSelectedElementIds([element.id])}
+                  onChange={(updates) => updateElement(element.id, updates)}
+                />
+              ))}
           </Group>
 
           {/* Transformer Layer */}
@@ -329,6 +337,33 @@ export default function ComicCanvas() {
           />
         </Layer>
       </Stage>
+
+      {/* HTML Speech Bubbles Overlay */}
+      <div style={{ 
+        position: 'absolute', 
+        top: position.y, 
+        left: position.x,
+        pointerEvents: 'none'
+      }}>
+        <div style={{ 
+          transform: `scale(${zoom})`, 
+          transformOrigin: 'top left',
+          pointerEvents: 'auto'
+        }}>
+          {currentPage?.elements
+            ?.filter(element => element.type === 'speechBubble')
+            .map((element) => (
+              <HtmlSpeechBubble
+                key={element.id}
+                element={element}
+                isSelected={selectedElementIds.includes(element.id)}
+                onSelect={() => setSelectedElementIds([element.id])}
+                onChange={(updates) => updateElement(element.id, updates)}
+                zoom={zoom}
+              />
+            ))}
+        </div>
+      </div>
 
       {/* Zoom Controls Overlay */}
       <ZoomControls 

@@ -1,10 +1,10 @@
 import React from 'react'
 import ImageElement from './ImageElement'
-import SpeechBubbleElement from './SpeechBubbleElement'
 
 /**
  * Element Renderer
  * Dispatches rendering to the appropriate element component based on type
+ * Note: Speech bubbles are rendered as HTML overlays, not through this renderer
  */
 export default function ElementRenderer({ element, isSelected, onSelect, onChange }) {
   if (element.type === 'image') {
@@ -14,17 +14,6 @@ export default function ElementRenderer({ element, isSelected, onSelect, onChang
         isSelected={isSelected} 
         onSelect={onSelect} 
         onChange={onChange} 
-      />
-    )
-  }
-  
-  if (element.type === 'speechBubble') {
-    return (
-      <SpeechBubbleElement
-        element={element}
-        isSelected={isSelected}
-        onSelect={onSelect}
-        onChange={onChange}
       />
     )
   }
