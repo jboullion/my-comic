@@ -2,7 +2,6 @@ import { FiTrash2 } from 'react-icons/fi'
 import useProjectStore from '../../../stores/useProjectStore'
 import CollapsibleSection from './sections/CollapsibleSection'
 import SizeSection from './sections/SizeSection'
-import ImageCropSection from './sections/ImageCropSection'
 import BorderShapeSection from './sections/BorderShapeSection'
 import BubbleStyleSection from './sections/BubbleStyleSection'
 import TextSection from './sections/TextSection'
@@ -54,13 +53,6 @@ export default function ElementProperties({ element }) {
             storageKey="image-size"
           >
             <SizeSection element={element} onUpdate={handleUpdate} />
-          </CollapsibleSection>
-
-          <CollapsibleSection
-            title="Image Crop"
-            storageKey="image-crop"
-          >
-            <ImageCropSection element={element} onUpdate={handleUpdate} />
           </CollapsibleSection>
 
           <CollapsibleSection

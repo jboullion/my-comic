@@ -49,13 +49,13 @@ const ImageElement = React.memo(({ element, onSelect, onChange }) => {
         ctx.save()
         ctx.clip()
         if (image) {
-          // Use normalized crop coordinates (0-1)
-          const cx = (element.cropX || 0) * image.width
-          const cy = (element.cropY || 0) * image.height
-          const cw = (element.cropWidth || 1) * image.width
-          const ch = (element.cropHeight || 1) * image.height
-          
-          ctx.drawImage(image, cx, cy, cw, ch, 0, 0, element.width, element.height)
+          // Use normalized crop coordinates (-1 to 1) as offset
+          // Positive cropX shifts image left (shows more of right side)
+          // Positive cropY shifts image up (shows more of bottom)
+          const offsetX = (element.cropX || 0) * element.width
+          const offsetY = (element.cropY || 0) * element.height
+
+          ctx.drawImage(image, -offsetX, -offsetY, element.width, element.height)
         }
         ctx.restore()
         ctx.strokeShape(shape)

@@ -1,3 +1,5 @@
+import NumberInput from '../../ui/NumberInput'
+
 /**
  * TextSection Component
  * Text content and formatting controls for speech bubble elements
@@ -17,17 +19,14 @@ export default function TextSection({ element, onUpdate }) {
       </div>
 
       <div className="grid grid-cols-2 gap-3">
-        <div className="space-y-1.5">
-          <label className="text-[10px] text-slate-500 uppercase font-bold">Font Size</label>
-          <input
-            type="number"
-            min="8"
-            max="72"
-            value={element.fontSize || 16}
-            onChange={(e) => onUpdate({ fontSize: parseInt(e.target.value) || 16 })}
-            className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all"
-          />
-        </div>
+        <NumberInput
+          label="Font Size"
+          value={element.fontSize || 16}
+          onChange={(val) => onUpdate({ fontSize: val })}
+          min={8}
+          max={72}
+          step={1}
+        />
         <div className="space-y-1.5">
           <label className="text-[10px] text-slate-500 uppercase font-bold">Text Color</label>
           <input

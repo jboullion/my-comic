@@ -34,7 +34,7 @@ export default function CollapsibleSection({
         className="w-full flex items-center justify-between group"
         type="button"
       >
-        <h4 className="text-[10px] text-slate-500 uppercase font-bold tracking-wider group-hover:text-slate-400 transition-colors">
+        <h4 className="text-[10px] text-slate-400 uppercase font-bold tracking-wider group-hover:text-slate-300 transition-colors">
           {title}
         </h4>
         {isExpanded ? (
