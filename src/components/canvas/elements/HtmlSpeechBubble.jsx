@@ -16,6 +16,10 @@ export default function HtmlSpeechBubble({ element, onSelect, onChange, isSelect
   const [isEditing, setIsEditing] = useState(false)
   const [interactionMode, setInteractionMode] = useState(null) // 'drag' | 'resize' | 'rotate' | null
 
+  // Local transform state for smooth visual updates during interaction
+  // These are only used while dragging/resizing/rotating - otherwise we use element props
+  const [localTransform, setLocalTransform] = useState(null)
+
   // Refs for tracking interaction state
   const interactionRef = useRef({
     startX: 0,
@@ -97,23 +101,21 @@ export default function HtmlSpeechBubble({ element, onSelect, onChange, isSelect
     }
   }, [element.rotation, getElementCenter])
 
-  // Handle mouse move for all interactions
-  const handleMouseMove = useCallback((e) => {
-    if (!interactionMode) return
-
+  // Calculate new transform values based on mouse position
+  const calculateTransform = useCallback((e) => {
     const { startX, startY, startWidth, startHeight, startElemX, startElemY, resizeHandle, centerX, centerY, startRotation } = interactionRef.current
 
     if (interactionMode === 'drag') {
       const dx = (e.clientX - startX) / zoom
       const dy = (e.clientY - startY) / zoom
 
-      onChange({
+      return {
         x: startElemX + dx,
         y: startElemY + dy,
-      })
+      }
     } else if (interactionMode === 'resize') {
       // Calculate mouse delta in rotated coordinate space
-      const rotation = (element.rotation || 0) * Math.PI / 180
+      const rotation = (startRotation || 0) * Math.PI / 180
       const dx = (e.clientX - startX) / zoom
       const dy = (e.clientY - startY) / zoom
 
@@ -148,12 +150,12 @@ export default function HtmlSpeechBubble({ element, onSelect, onChange, isSelect
       const worldOffsetX = offsetX * Math.cos(rotation) - offsetY * Math.sin(rotation)
       const worldOffsetY = offsetX * Math.sin(rotation) + offsetY * Math.cos(rotation)
 
-      onChange({
+      return {
         width: newWidth,
         height: newHeight,
         x: startElemX - worldOffsetX,
         y: startElemY - worldOffsetY,
-      })
+      }
     } else if (interactionMode === 'rotate') {
       // Calculate angle from center to mouse
       const currentAngle = Math.atan2(e.clientY - centerY, e.clientX - centerX)
@@ -167,14 +169,30 @@ export default function HtmlSpeechBubble({ element, onSelect, onChange, isSelect
         newRotation = Math.round(newRotation / 15) * 15
       }
 
-      onChange({ rotation: newRotation })
+      return { rotation: newRotation }
     }
-  }, [interactionMode, zoom, onChange, element.rotation])
 
-  // Handle mouse up - end all interactions
+    return null
+  }, [interactionMode, zoom])
+
+  // Handle mouse move - update local state only for smooth visuals
+  const handleMouseMove = useCallback((e) => {
+    if (!interactionMode) return
+
+    const newTransform = calculateTransform(e)
+    if (newTransform) {
+      setLocalTransform(newTransform)
+    }
+  }, [interactionMode, calculateTransform])
+
+  // Handle mouse up - persist to store and clear local state
   const handleMouseUp = useCallback(() => {
+    if (localTransform) {
+      onChange(localTransform)
+      setLocalTransform(null)
+    }
     setInteractionMode(null)
-  }, [])
+  }, [localTransform, onChange])
 
   // Set up global mouse listeners
   useEffect(() => {
@@ -189,7 +207,7 @@ export default function HtmlSpeechBubble({ element, onSelect, onChange, isSelect
   }, [interactionMode, handleMouseMove, handleMouseUp])
 
   // Handle wrapper click for selection
-  const handleWrapperClick = (e) => {
+  const handleWrapperClick = () => {
     if (!isEditing) {
       onSelect()
     }
@@ -222,9 +240,18 @@ export default function HtmlSpeechBubble({ element, onSelect, onChange, isSelect
     }
   }
 
+  // Use local transform during interaction, otherwise use element props
+  const currentX = localTransform?.x ?? element.x
+  const currentY = localTransform?.y ?? element.y
+  const currentWidth = localTransform?.width ?? element.width
+  const currentHeight = localTransform?.height ?? element.height
+  const currentRotation = localTransform?.rotation ?? element.rotation ?? 0
+
   // Render SVG bubble shape
   const renderBubbleSvg = () => {
-    const { width, height, bubbleStyle, cornerRadius = 20, fill = '#FFFFFF', stroke = '#000000', strokeWidth = 2 } = element
+    const { bubbleStyle, cornerRadius = 20, fill = '#FFFFFF', stroke = '#000000', strokeWidth = 2 } = element
+    const width = currentWidth
+    const height = currentHeight
 
     if (bubbleStyle === 'cloud') {
       // Cloud bubble - circle-based fluffy shape
@@ -308,11 +335,11 @@ export default function HtmlSpeechBubble({ element, onSelect, onChange, isSelect
   // Styles
   const wrapperStyle = {
     position: 'absolute',
-    left: `${element.x - element.width / 2}px`,
-    top: `${element.y - element.height / 2}px`,
-    width: `${element.width}px`,
-    height: `${element.height}px`,
-    transform: `rotate(${element.rotation || 0}deg)`,
+    left: `${currentX - currentWidth / 2}px`,
+    top: `${currentY - currentHeight / 2}px`,
+    width: `${currentWidth}px`,
+    height: `${currentHeight}px`,
+    transform: `rotate(${currentRotation}deg)`,
     transformOrigin: 'center center',
     opacity: element.opacity || 1,
     cursor: isEditing ? 'text' : (interactionMode === 'drag' ? 'grabbing' : 'grab'),
