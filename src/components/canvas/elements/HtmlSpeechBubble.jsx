@@ -10,13 +10,6 @@ export default function HtmlSpeechBubble({ element, onSelect, onChange, isSelect
   const isDraggingRef = useRef(false)
   const dragStartRef = useRef({ x: 0, y: 0, elemX: 0, elemY: 0 })
 
-  // Update contenteditable text when element.text changes externally
-  useEffect(() => {
-    if (textRef.current && textRef.current.textContent !== element.text) {
-      textRef.current.textContent = element.text || 'Type your text here...'
-    }
-  }, [element.text])
-
   const handleMouseDown = (e) => {
     // Don't start drag if clicking on the text for editing
     if (e.target === textRef.current) return
@@ -59,8 +52,12 @@ export default function HtmlSpeechBubble({ element, onSelect, onChange, isSelect
     }
   }, [element.x, element.y, zoom])
 
-  const handleTextInput = (e) => {
-    onChange({ text: e.currentTarget.textContent })
+  const handleTextBlur = (e) => {
+    // Only update state when done editing (on blur)
+    const newText = e.currentTarget.textContent || ''
+    if (newText !== element.text) {
+      onChange({ text: newText })
+    }
   }
 
   const handleTextClick = (e) => {
@@ -175,7 +172,9 @@ export default function HtmlSpeechBubble({ element, onSelect, onChange, isSelect
         ref={textRef}
         contentEditable
         suppressContentEditableWarning
-        onInput={handleTextInput}
+        onBlur={handleTextBlur}
+        onClick={handleTextClick}
+        spellCheck={false}
         style={textStyle}
       >
         {element.text || 'Type your text here...'}
