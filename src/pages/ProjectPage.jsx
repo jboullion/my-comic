@@ -63,7 +63,7 @@ export default function ProjectPage() {
     return () => window.removeEventListener('beforeunload', handleBeforeUnload)
   }, [hasUnsavedChanges])
 
-  // Combined auto-save + thumbnail generation (debounced 3 seconds)
+  // Combined auto-save + thumbnail generation (debounced 1 second)
   useEffect(() => {
     // Skip if no unsaved changes or currently saving
     if (!hasUnsavedChanges || isSavingRef.current) return
@@ -73,7 +73,7 @@ export default function ProjectPage() {
       clearTimeout(autoSaveTimerRef.current)
     }
 
-    // Set a new timer - generate thumbnail and save after 3 seconds of inactivity
+    // Set a new timer - generate thumbnail and save after 1 second of inactivity
     autoSaveTimerRef.current = setTimeout(async () => {
       if (isSavingRef.current) return
       isSavingRef.current = true
@@ -106,7 +106,7 @@ export default function ProjectPage() {
       } finally {
         isSavingRef.current = false
       }
-    }, 2000)
+    }, 1000)
 
     return () => {
       if (autoSaveTimerRef.current) {
