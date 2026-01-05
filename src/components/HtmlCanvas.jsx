@@ -372,8 +372,8 @@ const HtmlCanvas = forwardRef(function HtmlCanvas(props, ref) {
     /**
      * Capture all pages as images
      * @param {Object} options - Capture options
-     * @param {string} options.format - 'webp' | 'png' (default: 'webp')
-     * @param {number} options.quality - Quality for webp (0-1, default: 0.9)
+     * @param {string} options.format - 'webp' | 'png' | 'jpeg' (default: 'webp')
+     * @param {number} options.quality - Quality for webp/jpeg (0-1, default: 0.9)
      * @param {Function} options.onProgress - Progress callback (pageIndex, totalPages)
      * @returns {Promise<Array<{index: number, dataUrl: string}>>}
      */
@@ -424,7 +424,8 @@ const HtmlCanvas = forwardRef(function HtmlCanvas(props, ref) {
             }
           })
 
-          const mimeType = format === 'png' ? 'image/png' : 'image/webp'
+          const mimeTypes = { png: 'image/png', jpeg: 'image/jpeg', webp: 'image/webp' }
+          const mimeType = mimeTypes[format] || 'image/webp'
           const dataUrl = canvas.toDataURL(mimeType, format === 'png' ? undefined : quality)
 
           pages.push({ index: i, dataUrl })

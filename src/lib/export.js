@@ -24,12 +24,13 @@ export function dataUrlToBlob(dataUrl) {
  * Export all pages to a zip file
  * @param {Array} pages - Array of { index, dataUrl } objects
  * @param {string} projectTitle - Project title for the zip filename
- * @param {string} format - Image format ('webp' or 'png')
+ * @param {string} format - Image format ('webp', 'png', or 'jpeg')
  * @returns {Promise<void>}
  */
 export async function exportPagesToZip(pages, projectTitle, format = 'webp') {
   const zip = new JSZip()
-  const extension = format === 'png' ? 'png' : 'webp'
+  const extensions = { png: 'png', jpeg: 'jpg', webp: 'webp' }
+  const extension = extensions[format] || 'webp'
 
   // Add each page to the zip
   for (const page of pages) {

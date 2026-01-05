@@ -8,6 +8,7 @@ import ProjectHeader from '../components/editor/ProjectHeader'
 import PagesSidebar from '../components/editor/PagesSidebar'
 import PropertiesSidebar from '../components/editor/PropertiesSidebar'
 import ProjectSettingsModal from '../components/editor/ProjectSettingsModal'
+import ExportModal from '../components/editor/ExportModal'
 import { exportPagesToZip } from '../lib/export'
 
 export default function ProjectPage() {
@@ -47,6 +48,7 @@ export default function ProjectPage() {
 
   const [isDraggingOver, setIsDraggingOver] = useState(false)
   const [showProjectSettings, setShowProjectSettings] = useState(false)
+  const [showExportModal, setShowExportModal] = useState(false)
   const [isExporting, setIsExporting] = useState(false)
 
   // Load project on mount
@@ -252,18 +254,20 @@ export default function ProjectPage() {
     }
   }
 
-  const handleExport = useCallback(async () => {
+  const handleExport = useCallback(async ({ format = 'webp' } = {}) => {
     if (!canvasRef.current || !currentProject) return
 
     setIsExporting(true)
     try {
+      const quality = format === 'jpeg' ? 0.92 : 0.9
       const pages = await canvasRef.current.captureAllPages({
-        format: 'webp',
-        quality: 0.9
+        format,
+        quality
       })
 
       if (pages.length > 0) {
-        await exportPagesToZip(pages, currentProject.title, 'webp')
+        await exportPagesToZip(pages, currentProject.title, format)
+        setShowExportModal(false)
       }
     } catch (error) {
       console.error('Export failed:', error)
@@ -321,7 +325,7 @@ export default function ProjectPage() {
           onTitleChange={handleTitleChange}
           onSave={saveCurrentProject}
           onSaveToFile={handleSaveToFile}
-          onExport={handleExport}
+          onExport={() => setShowExportModal(true)}
           onOpenProjectSettings={() => setShowProjectSettings(true)}
           tool={tool}
           onToolChange={setTool}
@@ -373,6 +377,14 @@ export default function ProjectPage() {
           onClose={() => setShowProjectSettings(false)}
           settings={currentProject.settings}
           onApply={updateProjectSettings}
+        />
+
+        {/* Export Modal */}
+        <ExportModal
+          isOpen={showExportModal}
+          onClose={() => setShowExportModal(false)}
+          onExport={handleExport}
+          isExporting={isExporting}
         />
       </div>
     </AppLayout>
