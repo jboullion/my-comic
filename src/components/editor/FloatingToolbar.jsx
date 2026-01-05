@@ -45,12 +45,6 @@ export default function FloatingToolbar({
       />
       <div className="w-px h-6 bg-slate-700 mx-1" />
       <ToolButton
-        icon="image"
-        label="Image (I)"
-        active={tool === 'image'}
-        onClick={() => fileInputRef.current?.click()}
-      />
-      <ToolButton
         icon="type"
         label="Text (T)"
         active={tool === 'text'}
