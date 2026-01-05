@@ -254,21 +254,58 @@ const HtmlCanvas = forwardRef(function HtmlCanvas(props, ref) {
     addAssetToPage(Number(assetId), pos)
   }, [screenToPage, addAssetToPage])
 
+  /**
+   * Create a hidden clone of the page for capture (removes selection UI)
+   * Returns { clone, cleanup } where cleanup removes the clone from DOM
+   */
+  const createCaptureClone = useCallback(() => {
+    if (!pageRef.current) return null
+
+    // Create a container that clips the clone (invisible but fully rendered)
+    const container = document.createElement('div')
+    container.style.position = 'fixed'
+    container.style.top = '0'
+    container.style.left = '0'
+    container.style.width = '1px'
+    container.style.height = '1px'
+    container.style.overflow = 'hidden'
+    container.style.pointerEvents = 'none'
+
+    // Clone the page element
+    const clone = pageRef.current.cloneNode(true)
+
+    // Remove all selection UI elements from the clone
+    const selectionElements = clone.querySelectorAll('.selection-ui')
+    selectionElements.forEach(el => el.remove())
+
+    // Reset clone positioning (it will be positioned by container)
+    clone.style.position = 'relative'
+    clone.style.left = '0'
+    clone.style.top = '0'
+
+    container.appendChild(clone)
+    document.body.appendChild(container)
+
+    return {
+      clone,
+      cleanup: () => container.remove()
+    }
+  }, [])
+
   // Expose methods to parent via ref
   useImperativeHandle(ref, () => ({
     generateThumbnail: async () => {
       if (!pageRef.current) return null
 
-      // Hide selection handles via CSS class (no state change = no flash)
-      pageRef.current.classList.add('capturing')
-      // Wait for browser to apply the style
-      await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))
+      // Create off-screen clone without selection UI
+      const capture = createCaptureClone()
+      if (!capture) return null
 
       try {
         // Get embedded font CSS for proper font rendering
         const fontEmbedCSS = await getEmbeddedFontCSS()
 
-        const dataUrl = await toPng(pageRef.current, {
+        const dataUrl = await toPng(capture.clone, {
           width: pageWidth,
           height: pageHeight,
           pixelRatio: 0.5,
@@ -285,21 +322,21 @@ const HtmlCanvas = forwardRef(function HtmlCanvas(props, ref) {
         console.error('Failed to generate thumbnail:', error)
         return null
       } finally {
-        pageRef.current?.classList.remove('capturing')
+        capture.cleanup()
       }
     },
     captureFullPage: async () => {
       if (!pageRef.current) return null
 
-      // Hide selection handles via CSS class (no state change = no flash)
-      pageRef.current.classList.add('capturing')
-      await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))
+      // Create off-screen clone without selection UI
+      const capture = createCaptureClone()
+      if (!capture) return null
 
       try {
         // Get embedded font CSS for proper font rendering
         const fontEmbedCSS = await getEmbeddedFontCSS()
 
-        const result = await toPng(pageRef.current, {
+        const result = await toPng(capture.clone, {
           width: pageWidth,
           height: pageHeight,
           pixelRatio: 2,
@@ -315,11 +352,11 @@ const HtmlCanvas = forwardRef(function HtmlCanvas(props, ref) {
         console.error('Failed to capture full page:', error)
         return null
       } finally {
-        pageRef.current?.classList.remove('capturing')
+        capture.cleanup()
       }
     },
     getPageRef: () => pageRef.current
-  }), [pageWidth, pageHeight])
+  }), [pageWidth, pageHeight, createCaptureClone])
 
   if (!currentProject) return null
 
