@@ -27,6 +27,8 @@
 
 ### Text
 
+- Add Comic Sans Font
+
 - We want Japanese and Korean comics to be made here.
 - - How can we enable these languages?
 - - Our Text effects will need to be in these languages as well

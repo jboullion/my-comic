@@ -1,5 +1,6 @@
 import PresetButton from '../ui/PresetButton'
 import NumberInput from '../ui/NumberInput'
+import ColorPicker from '../ui/ColorPicker'
 import CollapsibleSection from './sections/CollapsibleSection'
 import useProjectStore from '../../../stores/useProjectStore'
 
@@ -111,11 +112,10 @@ export default function PageSettingsPanel() {
             <div className="space-y-2">
               <label className="text-[10px] text-slate-500 uppercase font-bold">Background Color</label>
               <div className="flex items-center gap-3">
-                <input
-                  type="color"
+                <ColorPicker
                   value={pageSettings.backgroundColor || '#ffffff'}
-                  onChange={(e) => handleSettingsChange('backgroundColor', e.target.value)}
-                  className="w-10 h-10 bg-slate-800 border border-slate-700 rounded cursor-pointer"
+                  onChange={(color) => handleSettingsChange('backgroundColor', color)}
+                  className="w-10 h-10"
                 />
                 <input
                   type="text"

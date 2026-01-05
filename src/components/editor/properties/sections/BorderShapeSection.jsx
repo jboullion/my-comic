@@ -1,5 +1,6 @@
 import RangeInput from '../../ui/RangeInput'
 import NumberInput from '../../ui/NumberInput'
+import ColorPicker from '../../ui/ColorPicker'
 
 /**
  * BorderShapeSection Component
@@ -11,11 +12,10 @@ export default function BorderShapeSection({ element, onUpdate }) {
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-1.5">
           <label className="text-[10px] text-slate-500 uppercase font-bold">Color</label>
-          <input
-            type="color"
+          <ColorPicker
             value={element.stroke || '#000000'}
-            onChange={(e) => onUpdate({ stroke: e.target.value })}
-            className="w-full h-8 bg-slate-900 border border-slate-700 rounded cursor-pointer"
+            onChange={(color) => onUpdate({ stroke: color })}
+            className="w-full h-8"
           />
         </div>
         <NumberInput

@@ -1,5 +1,6 @@
 import NumberInput from '../editor/ui/NumberInput'
 import FontSelect from '../editor/ui/FontSelect'
+import ColorPicker from '../editor/ui/ColorPicker'
 
 /**
  * SpeechBubbleSettingsTab Component
@@ -41,11 +42,10 @@ export default function SpeechBubbleSettingsTab({ settings, onUpdate }) {
         <div className="space-y-2">
           <label className="text-[10px] text-slate-500 uppercase font-bold">Fill Color</label>
           <div className="flex items-center gap-2">
-            <input
-              type="color"
+            <ColorPicker
               value={settings.fill}
-              onChange={(e) => onUpdate({ fill: e.target.value })}
-              className="w-10 h-10 bg-slate-800 border border-slate-700 rounded cursor-pointer"
+              onChange={(color) => onUpdate({ fill: color })}
+              className="w-10 h-10"
             />
             <input
               type="text"
@@ -58,11 +58,10 @@ export default function SpeechBubbleSettingsTab({ settings, onUpdate }) {
         <div className="space-y-2">
           <label className="text-[10px] text-slate-500 uppercase font-bold">Stroke Color</label>
           <div className="flex items-center gap-2">
-            <input
-              type="color"
+            <ColorPicker
               value={settings.stroke}
-              onChange={(e) => onUpdate({ stroke: e.target.value })}
-              className="w-10 h-10 bg-slate-800 border border-slate-700 rounded cursor-pointer"
+              onChange={(color) => onUpdate({ stroke: color })}
+              className="w-10 h-10"
             />
             <input
               type="text"
@@ -104,16 +103,13 @@ export default function SpeechBubbleSettingsTab({ settings, onUpdate }) {
               max={72}
               step={1}
             />
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               <label className="text-[10px] text-slate-500 uppercase font-bold">Text Color</label>
-              <div className="flex items-center gap-2">
-                <input
-                  type="color"
-                  value={settings.textColor}
-                  onChange={(e) => onUpdate({ textColor: e.target.value })}
-                  className="w-full h-8 bg-slate-800 border border-slate-700 rounded cursor-pointer"
-                />
-              </div>
+              <ColorPicker
+                value={settings.textColor}
+                onChange={(color) => onUpdate({ textColor: color })}
+                className="w-full h-8"
+              />
             </div>
           </div>
         </div>

@@ -1,4 +1,5 @@
 import NumberInput from '../../ui/NumberInput'
+import ColorPicker from '../../ui/ColorPicker'
 
 /**
  * TextSection Component
@@ -29,11 +30,10 @@ export default function TextSection({ element, onUpdate }) {
         />
         <div className="space-y-1.5">
           <label className="text-[10px] text-slate-500 uppercase font-bold">Text Color</label>
-          <input
-            type="color"
+          <ColorPicker
             value={element.textColor || '#000000'}
-            onChange={(e) => onUpdate({ textColor: e.target.value })}
-            className="w-full h-8 bg-slate-900 border border-slate-700 rounded cursor-pointer"
+            onChange={(color) => onUpdate({ textColor: color })}
+            className="w-full h-8"
           />
         </div>
       </div>

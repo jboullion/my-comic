@@ -1,5 +1,6 @@
 import NumberInput from '../editor/ui/NumberInput'
 import FontSelect from '../editor/ui/FontSelect'
+import ColorPicker from '../editor/ui/ColorPicker'
 
 /**
  * TextEffectSettingsTab Component
@@ -61,11 +62,10 @@ export default function TextEffectSettingsTab({ settings, onUpdate }) {
       <div className="space-y-2">
         <label className="text-[10px] text-slate-500 uppercase font-bold">Fill Color</label>
         <div className="flex items-center gap-3">
-          <input
-            type="color"
+          <ColorPicker
             value={settings.fill}
-            onChange={(e) => onUpdate({ fill: e.target.value })}
-            className="w-10 h-10 bg-slate-800 border border-slate-700 rounded cursor-pointer"
+            onChange={(color) => onUpdate({ fill: color })}
+            className="w-10 h-10"
           />
           <input
             type="text"
@@ -80,11 +80,10 @@ export default function TextEffectSettingsTab({ settings, onUpdate }) {
       <div className="space-y-2">
         <label className="text-[10px] text-slate-500 uppercase font-bold">Stroke</label>
         <div className="flex items-center gap-3">
-          <input
-            type="color"
+          <ColorPicker
             value={settings.stroke}
-            onChange={(e) => onUpdate({ stroke: e.target.value })}
-            className="w-10 h-10 bg-slate-800 border border-slate-700 rounded cursor-pointer"
+            onChange={(color) => onUpdate({ stroke: color })}
+            className="w-10 h-10"
           />
           <div className="flex-1">
             <NumberInput
@@ -102,11 +101,10 @@ export default function TextEffectSettingsTab({ settings, onUpdate }) {
       <div className="space-y-2">
         <label className="text-[10px] text-slate-500 uppercase font-bold">Outer Stroke</label>
         <div className="flex items-center gap-3">
-          <input
-            type="color"
+          <ColorPicker
             value={settings.outerStroke}
-            onChange={(e) => onUpdate({ outerStroke: e.target.value })}
-            className="w-10 h-10 bg-slate-800 border border-slate-700 rounded cursor-pointer"
+            onChange={(color) => onUpdate({ outerStroke: color })}
+            className="w-10 h-10"
           />
           <div className="flex-1">
             <NumberInput

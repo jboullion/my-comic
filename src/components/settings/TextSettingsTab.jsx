@@ -1,5 +1,6 @@
 import NumberInput from '../editor/ui/NumberInput'
 import FontSelect from '../editor/ui/FontSelect'
+import ColorPicker from '../editor/ui/ColorPicker'
 
 /**
  * TextSettingsTab Component
@@ -51,11 +52,10 @@ export default function TextSettingsTab({ settings, onUpdate }) {
       <div className="space-y-2">
         <label className="text-[10px] text-slate-500 uppercase font-bold">Text Color</label>
         <div className="flex items-center gap-3">
-          <input
-            type="color"
+          <ColorPicker
             value={settings.textColor}
-            onChange={(e) => onUpdate({ textColor: e.target.value })}
-            className="w-10 h-10 bg-slate-800 border border-slate-700 rounded cursor-pointer"
+            onChange={(color) => onUpdate({ textColor: color })}
+            className="w-10 h-10"
           />
           <input
             type="text"
@@ -70,11 +70,10 @@ export default function TextSettingsTab({ settings, onUpdate }) {
       <div className="space-y-2">
         <label className="text-[10px] text-slate-500 uppercase font-bold">Text Stroke</label>
         <div className="flex items-center gap-3">
-          <input
-            type="color"
+          <ColorPicker
             value={settings.strokeColor}
-            onChange={(e) => onUpdate({ strokeColor: e.target.value })}
-            className="w-10 h-10 bg-slate-800 border border-slate-700 rounded cursor-pointer"
+            onChange={(color) => onUpdate({ strokeColor: color })}
+            className="w-10 h-10"
           />
           <div className="flex-1">
             <NumberInput

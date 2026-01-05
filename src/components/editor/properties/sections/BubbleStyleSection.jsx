@@ -1,5 +1,6 @@
 import RangeInput from '../../ui/RangeInput'
 import NumberInput from '../../ui/NumberInput'
+import ColorPicker from '../../ui/ColorPicker'
 
 /**
  * BubbleStyleSection Component
@@ -78,22 +79,20 @@ export default function BubbleStyleSection({ element, onUpdate }) {
 
       <div className="space-y-1.5">
         <label className="text-[10px] text-slate-500 uppercase font-bold">Fill Color</label>
-        <input
-          type="color"
+        <ColorPicker
           value={element.fill || '#FFFFFF'}
-          onChange={(e) => onUpdate({ fill: e.target.value })}
-          className="w-full h-8 bg-slate-900 border border-slate-700 rounded cursor-pointer"
+          onChange={(color) => onUpdate({ fill: color })}
+          className="w-full h-8"
         />
       </div>
 
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-1.5">
           <label className="text-[10px] text-slate-500 uppercase font-bold">Stroke Color</label>
-          <input
-            type="color"
+          <ColorPicker
             value={element.stroke || '#000000'}
-            onChange={(e) => onUpdate({ stroke: e.target.value })}
-            className="w-full h-8 bg-slate-900 border border-slate-700 rounded cursor-pointer"
+            onChange={(color) => onUpdate({ stroke: color })}
+            className="w-full h-8"
           />
         </div>
         <NumberInput
