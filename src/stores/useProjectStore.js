@@ -371,6 +371,20 @@ export const useProjectStore = create(
       setShowGrid: (showGrid) => set({ showGrid }),
 
       /**
+       * Save project settings without updating existing pages
+       * Used when user wants to change defaults for new pages only
+       */
+      saveProjectSettings: (settings) => {
+        const { currentProject } = get()
+        if (!currentProject) return
+
+        const newProjectSettings = { ...currentProject.settings, ...settings }
+        get().updateCurrentProjectLocal({
+          settings: newProjectSettings
+        })
+      },
+
+      /**
        * Update project settings AND apply to all pages
        * Used when user wants to sync all pages to project defaults
        */
@@ -744,6 +758,9 @@ export const useProjectStore = create(
         const { currentProject, activePageIndex } = get()
         if (!currentProject) return
 
+        // Use project's default font or fallback
+        const defaultFont = currentProject.settings?.defaultFont || 'Comic Neue, cursive'
+
         const newElement = {
           type: 'speechBubble',
           id: `elem-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
@@ -762,7 +779,7 @@ export const useProjectStore = create(
           cornerRadius: 20,
           text: 'Double-click to edit',
           fontSize: 16,
-          fontFamily: 'Arial, sans-serif',
+          fontFamily: defaultFont,
           textColor: '#000000',
           textAlign: 'center',
           verticalAlign: 'middle',
@@ -787,6 +804,9 @@ export const useProjectStore = create(
         const { currentProject, activePageIndex } = get()
         if (!currentProject) return
 
+        // Use project's default font or fallback
+        const defaultFont = currentProject.settings?.defaultFont || 'Comic Neue, cursive'
+
         const newElement = {
           type: 'text',
           id: `elem-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
@@ -800,7 +820,7 @@ export const useProjectStore = create(
           opacity: 1,
           text: 'Double-click to edit',
           fontSize: 24,
-          fontFamily: 'Arial, sans-serif',
+          fontFamily: defaultFont,
           fontWeight: 'normal',
           fontStyle: 'normal',
           textColor: '#000000',

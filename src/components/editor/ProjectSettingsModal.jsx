@@ -2,18 +2,20 @@ import { useState, useEffect } from 'react'
 import { FiX } from 'react-icons/fi'
 import NumberInput from './ui/NumberInput'
 import PresetButton from './ui/PresetButton'
+import FontSelect from './ui/FontSelect'
 
 /**
  * ProjectSettingsModal Component
  * Modal dialog for editing project-wide default settings.
  * When applied, these settings are copied to ALL pages.
  */
-export default function ProjectSettingsModal({ isOpen, onClose, settings, onApply }) {
+export default function ProjectSettingsModal({ isOpen, onClose, settings, onApply, onSave }) {
   // Local state for editing
   const [localSettings, setLocalSettings] = useState({
     width: 800,
     height: 1200,
-    backgroundColor: '#ffffff'
+    backgroundColor: '#ffffff',
+    defaultFont: 'Comic Neue, cursive'
   })
 
   // Sync local state when modal opens or settings change
@@ -22,12 +24,18 @@ export default function ProjectSettingsModal({ isOpen, onClose, settings, onAppl
       setLocalSettings({
         width: settings.width || 800,
         height: settings.height || 1200,
-        backgroundColor: settings.backgroundColor || '#ffffff'
+        backgroundColor: settings.backgroundColor || '#ffffff',
+        defaultFont: settings.defaultFont || 'Comic Neue, cursive'
       })
     }
   }, [isOpen, settings])
 
   if (!isOpen) return null
+
+  const handleSave = () => {
+    onSave(localSettings)
+    onClose()
+  }
 
   const handleApply = () => {
     onApply(localSettings)
@@ -142,9 +150,21 @@ export default function ProjectSettingsModal({ isOpen, onClose, settings, onAppl
             )}
           </div>
 
+          {/* Default Font */}
+          <div className="space-y-3">
+            <FontSelect
+              label="Default Font"
+              value={localSettings.defaultFont}
+              onChange={(val) => setLocalSettings(prev => ({ ...prev, defaultFont: val }))}
+            />
+            <p className="text-xs text-slate-500">
+              Used for new text elements and speech bubbles.
+            </p>
+          </div>
+
           {/* Info */}
           <p className="text-xs text-slate-500">
-            Applying these settings will update all existing pages to match these defaults.
+            <strong>Save</strong> updates defaults for new pages. <strong>Apply to All</strong> also updates existing pages.
           </p>
         </div>
 
@@ -155,6 +175,12 @@ export default function ProjectSettingsModal({ isOpen, onClose, settings, onAppl
             className="px-4 py-2 text-sm text-slate-400 hover:text-white transition-colors"
           >
             Cancel
+          </button>
+          <button
+            onClick={handleSave}
+            className="px-4 py-2 text-sm bg-slate-700 hover:bg-slate-600 text-white rounded-lg font-medium transition-colors"
+          >
+            Save
           </button>
           <button
             onClick={handleApply}

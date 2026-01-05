@@ -31,6 +31,7 @@ export default function ProjectPage() {
     addPage,
     updateCurrentProject,
     updateProjectSettings,
+    saveProjectSettings,
     activePageIndex,
     setActivePageIndex,
     tool,
@@ -376,6 +377,7 @@ export default function ProjectPage() {
           isOpen={showProjectSettings}
           onClose={() => setShowProjectSettings(false)}
           settings={currentProject.settings}
+          onSave={saveProjectSettings}
           onApply={updateProjectSettings}
         />
 
