@@ -1,6 +1,7 @@
 import React, { useRef, useEffect, useState, useCallback, useImperativeHandle, forwardRef } from 'react'
 import { toPng } from 'html-to-image'
 import useProjectStore from '../stores/useProjectStore'
+import { getEmbeddedFontCSS, preloadFonts } from '../utils/fontEmbed'
 import HtmlImageElement from './canvas/elements/HtmlImageElement'
 import HtmlSpeechBubble from './canvas/elements/HtmlSpeechBubble'
 import HtmlTextElement from './canvas/elements/HtmlTextElement'
@@ -51,6 +52,11 @@ const HtmlCanvas = forwardRef(function HtmlCanvas(props, ref) {
       window.removeEventListener('click', handleClick)
       window.removeEventListener('wheel', handleClick)
     }
+  }, [])
+
+  // Preload fonts for capture (runs once on mount)
+  useEffect(() => {
+    preloadFonts()
   }, [])
 
   /**
@@ -256,10 +262,14 @@ const HtmlCanvas = forwardRef(function HtmlCanvas(props, ref) {
       await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))
 
       try {
+        // Get embedded font CSS for proper font rendering
+        const fontEmbedCSS = await getEmbeddedFontCSS()
+
         const dataUrl = await toPng(pageRef.current, {
           width: pageWidth,
           height: pageHeight,
           pixelRatio: 0.5,
+          fontEmbedCSS, // Embed fonts to avoid cross-origin errors
           style: {
             transform: 'none',
             transformOrigin: 'top left'
@@ -283,10 +293,14 @@ const HtmlCanvas = forwardRef(function HtmlCanvas(props, ref) {
       await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))
 
       try {
+        // Get embedded font CSS for proper font rendering
+        const fontEmbedCSS = await getEmbeddedFontCSS()
+
         const result = await toPng(pageRef.current, {
           width: pageWidth,
           height: pageHeight,
           pixelRatio: 2,
+          fontEmbedCSS, // Embed fonts to avoid cross-origin errors
           style: {
             transform: 'none',
             transformOrigin: 'top left'

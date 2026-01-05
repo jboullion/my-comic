@@ -1,0 +1,106 @@
+# Comic Book Maker - Claude Code Instructions
+
+## Project Overview
+
+A Progressive Web App (PWA) for creating digital comic books. Client-centric architecture where all creative work happens in the browser—no backend storage for user content.
+
+**Current State:** Phase 7 - Full canvas editor with HTML/CSS canvas, text elements, text effects, and comprehensive element editing.
+
+## Tech Stack
+
+- **React 19** with functional components and hooks
+- **Vite 7** for dev/build (`npm run dev` at http://localhost:5173)
+- **Tailwind CSS 4** via `@tailwindcss/vite` plugin
+- **Zustand** + **Zundo** for state management with undo/redo
+- **html-to-image** for canvas capture/export
+- **Dexie.js** for IndexedDB storage
+- **Google Fonts** for text elements
+
+## Commands
+
+```bash
+npm run dev      # Start dev server
+npm run build    # Production build
+npm run lint     # ESLint check
+```
+
+## Key Architecture
+
+### Canvas System
+- `src/components/HtmlCanvas.jsx` - Main canvas with zoom, pan, element rendering
+- `src/components/canvas/elements/` - Element type renderers
+- `src/hooks/useElementInteraction.js` - Shared drag/resize/rotate logic
+- `src/utils/fontEmbed.js` - Font embedding for capture
+
+### Element Types
+1. **Image** - With rotation, opacity, borders, corner shapes
+2. **Speech Bubble** - Round/cloud styles, inline text editing
+3. **Text** - Captions/titles, ContentEditable, auto-resize, Google Fonts
+4. **Text Effect** - SVG-based POW!/BAM! with fill + stroke + outer stroke
+
+### State Management
+```javascript
+// src/stores/useProjectStore.js
+updateElement(elementId, updates)
+addImage(file)
+addSpeechBubble(position)
+addText(position)
+addTextEffect(preset, position)  // 'pow', 'bam', 'boom', 'zap'
+deleteSelectedElements()
+reorderElements(ids, direction)
+```
+
+### Properties Panel
+- `src/components/editor/properties/ElementProperties.jsx` - Orchestrator
+- `src/components/editor/properties/sections/` - Modular sections per element type
+- `src/components/editor/ui/` - Reusable controls (NumberInput, FontSelect, etc.)
+
+## Coding Conventions
+
+### Components
+- Single component per file, default export
+- Functional components with hooks only
+- Page components in `src/pages/`
+- Shared components in `src/components/`
+
+### Styling (Tailwind v4)
+- Dark theme: `bg-slate-900`, `text-white`, `indigo-500` accents
+- Labels: `text-[10px] text-slate-500 uppercase font-bold`
+- Inputs: `bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-sm`
+- Focus: `focus:outline-none focus:ring-2 focus:ring-indigo-500/50`
+- **Avoid** `backdrop-blur` and transparency on backgrounds (GPU artifacts)
+
+### Key Patterns
+- Use existing UI components from `src/components/editor/ui/`
+- Use `CollapsibleSection` for property panel sections
+- Use `useElementInteraction` hook for element interactions
+- Use `SelectionHandles` component for resize/rotate handles
+
+## Important Files
+
+| File | Purpose |
+|------|---------|
+| `src/stores/useProjectStore.js` | All application state |
+| `src/components/HtmlCanvas.jsx` | Canvas with capture |
+| `src/components/canvas/elements/*.jsx` | Element renderers |
+| `src/hooks/useElementInteraction.js` | Drag/resize/rotate |
+| `src/utils/fontEmbed.js` | Font embedding for export |
+| `src/components/editor/properties/` | Property panels |
+
+## Current Features
+
+- HTML/CSS canvas with html-to-image capture
+- Image elements with corner shapes (round, bevel, notch, scoop, squircle)
+- Speech bubbles with inline text editing
+- Text elements with Google Fonts and auto-resize
+- Text effects (POW!, BAM!) with SVG stroke layers
+- Font embedding for proper export
+- Zoom, pan, undo/redo
+- Asset gallery with IndexedDB
+- Z-order management
+
+## Planned
+
+- Panel/frame elements
+- Export to PNG/JPG/PDF
+- Multi-select and grouping

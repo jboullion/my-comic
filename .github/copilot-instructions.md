@@ -4,7 +4,7 @@
 
 A Progressive Web App (PWA) for creating digital comic books. Client-centric architecture where all creative work happens in the browser—no backend storage for user content (user data sovereignty).
 
-**Current State:** Phase 6 - Full canvas editor with Konva.js, zoom/pan/undo-redo, image elements with advanced properties (rotation, opacity, borders, corner shapes), speech bubbles with inline text editing, modular collapsible property panels, asset gallery with IndexedDB storage, and Z-order management via context menu and drag-and-drop layers panel.
+**Current State:** Phase 7 - Full canvas editor with HTML/CSS canvas (html-to-image for capture), zoom/pan/undo-redo, image elements with advanced properties (rotation, opacity, borders, corner shapes), speech bubbles with inline text editing, text elements for captions/titles, text effect elements (POW!, BAM! style SVG effects), modular collapsible property panels, asset gallery with IndexedDB storage, and Z-order management via context menu and drag-and-drop layers panel.
 
 ## Tech Stack & Patterns
 
@@ -16,8 +16,9 @@ A Progressive Web App (PWA) for creating digital comic books. Client-centric arc
 - **Dexie.js** for IndexedDB operations ([src/lib/db.js](src/lib/db.js))
 - **Zustand** for global state management ([src/stores/useProjectStore.js](src/stores/useProjectStore.js))
 - **Zundo** for undo/redo functionality (temporal store wrapper)
-- **Konva.js** via `react-konva` for canvas rendering ([src/components/ComicCanvas.jsx](src/components/ComicCanvas.jsx))
+- **html-to-image** for canvas capture/export ([src/components/HtmlCanvas.jsx](src/components/HtmlCanvas.jsx))
 - **react-icons** (Feather icons) for UI icons
+- **Google Fonts** for text elements (Bangers, Comic Neue, Permanent Marker, etc.)
 
 ## Commands
 
@@ -49,9 +50,11 @@ src/
 ├── components/
 │   ├── canvas/
 │   │   ├── elements/
-│   │   │   ├── ElementRenderer.jsx    # Routes elements to type-specific renderers
-│   │   │   ├── ImageElement.jsx       # Konva image with corner shapes
-│   │   │   └── HtmlSpeechBubble.jsx   # HTML speech bubble overlay
+│   │   │   ├── HtmlImageElement.jsx   # Image element with corner shapes
+│   │   │   ├── HtmlSpeechBubble.jsx   # Speech bubble with text editing
+│   │   │   ├── HtmlTextElement.jsx    # Text element for captions/titles
+│   │   │   ├── HtmlTextEffect.jsx     # SVG text effects (POW!, BAM!)
+│   │   │   └── SelectionHandles.jsx   # Resize/rotate handles component
 │   │   ├── CanvasContextMenu.jsx      # Right-click context menu
 │   │   └── ZoomControls.jsx           # Zoom UI controls
 │   ├── editor/
@@ -63,6 +66,8 @@ src/
 │   │   │   │   ├── BorderShapeSection.jsx
 │   │   │   │   ├── BubbleStyleSection.jsx
 │   │   │   │   ├── TextSection.jsx
+│   │   │   │   ├── TextStyleSection.jsx      # Text element styling
+│   │   │   │   ├── TextEffectStyleSection.jsx # Text effect styling
 │   │   │   │   └── TransformSection.jsx
 │   │   │   ├── AssetGallery.jsx
 │   │   │   ├── LayersPanel.jsx
@@ -70,18 +75,22 @@ src/
 │   │   ├── ui/                        # Reusable form controls
 │   │   │   ├── NumberInput.jsx        # Number with +/- buttons
 │   │   │   ├── RangeInput.jsx         # Slider with number input
+│   │   │   ├── FontSelect.jsx         # Font family dropdown
 │   │   │   ├── PropertyInput.jsx
 │   │   │   └── ToolButton.jsx
 │   │   ├── FloatingToolbar.jsx
 │   │   ├── PagesSidebar.jsx
 │   │   └── PropertiesSidebar.jsx
-│   ├── ComicCanvas.jsx                # Main canvas manager
+│   ├── HtmlCanvas.jsx                 # Main canvas with html-to-image capture
 │   └── ...
 ├── contexts/
 │   └── AuthContext.jsx                # Supabase auth
 ├── hooks/
 │   ├── useAsset.js                    # Load asset metadata
-│   └── useImage.js                    # Load & cache images
+│   ├── useImage.js                    # Load & cache images
+│   └── useElementInteraction.js       # Drag/resize/rotate for elements
+├── utils/
+│   └── fontEmbed.js                   # Font embedding for html-to-image
 ├── layouts/
 │   ├── AppLayout.jsx                  # Protected routes
 │   ├── PublicLayout.jsx
@@ -116,6 +125,24 @@ src/
 - Double-click to edit text inline
 - Properties in: `SizeSection`, `BubbleStyleSection`, `TextSection`, `TransformSection`
 
+### Text Elements
+- Simple text for captions, narration, titles
+- ContentEditable for inline editing (double-click to edit)
+- Auto-resizes to fit content
+- Google Fonts support (Comic Neue, Roboto, Montserrat, etc.)
+- Font size, weight, color, alignment controls
+- Full resize and rotate handles
+- Properties in: `SizeSection`, `TextStyleSection`, `TransformSection`
+
+### Text Effect Elements
+- SVG-based comic effects (POW!, BAM!, BOOM!, ZAP!)
+- Multiple stroke layers: fill + stroke + outer stroke
+- Presets for quick creation via toolbar dropdown
+- Auto-resizes based on SVG bounding box
+- Rotate handle only (no resize handles)
+- Text editing via properties panel only
+- Properties in: `SizeSection`, `TextEffectStyleSection`, `TransformSection`
+
 ## Coding Conventions
 
 ### Component Structure
@@ -133,6 +160,7 @@ When adding property controls, use these existing components:
 - **RangeInput** - Slider with attached number input
 - **PropertyInput** - Basic text/number input with label
 - **CollapsibleSection** - Accordion wrapper with localStorage persistence
+- **FontSelect** - Font family dropdown with Google Fonts preview
 
 ### Styling
 - Tailwind utility classes only (no CSS modules)
@@ -180,6 +208,8 @@ tool: 'select' | 'image' | 'text' | 'speechBubble'
 updateElement(elementId, updates)    // Update element properties
 addImage(file)                       // Upload & add image
 addSpeechBubble(position)           // Create speech bubble
+addText(position)                    // Create text element
+addTextEffect(preset, position)      // Create text effect (pow, bam, boom, zap)
 deleteSelectedElements()
 reorderElements(ids, direction)      // Z-order operations
 ```
@@ -218,33 +248,38 @@ const { user, loading, signInWithGoogle, signInWithDiscord, signOut } = useAuth(
 | File | Purpose |
 |------|---------|
 | [src/stores/useProjectStore.js](src/stores/useProjectStore.js) | All application state |
-| [src/components/ComicCanvas.jsx](src/components/ComicCanvas.jsx) | Canvas with zoom, pan, element rendering |
-| [src/components/canvas/elements/ImageElement.jsx](src/components/canvas/elements/ImageElement.jsx) | Konva image with corner shapes |
+| [src/components/HtmlCanvas.jsx](src/components/HtmlCanvas.jsx) | Canvas with zoom, pan, element rendering, capture |
+| [src/components/canvas/elements/HtmlImageElement.jsx](src/components/canvas/elements/HtmlImageElement.jsx) | Image element with corner shapes |
 | [src/components/canvas/elements/HtmlSpeechBubble.jsx](src/components/canvas/elements/HtmlSpeechBubble.jsx) | Speech bubble with text editing |
+| [src/components/canvas/elements/HtmlTextElement.jsx](src/components/canvas/elements/HtmlTextElement.jsx) | Text element with inline editing |
+| [src/components/canvas/elements/HtmlTextEffect.jsx](src/components/canvas/elements/HtmlTextEffect.jsx) | SVG text effects (POW!, BAM!) |
+| [src/components/canvas/elements/SelectionHandles.jsx](src/components/canvas/elements/SelectionHandles.jsx) | Reusable resize/rotate handles |
+| [src/hooks/useElementInteraction.js](src/hooks/useElementInteraction.js) | Drag, resize, rotate logic |
 | [src/components/editor/properties/ElementProperties.jsx](src/components/editor/properties/ElementProperties.jsx) | Property panel orchestrator |
 | [src/components/editor/properties/sections/](src/components/editor/properties/sections/) | Modular property sections |
-| [src/components/editor/ui/NumberInput.jsx](src/components/editor/ui/NumberInput.jsx) | Number input with +/- buttons |
-| [src/components/editor/ui/RangeInput.jsx](src/components/editor/ui/RangeInput.jsx) | Slider with number input |
+| [src/components/editor/ui/FontSelect.jsx](src/components/editor/ui/FontSelect.jsx) | Font family dropdown |
+| [src/utils/fontEmbed.js](src/utils/fontEmbed.js) | Font embedding for html-to-image capture |
 | [src/lib/db.js](src/lib/db.js) | Dexie IndexedDB schema |
-| [src/lib/canvasShapes.js](src/lib/canvasShapes.js) | Shape drawing (round, bevel, notch, scoop, squircle) |
 | [src/pages/ProjectPage.jsx](src/pages/ProjectPage.jsx) | Main editor workspace |
 | [docs/Comic_Book_Maker_Tech_Spec.md](docs/Comic_Book_Maker_Tech_Spec.md) | Full technical specification |
 
 ## Implemented Features
 
-- ✅ Konva.js canvas with zoom, pan, undo/redo
+- ✅ HTML/CSS canvas with html-to-image capture, zoom, pan, undo/redo
 - ✅ Image elements with rotation, opacity, borders, corner shapes
 - ✅ Panel elements with custom corner geometries (bevel, notch, scoop, squircle)
 - ✅ Asset gallery with IndexedDB storage and drag-and-drop
 - ✅ Z-order management via right-click context menu
 - ✅ Drag-and-drop layer reordering in layers panel
 - ✅ Speech bubbles with editable text (round and cloud styles)
+- ✅ Text elements with Google Fonts, inline editing, auto-resize
+- ✅ Text effect elements (POW!, BAM!) with SVG fill/stroke/outer stroke
+- ✅ Font embedding for proper capture/export of custom fonts
 - ✅ Modular collapsible property sections with localStorage persistence
-- ✅ Reusable UI components (NumberInput, RangeInput, CollapsibleSection)
+- ✅ Reusable UI components (NumberInput, RangeInput, FontSelect, CollapsibleSection)
 
 ## Planned Features
 
-- Text elements with font selection
 - Panel/frame elements
 - Export to image formats (PNG, JPG, PDF)
 - Multi-select and group operations
