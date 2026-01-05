@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, useCallback } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { FiLoader, FiFrown, FiUploadCloud } from 'react-icons/fi'
 import AppLayout from '../layouts/AppLayout'
@@ -8,6 +8,7 @@ import ProjectHeader from '../components/editor/ProjectHeader'
 import PagesSidebar from '../components/editor/PagesSidebar'
 import PropertiesSidebar from '../components/editor/PropertiesSidebar'
 import ProjectSettingsModal from '../components/editor/ProjectSettingsModal'
+import { exportPagesToZip } from '../lib/export'
 
 export default function ProjectPage() {
   const { projectId } = useParams()
@@ -25,7 +26,7 @@ export default function ProjectPage() {
     loadProject,
     clearCurrentProject,
     saveCurrentProject,
-    saveToFile,
+    saveAsMyComic,
     addPage,
     updateCurrentProject,
     updateProjectSettings,
@@ -46,6 +47,7 @@ export default function ProjectPage() {
 
   const [isDraggingOver, setIsDraggingOver] = useState(false)
   const [showProjectSettings, setShowProjectSettings] = useState(false)
+  const [isExporting, setIsExporting] = useState(false)
 
   // Load project on mount
   useEffect(() => {
@@ -164,7 +166,7 @@ export default function ProjectPage() {
 
   const handleSaveToFile = async () => {
     try {
-      await saveToFile()
+      await saveAsMyComic()
     } catch (error) {
       console.error('Save to file failed:', error)
     }
@@ -250,6 +252,27 @@ export default function ProjectPage() {
     }
   }
 
+  const handleExport = useCallback(async () => {
+    if (!canvasRef.current || !currentProject) return
+
+    setIsExporting(true)
+    try {
+      const pages = await canvasRef.current.captureAllPages({
+        format: 'webp',
+        quality: 0.9
+      })
+
+      if (pages.length > 0) {
+        await exportPagesToZip(pages, currentProject.title, 'webp')
+      }
+    } catch (error) {
+      console.error('Export failed:', error)
+      alert('Failed to export pages. Please try again.')
+    } finally {
+      setIsExporting(false)
+    }
+  }, [currentProject])
+
   // Loading state
   if (currentProjectLoading) {
     return (
@@ -294,9 +317,11 @@ export default function ProjectPage() {
           project={currentProject}
           hasUnsavedChanges={hasUnsavedChanges}
           isSaving={isSaving}
+          isExporting={isExporting}
           onTitleChange={handleTitleChange}
           onSave={saveCurrentProject}
           onSaveToFile={handleSaveToFile}
+          onExport={handleExport}
           onOpenProjectSettings={() => setShowProjectSettings(true)}
           tool={tool}
           onToolChange={setTool}

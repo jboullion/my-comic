@@ -368,7 +368,78 @@ const HtmlCanvas = forwardRef(function HtmlCanvas(props, ref) {
         capture.cleanup()
       }
     },
-    getPageRef: () => pageRef.current
+    getPageRef: () => pageRef.current,
+    /**
+     * Capture all pages as images
+     * @param {Object} options - Capture options
+     * @param {string} options.format - 'webp' | 'png' (default: 'webp')
+     * @param {number} options.quality - Quality for webp (0-1, default: 0.9)
+     * @param {Function} options.onProgress - Progress callback (pageIndex, totalPages)
+     * @returns {Promise<Array<{index: number, dataUrl: string}>>}
+     */
+    captureAllPages: async ({ format = 'webp', quality = 0.9, onProgress } = {}) => {
+      const state = useProjectStore.getState()
+      const project = state.currentProject
+      if (!project || !project.pages.length) return []
+
+      const originalPageIndex = state.activePageIndex
+      const pages = []
+
+      for (let i = 0; i < project.pages.length; i++) {
+        // Report progress
+        if (onProgress) onProgress(i, project.pages.length)
+
+        // Switch to the page
+        state.setActivePageIndex(i)
+
+        // Wait for React to re-render (two animation frames to ensure DOM is updated)
+        await new Promise(resolve => {
+          requestAnimationFrame(() => {
+            requestAnimationFrame(resolve)
+          })
+        })
+
+        // Small additional delay for any async content
+        await new Promise(resolve => setTimeout(resolve, 50))
+
+        // Create fresh clone after page switch
+        const capture = createCaptureClone()
+        if (!capture) continue
+
+        try {
+          const fontEmbedCSS = await getEmbeddedFontCSS()
+          const pageData = project.pages[i]
+          const pageSettings = pageData.settings || project.settings
+          const width = pageSettings.width
+          const height = pageSettings.height
+
+          const canvas = await toCanvas(capture.clone, {
+            width,
+            height,
+            pixelRatio: 2,
+            fontEmbedCSS,
+            style: {
+              transform: 'none',
+              transformOrigin: 'top left'
+            }
+          })
+
+          const mimeType = format === 'png' ? 'image/png' : 'image/webp'
+          const dataUrl = canvas.toDataURL(mimeType, format === 'png' ? undefined : quality)
+
+          pages.push({ index: i, dataUrl })
+        } catch (error) {
+          console.error(`Failed to capture page ${i + 1}:`, error)
+        } finally {
+          capture.cleanup()
+        }
+      }
+
+      // Restore original page
+      state.setActivePageIndex(originalPageIndex)
+
+      return pages
+    }
   }), [pageWidth, pageHeight, createCaptureClone])
 
   if (!currentProject) return null
