@@ -25,6 +25,7 @@
 - Probably remove the "Layers" panel for now. Potentially turn it into shapes / decals later
 
 
+
 ### Text
 
 Add "arcs" and other common SVG text effects to our text elements
@@ -50,6 +51,7 @@ Add "arcs" and other common SVG text effects to our text elements
 - Show original size in properties
 - Need a search system.
 - Search by name. Filter by pages placed on and date added
+- We DO have limits on space with IndexDB and so we might need to warn users or ask users to install locally if they want to have more working space.
 
 ### Canvas
 
