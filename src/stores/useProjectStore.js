@@ -687,7 +687,7 @@ export const useProjectStore = create(
             fill: '#FF6B00',
             stroke: '#000000',
             strokeWidth: 3,
-            outerStroke: '',
+            outerStroke: '#FFFFFF',
             outerStrokeWidth: 0,
           },
           boom: {
@@ -705,7 +705,7 @@ export const useProjectStore = create(
             fill: '#00FFFF',
             stroke: '#000000',
             strokeWidth: 3,
-            outerStroke: '',
+            outerStroke: '#FF00FF',
             outerStrokeWidth: 0,
           },
           custom: {
@@ -714,7 +714,7 @@ export const useProjectStore = create(
             fill: '#FFFFFF',
             stroke: '#000000',
             strokeWidth: 2,
-            outerStroke: '',
+            outerStroke: '#FF0000',
             outerStrokeWidth: 0,
           }
         }

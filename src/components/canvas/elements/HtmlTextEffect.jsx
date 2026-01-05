@@ -91,7 +91,7 @@ export default function HtmlTextEffect({ element, onSelect, onChange, onContextM
     fill = '#FFFF00',
     stroke = '#000000',
     strokeWidth = 3,
-    outerStroke = '',
+    outerStroke = '#FF0000',
     outerStrokeWidth = 0,
     textAlign = 'center',
     letterSpacing = 2,
@@ -140,7 +140,7 @@ export default function HtmlTextEffect({ element, onSelect, onChange, onContextM
             }}
           >
             {/* Outer stroke layer (if enabled) */}
-            {outerStroke && outerStrokeWidth > 0 && (
+            {outerStrokeWidth > 0 && (
               <tspan
                 fill="none"
                 stroke={outerStroke}
