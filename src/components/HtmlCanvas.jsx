@@ -1,8 +1,11 @@
 import React, { useRef, useEffect, useState, useCallback, useImperativeHandle, forwardRef } from 'react'
 import { toPng } from 'html-to-image'
 import useProjectStore from '../stores/useProjectStore'
+import { getEmbeddedFontCSS, preloadFonts } from '../utils/fontEmbed'
 import HtmlImageElement from './canvas/elements/HtmlImageElement'
 import HtmlSpeechBubble from './canvas/elements/HtmlSpeechBubble'
+import HtmlTextElement from './canvas/elements/HtmlTextElement'
+import HtmlTextEffect from './canvas/elements/HtmlTextEffect'
 import ZoomControls from './canvas/ZoomControls'
 import CanvasContextMenu from './canvas/CanvasContextMenu'
 
@@ -49,6 +52,11 @@ const HtmlCanvas = forwardRef(function HtmlCanvas(props, ref) {
       window.removeEventListener('click', handleClick)
       window.removeEventListener('wheel', handleClick)
     }
+  }, [])
+
+  // Preload fonts for capture (runs once on mount)
+  useEffect(() => {
+    preloadFonts()
   }, [])
 
   /**
@@ -105,6 +113,9 @@ const HtmlCanvas = forwardRef(function HtmlCanvas(props, ref) {
   const handleWheel = useCallback((e) => {
     e.preventDefault()
 
+    // Ignore wheel events while panning (prevents accidental zoom during middle-click drag)
+    if (isPanning) return
+
     const rect = containerRef.current.getBoundingClientRect()
     const mouseX = e.clientX - rect.left
     const mouseY = e.clientY - rect.top
@@ -124,7 +135,7 @@ const HtmlCanvas = forwardRef(function HtmlCanvas(props, ref) {
 
     setZoom(newZoom)
     setPanOffset({ x: newPanX, y: newPanY })
-  }, [zoom, panOffset, setZoom])
+  }, [zoom, panOffset, setZoom, isPanning])
 
   /**
    * Handle zoom reset (100%)
@@ -243,21 +254,62 @@ const HtmlCanvas = forwardRef(function HtmlCanvas(props, ref) {
     addAssetToPage(Number(assetId), pos)
   }, [screenToPage, addAssetToPage])
 
+  /**
+   * Create a hidden clone of the page for capture (removes selection UI)
+   * Returns { clone, cleanup } where cleanup removes the clone from DOM
+   */
+  const createCaptureClone = useCallback(() => {
+    if (!pageRef.current) return null
+
+    // Create a container that clips the clone (invisible but fully rendered)
+    const container = document.createElement('div')
+    container.style.position = 'fixed'
+    container.style.top = '0'
+    container.style.left = '0'
+    container.style.width = '1px'
+    container.style.height = '1px'
+    container.style.overflow = 'hidden'
+    container.style.pointerEvents = 'none'
+
+    // Clone the page element
+    const clone = pageRef.current.cloneNode(true)
+
+    // Remove all selection UI elements from the clone
+    const selectionElements = clone.querySelectorAll('.selection-ui')
+    selectionElements.forEach(el => el.remove())
+
+    // Reset clone positioning (it will be positioned by container)
+    clone.style.position = 'relative'
+    clone.style.left = '0'
+    clone.style.top = '0'
+
+    container.appendChild(clone)
+    document.body.appendChild(container)
+
+    return {
+      clone,
+      cleanup: () => container.remove()
+    }
+  }, [])
+
   // Expose methods to parent via ref
   useImperativeHandle(ref, () => ({
     generateThumbnail: async () => {
       if (!pageRef.current) return null
 
-      // Hide selection handles via CSS class (no state change = no flash)
-      pageRef.current.classList.add('capturing')
-      // Wait for browser to apply the style
-      await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))
+      // Create off-screen clone without selection UI
+      const capture = createCaptureClone()
+      if (!capture) return null
 
       try {
-        const dataUrl = await toPng(pageRef.current, {
+        // Get embedded font CSS for proper font rendering
+        const fontEmbedCSS = await getEmbeddedFontCSS()
+
+        const dataUrl = await toPng(capture.clone, {
           width: pageWidth,
           height: pageHeight,
           pixelRatio: 0.5,
+          fontEmbedCSS, // Embed fonts to avoid cross-origin errors
           style: {
             transform: 'none',
             transformOrigin: 'top left'
@@ -270,21 +322,25 @@ const HtmlCanvas = forwardRef(function HtmlCanvas(props, ref) {
         console.error('Failed to generate thumbnail:', error)
         return null
       } finally {
-        pageRef.current?.classList.remove('capturing')
+        capture.cleanup()
       }
     },
     captureFullPage: async () => {
       if (!pageRef.current) return null
 
-      // Hide selection handles via CSS class (no state change = no flash)
-      pageRef.current.classList.add('capturing')
-      await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))
+      // Create off-screen clone without selection UI
+      const capture = createCaptureClone()
+      if (!capture) return null
 
       try {
-        const result = await toPng(pageRef.current, {
+        // Get embedded font CSS for proper font rendering
+        const fontEmbedCSS = await getEmbeddedFontCSS()
+
+        const result = await toPng(capture.clone, {
           width: pageWidth,
           height: pageHeight,
           pixelRatio: 2,
+          fontEmbedCSS, // Embed fonts to avoid cross-origin errors
           style: {
             transform: 'none',
             transformOrigin: 'top left'
@@ -296,11 +352,11 @@ const HtmlCanvas = forwardRef(function HtmlCanvas(props, ref) {
         console.error('Failed to capture full page:', error)
         return null
       } finally {
-        pageRef.current?.classList.remove('capturing')
+        capture.cleanup()
       }
     },
     getPageRef: () => pageRef.current
-  }), [pageWidth, pageHeight])
+  }), [pageWidth, pageHeight, createCaptureClone])
 
   if (!currentProject) return null
 
@@ -369,6 +425,48 @@ const HtmlCanvas = forwardRef(function HtmlCanvas(props, ref) {
             if (element.type === 'image') {
               return (
                 <HtmlImageElement
+                  key={element.id}
+                  element={element}
+                  isSelected={selectedElementIds.includes(element.id)}
+                  onSelect={() => setSelectedElementIds([element.id])}
+                  onChange={(updates) => updateElement(element.id, updates)}
+                  onContextMenu={(e) => {
+                    e.preventDefault()
+                    setContextMenu({
+                      visible: true,
+                      x: e.clientX,
+                      y: e.clientY
+                    })
+                  }}
+                  zoom={zoom}
+                />
+              )
+            }
+
+            if (element.type === 'text') {
+              return (
+                <HtmlTextElement
+                  key={element.id}
+                  element={element}
+                  isSelected={selectedElementIds.includes(element.id)}
+                  onSelect={() => setSelectedElementIds([element.id])}
+                  onChange={(updates) => updateElement(element.id, updates)}
+                  onContextMenu={(e) => {
+                    e.preventDefault()
+                    setContextMenu({
+                      visible: true,
+                      x: e.clientX,
+                      y: e.clientY
+                    })
+                  }}
+                  zoom={zoom}
+                />
+              )
+            }
+
+            if (element.type === 'textEffect') {
+              return (
+                <HtmlTextEffect
                   key={element.id}
                   element={element}
                   isSelected={selectedElementIds.includes(element.id)}

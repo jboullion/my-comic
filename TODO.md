@@ -17,9 +17,12 @@
 - - Setup project settings page. Including Thumbnail / cover
 - Some actions don't seem to get caught in the undo. Is there a redo?
 - Snap to grid not working with keyboard movement on elements
+- Sometimes the save will "hijack" the ui a bit. Try to prevent that.
 
 
 ## Ideas and Brainstorming
+
+
 
 ### UI / UX
 
@@ -28,6 +31,12 @@
 - Allow page settings to have rounded edges? Same with export?
 
 - Probably remove the "Layers" panel for now. Potentially turn it into shapes / decals later
+
+
+### Text
+
+Add "arcs" and other common SVG text effects to our text elements
+
 
 ### Projects
 - Lots of project default settings

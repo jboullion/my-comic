@@ -62,8 +62,9 @@ export const selectionBorderStyle = {
 
 /**
  * Selection handles component for resize and rotate interactions
+ * @param {boolean} hideResizeHandles - If true, hides resize handles but keeps rotate handle
  */
-export default function SelectionHandles({ onResizeStart, onRotateStart }) {
+export default function SelectionHandles({ onResizeStart, onRotateStart, hideResizeHandles = false }) {
   return (
     <div className="selection-ui">
       {/* Rotate handle */}
@@ -75,7 +76,7 @@ export default function SelectionHandles({ onResizeStart, onRotateStart }) {
       />
 
       {/* Resize handles */}
-      {RESIZE_HANDLES.map((handle) => (
+      {!hideResizeHandles && RESIZE_HANDLES.map((handle) => (
         <div
           key={handle.id}
           style={{

@@ -48,6 +48,8 @@ export default function useElementInteraction({
 
   const handleDragStart = useCallback((e) => {
     if (isDisabled) return
+    // Only respond to left mouse button (0), ignore middle (1) and right (2)
+    if (e.button !== 0) return
     e.preventDefault()
     e.stopPropagation()
 
@@ -64,6 +66,8 @@ export default function useElementInteraction({
   }, [isDisabled, element.x, element.y, onSelect])
 
   const handleResizeStart = useCallback((e, handle) => {
+    // Only respond to left mouse button (0), ignore middle (1) and right (2)
+    if (e.button !== 0) return
     e.preventDefault()
     e.stopPropagation()
 
@@ -85,6 +89,8 @@ export default function useElementInteraction({
   }, [element.width, element.height, element.x, element.y, element.rotation, getElementCenter])
 
   const handleRotateStart = useCallback((e) => {
+    // Only respond to left mouse button (0), ignore middle (1) and right (2)
+    if (e.button !== 0) return
     e.preventDefault()
     e.stopPropagation()
 

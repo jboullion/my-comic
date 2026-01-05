@@ -625,6 +625,133 @@ export const useProjectStore = create(
       },
 
       /**
+       * Add a text element to the current page
+       */
+      addText: async (position = { x: 200, y: 200 }) => {
+        const { currentProject, activePageIndex } = get()
+        if (!currentProject) return
+
+        const newElement = {
+          type: 'text',
+          id: `elem-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
+          x: position.x,
+          y: position.y,
+          width: 200,
+          height: 60,
+          rotation: 0,
+          scaleX: 1,
+          scaleY: 1,
+          opacity: 1,
+          text: 'Double-click to edit',
+          fontSize: 24,
+          fontFamily: 'Arial, sans-serif',
+          fontWeight: 'normal',
+          fontStyle: 'normal',
+          textColor: '#000000',
+          textAlign: 'center',
+          verticalAlign: 'middle',
+          padding: 8,
+          zIndex: (currentProject.pages[activePageIndex].elements?.length || 0) + 1
+        }
+
+        const pages = [...currentProject.pages]
+        const page = { ...pages[activePageIndex] }
+        page.elements = [...(page.elements || []), newElement]
+        pages[activePageIndex] = page
+
+        await get().updateCurrentProject({ pages })
+        set({ selectedElementIds: [newElement.id] })
+        return newElement
+      },
+
+      /**
+       * Add a text effect element to the current page
+       */
+      addTextEffect: async (preset = 'custom', position = { x: 200, y: 200 }) => {
+        const { currentProject, activePageIndex } = get()
+        if (!currentProject) return
+
+        const presets = {
+          pow: {
+            text: 'POW!',
+            fontSize: 64,
+            fill: '#FFFF00',
+            stroke: '#000000',
+            strokeWidth: 3,
+            outerStroke: '#FF0000',
+            outerStrokeWidth: 4,
+          },
+          bam: {
+            text: 'BAM!',
+            fontSize: 64,
+            fill: '#FF6B00',
+            stroke: '#000000',
+            strokeWidth: 3,
+            outerStroke: '#FFFFFF',
+            outerStrokeWidth: 0,
+          },
+          boom: {
+            text: 'BOOM!',
+            fontSize: 64,
+            fill: '#FF0000',
+            stroke: '#FFFFFF',
+            strokeWidth: 4,
+            outerStroke: '#000000',
+            outerStrokeWidth: 2,
+          },
+          zap: {
+            text: 'ZAP!',
+            fontSize: 64,
+            fill: '#00FFFF',
+            stroke: '#000000',
+            strokeWidth: 3,
+            outerStroke: '#FF00FF',
+            outerStrokeWidth: 0,
+          },
+          custom: {
+            text: 'TEXT',
+            fontSize: 48,
+            fill: '#FFFFFF',
+            stroke: '#000000',
+            strokeWidth: 2,
+            outerStroke: '#FF0000',
+            outerStrokeWidth: 0,
+          }
+        }
+
+        const presetData = presets[preset] || presets.custom
+
+        const newElement = {
+          type: 'textEffect',
+          id: `elem-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
+          x: position.x,
+          y: position.y,
+          width: 200,
+          height: 100,
+          rotation: 0,
+          scaleX: 1,
+          scaleY: 1,
+          opacity: 1,
+          fontFamily: 'Bangers, cursive',
+          fontWeight: 'bold',
+          textAlign: 'center',
+          letterSpacing: 2,
+          preset: preset,
+          ...presetData,
+          zIndex: (currentProject.pages[activePageIndex].elements?.length || 0) + 1
+        }
+
+        const pages = [...currentProject.pages]
+        const page = { ...pages[activePageIndex] }
+        page.elements = [...(page.elements || []), newElement]
+        pages[activePageIndex] = page
+
+        await get().updateCurrentProject({ pages })
+        set({ selectedElementIds: [newElement.id] })
+        return newElement
+      },
+
+      /**
        * Delete a page from current project
        */
       deletePage: async (pageIndex) => {
