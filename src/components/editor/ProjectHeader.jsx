@@ -7,9 +7,9 @@ import FloatingToolbar from './FloatingToolbar'
  * ProjectHeader Component
  * Top header bar with project title, save controls, and navigation
  */
-export default function ProjectHeader({ 
-  project, 
-  hasUnsavedChanges, 
+export default function ProjectHeader({
+  project,
+  hasUnsavedChanges,
   isSaving,
   onTitleChange,
   onSaveToFile,
@@ -18,6 +18,8 @@ export default function ProjectHeader({
   onToolChange,
   onImageUpload,
   onAddSpeechBubble,
+  onAddText,
+  onAddTextEffect,
   fileInputRef
 }) {
   return (
@@ -47,11 +49,13 @@ export default function ProjectHeader({
 
       <div className="flex-1 flex justify-center">
         <div className="">
-          <FloatingToolbar 
+          <FloatingToolbar
             tool={tool}
             onToolChange={onToolChange}
             onImageUpload={onImageUpload}
             onAddSpeechBubble={onAddSpeechBubble}
+            onAddText={onAddText}
+            onAddTextEffect={onAddTextEffect}
             fileInputRef={fileInputRef}
           />
         </div>

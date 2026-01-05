@@ -5,6 +5,8 @@ import SizeSection from './sections/SizeSection'
 import BorderShapeSection from './sections/BorderShapeSection'
 import BubbleStyleSection from './sections/BubbleStyleSection'
 import TextSection from './sections/TextSection'
+import TextStyleSection from './sections/TextStyleSection'
+import TextEffectStyleSection from './sections/TextEffectStyleSection'
 import TransformSection from './sections/TransformSection'
 
 /**
@@ -23,7 +25,8 @@ export default function ElementProperties({ element }) {
     const names = {
       image: 'Image',
       speechBubble: 'Speech Bubble',
-      text: 'Text'
+      text: 'Text',
+      textEffect: 'Text Effect'
     }
     return names[type] || type.charAt(0).toUpperCase() + type.slice(1)
   }
@@ -86,6 +89,44 @@ export default function ElementProperties({ element }) {
             storageKey="bubble-text"
           >
             <TextSection element={element} onUpdate={handleUpdate} />
+          </CollapsibleSection>
+        </>
+      )}
+
+      {/* Text-specific sections */}
+      {element.type === 'text' && (
+        <>
+          <CollapsibleSection
+            title="Size"
+            storageKey="text-size"
+          >
+            <SizeSection element={element} onUpdate={handleUpdate} />
+          </CollapsibleSection>
+
+          <CollapsibleSection
+            title="Text Style"
+            storageKey="text-style"
+          >
+            <TextStyleSection element={element} onUpdate={handleUpdate} />
+          </CollapsibleSection>
+        </>
+      )}
+
+      {/* Text Effect-specific sections */}
+      {element.type === 'textEffect' && (
+        <>
+          <CollapsibleSection
+            title="Size"
+            storageKey="textEffect-size"
+          >
+            <SizeSection element={element} onUpdate={handleUpdate} />
+          </CollapsibleSection>
+
+          <CollapsibleSection
+            title="Effect Style"
+            storageKey="textEffect-style"
+          >
+            <TextEffectStyleSection element={element} onUpdate={handleUpdate} />
           </CollapsibleSection>
         </>
       )}

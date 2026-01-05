@@ -3,6 +3,8 @@ import { toPng } from 'html-to-image'
 import useProjectStore from '../stores/useProjectStore'
 import HtmlImageElement from './canvas/elements/HtmlImageElement'
 import HtmlSpeechBubble from './canvas/elements/HtmlSpeechBubble'
+import HtmlTextElement from './canvas/elements/HtmlTextElement'
+import HtmlTextEffect from './canvas/elements/HtmlTextEffect'
 import ZoomControls from './canvas/ZoomControls'
 import CanvasContextMenu from './canvas/CanvasContextMenu'
 
@@ -369,6 +371,48 @@ const HtmlCanvas = forwardRef(function HtmlCanvas(props, ref) {
             if (element.type === 'image') {
               return (
                 <HtmlImageElement
+                  key={element.id}
+                  element={element}
+                  isSelected={selectedElementIds.includes(element.id)}
+                  onSelect={() => setSelectedElementIds([element.id])}
+                  onChange={(updates) => updateElement(element.id, updates)}
+                  onContextMenu={(e) => {
+                    e.preventDefault()
+                    setContextMenu({
+                      visible: true,
+                      x: e.clientX,
+                      y: e.clientY
+                    })
+                  }}
+                  zoom={zoom}
+                />
+              )
+            }
+
+            if (element.type === 'text') {
+              return (
+                <HtmlTextElement
+                  key={element.id}
+                  element={element}
+                  isSelected={selectedElementIds.includes(element.id)}
+                  onSelect={() => setSelectedElementIds([element.id])}
+                  onChange={(updates) => updateElement(element.id, updates)}
+                  onContextMenu={(e) => {
+                    e.preventDefault()
+                    setContextMenu({
+                      visible: true,
+                      x: e.clientX,
+                      y: e.clientY
+                    })
+                  }}
+                  zoom={zoom}
+                />
+              )
+            }
+
+            if (element.type === 'textEffect') {
+              return (
+                <HtmlTextEffect
                   key={element.id}
                   element={element}
                   isSelected={selectedElementIds.includes(element.id)}

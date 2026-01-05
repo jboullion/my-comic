@@ -15,7 +15,7 @@ export default function ProjectPage() {
   const autoSaveTimerRef = useRef(null)
   const isSavingRef = useRef(false)
 
-  const { 
+  const {
     currentProject,
     currentProjectLoading,
     currentProjectError,
@@ -35,6 +35,8 @@ export default function ProjectPage() {
     addImage,
     addAssetToPage,
     addSpeechBubble,
+    addText,
+    addTextEffect,
     selectedElementIds,
     setSelectedElementIds,
     selectedAssetId,
@@ -218,6 +220,14 @@ export default function ProjectPage() {
     }
   }
 
+  const handleAddText = () => {
+    addText()
+  }
+
+  const handleAddTextEffect = (preset) => {
+    addTextEffect(preset)
+  }
+
   const handleDragOver = (e) => {
     e.preventDefault()
     e.stopPropagation()
@@ -298,7 +308,7 @@ export default function ProjectPage() {
     <AppLayout>
       <div className="flex flex-col h-[calc(100vh-61px)]">
         {/* Project Header */}
-        <ProjectHeader 
+        <ProjectHeader
           project={currentProject}
           hasUnsavedChanges={hasUnsavedChanges}
           isSaving={isSaving}
@@ -309,6 +319,8 @@ export default function ProjectPage() {
           onToolChange={setTool}
           onImageUpload={handleImageUpload}
           onAddSpeechBubble={handleAddSpeechBubble}
+          onAddText={handleAddText}
+          onAddTextEffect={handleAddTextEffect}
           fileInputRef={fileInputRef}
         />
 
