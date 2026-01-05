@@ -11,8 +11,10 @@ export default function ProjectHeader({
   project,
   hasUnsavedChanges,
   isSaving,
+  isExporting,
   onTitleChange,
   onSaveToFile,
+  onExport,
   onOpenProjectSettings,
   // Toolbar props
   tool,
@@ -78,8 +80,12 @@ export default function ProjectHeader({
           <FiDownload className="w-4 h-4" />
           Save As
         </button>
-        <button className="px-4 py-1.5 bg-indigo-500 hover:bg-indigo-600 rounded-lg text-sm font-medium transition-colors">
-          Export
+        <button
+          onClick={onExport}
+          disabled={isExporting}
+          className="px-4 py-1.5 bg-indigo-500 hover:bg-indigo-600 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+        >
+          {isExporting ? 'Exporting...' : 'Export'}
         </button>
       </div>
     </div>

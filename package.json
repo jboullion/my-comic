@@ -13,6 +13,7 @@
     "@supabase/supabase-js": "^2.89.0",
     "dexie": "^4.2.1",
     "html-to-image": "^1.11.11",
+    "jszip": "^3.10.1",
     "lodash-es": "^4.17.22",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",

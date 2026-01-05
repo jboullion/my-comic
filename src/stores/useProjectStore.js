@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { temporal } from 'zundo'
 import { projectsDb, createBlankPage } from '../lib/db'
 import { imageAssets } from '../lib/images'
+import { saveProjectToFile, loadProjectFromFile } from '../lib/projectFile'
 
 /**
  * Project Store
@@ -404,6 +405,47 @@ export const useProjectStore = create(
           return null
         } catch (error) {
           console.error('Failed to open from file:', error)
+          throw error
+        }
+      },
+
+      /**
+       * Save current project as .mycomic file (includes images)
+       */
+      saveAsMyComic: async () => {
+        const { currentProject } = get()
+        if (!currentProject) return
+
+        set({ isSaving: true })
+        try {
+          // First save to IndexedDB
+          await get().saveCurrentProject()
+
+          // Then save to .mycomic file
+          const result = await saveProjectToFile(currentProject)
+          set({ isSaving: false })
+          return result
+        } catch (error) {
+          console.error('Failed to save as .mycomic:', error)
+          set({ isSaving: false })
+          throw error
+        }
+      },
+
+      /**
+       * Load project from .mycomic file
+       */
+      loadFromMyComic: async () => {
+        try {
+          const result = await loadProjectFromFile()
+          if (result.success && result.project) {
+            // Refresh projects list
+            await get().loadProjects()
+            return result.project
+          }
+          return null
+        } catch (error) {
+          console.error('Failed to load .mycomic file:', error)
           throw error
         }
       },
