@@ -309,6 +309,47 @@ export const useProjectStore = create(
       setSnapGridSize: (snapGridSize) => set({ snapGridSize }),
 
       /**
+       * Update project settings AND apply to all pages
+       * Used when user wants to sync all pages to project defaults
+       */
+      updateProjectSettings: (settings) => {
+        const { currentProject } = get()
+        if (!currentProject) return
+
+        // Merge with existing settings
+        const newProjectSettings = { ...currentProject.settings, ...settings }
+
+        // Update all pages with new settings
+        const updatedPages = currentProject.pages.map(page => ({
+          ...page,
+          settings: { ...newProjectSettings }
+        }))
+
+        get().updateCurrentProjectLocal({
+          settings: newProjectSettings,
+          pages: updatedPages
+        })
+      },
+
+      /**
+       * Update settings for a specific page only
+       */
+      updatePageSettings: (pageIndex, settings) => {
+        const { currentProject } = get()
+        if (!currentProject) return
+
+        const pages = [...currentProject.pages]
+        const page = { ...pages[pageIndex] }
+
+        // Merge with existing page settings (or project settings as fallback)
+        const currentPageSettings = page.settings || currentProject.settings
+        page.settings = { ...currentPageSettings, ...settings }
+
+        pages[pageIndex] = page
+        get().updateCurrentProjectLocal({ pages })
+      },
+
+      /**
        * Set selected elements
        */
       setSelectedElementIds: (ids) => set({ selectedElementIds: ids }),
@@ -368,15 +409,15 @@ export const useProjectStore = create(
       },
 
       /**
-       * Add a new page to current project
+       * Add a new page to current project (inherits project settings)
        */
       addPage: async () => {
         const { currentProject } = get()
         if (!currentProject) return
 
         const newPageNumber = currentProject.pages.length + 1
-        const newPage = createBlankPage(newPageNumber)
-        
+        const newPage = createBlankPage(newPageNumber, currentProject.settings)
+
         const updatedPages = [...currentProject.pages, newPage]
         await get().updateCurrentProject({ pages: updatedPages })
         set({ activePageIndex: updatedPages.length - 1 })

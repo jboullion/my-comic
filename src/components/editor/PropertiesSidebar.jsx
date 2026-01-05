@@ -1,26 +1,19 @@
 import { useState } from 'react'
 import ElementProperties from './properties/ElementProperties'
-import PageSettings from './properties/PageSettings'
+import PageSettingsPanel from './properties/PageSettingsPanel'
 import AssetGallery from './properties/AssetGallery'
 import AssetPropertiesWidget from './properties/AssetPropertiesWidget'
-import LayersPanel from './properties/LayersPanel'
 
 /**
  * PropertiesSidebar Component
- * Right sidebar with tabbed interface for properties, assets, and layers
+ * Right sidebar with tabbed interface for properties, assets, and page settings
  */
-export default function PropertiesSidebar({ 
+export default function PropertiesSidebar({
   currentProject,
-  currentPage,
-  activePageIndex,
   selectedElement,
-  selectedElementIds,
   selectedAssetId,
-  onSelectElement,
   onSelectAsset,
   onAddAsset,
-  onSettingsChange,
-  onApplyPreset
 }) {
   const [activeTab, setActiveTab] = useState('properties')
 
@@ -38,10 +31,10 @@ export default function PropertiesSidebar({
           active={activeTab === 'assets'} 
           onClick={() => setActiveTab('assets')}
         />
-        <TabButton 
-          label="Layers" 
-          active={activeTab === 'layers'} 
-          onClick={() => setActiveTab('layers')}
+        <TabButton
+          label="Page"
+          active={activeTab === 'page'}
+          onClick={() => setActiveTab('page')}
         />
       </div>
 
@@ -51,11 +44,9 @@ export default function PropertiesSidebar({
             {selectedElement ? (
               <ElementProperties element={selectedElement} />
             ) : (
-              <PageSettings 
-                settings={currentProject.settings}
-                onSettingsChange={onSettingsChange}
-                onApplyPreset={onApplyPreset}
-              />
+              <div className="text-center py-8 text-slate-500 text-sm">
+                Select an element to edit its properties
+              </div>
             )}
           </div>
         )}
@@ -82,13 +73,8 @@ export default function PropertiesSidebar({
           </div>
         )}
 
-        {activeTab === 'layers' && (
-          <LayersPanel 
-            currentPage={currentPage}
-            activePageIndex={activePageIndex}
-            selectedElementIds={selectedElementIds}
-            onSelectElement={onSelectElement}
-          />
+        {activeTab === 'page' && (
+          <PageSettingsPanel />
         )}
       </div>
     </aside>

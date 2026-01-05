@@ -40,7 +40,11 @@ db.version(3).stores({
  * {
  *   id: string
  *   pageNumber: number
- *   backgroundColor: string | null
+ *   settings: {
+ *     width: number
+ *     height: number
+ *     backgroundColor: string
+ *   }
  *   panels: Panel[]
  *   elements: Element[]
  *   createdAt: Date
@@ -55,12 +59,12 @@ export const DEFAULT_PROJECT_SETTINGS = {
   backgroundColor: '#ffffff',
 }
 
-// Create a new blank page
-export function createBlankPage(pageNumber = 1) {
+// Create a new blank page (inherits settings from project)
+export function createBlankPage(pageNumber = 1, projectSettings = DEFAULT_PROJECT_SETTINGS) {
   return {
     id: `page-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
     pageNumber,
-    backgroundColor: null,
+    settings: { ...projectSettings },
     panels: [],
     elements: [],
     createdAt: new Date(),
@@ -75,16 +79,17 @@ export const projectsDb = {
    */
   async create(title, settings = {}) {
     const now = new Date()
+    const mergedSettings = { ...DEFAULT_PROJECT_SETTINGS, ...settings }
     const project = {
       title: title || 'Untitled Project',
       createdAt: now,
       updatedAt: now,
       fileHandle: null,
-      settings: { ...DEFAULT_PROJECT_SETTINGS, ...settings },
+      settings: mergedSettings,
       assets: {
         imageIds: []
       },
-      pages: [createBlankPage(1)],
+      pages: [createBlankPage(1, mergedSettings)],
     }
     
     const id = await db.projects.add(project)

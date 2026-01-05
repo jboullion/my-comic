@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { FiChevronLeft, FiCheck, FiDownload } from 'react-icons/fi'
+import { FiChevronLeft, FiCheck, FiDownload, FiSettings } from 'react-icons/fi'
 import EditableTitle from './ui/EditableTitle'
 import FloatingToolbar from './FloatingToolbar'
 
@@ -13,6 +13,7 @@ export default function ProjectHeader({
   isSaving,
   onTitleChange,
   onSaveToFile,
+  onOpenProjectSettings,
   // Toolbar props
   tool,
   onToolChange,
@@ -62,8 +63,14 @@ export default function ProjectHeader({
       </div>
       
       <div className="flex items-center gap-2 min-w-[240px] justify-end">
-        
-        <button 
+        <button
+          onClick={onOpenProjectSettings}
+          className="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
+          title="Project Settings"
+        >
+          <FiSettings className="w-4 h-4" />
+        </button>
+        <button
           onClick={onSaveToFile}
           disabled={isSaving}
           className="px-3 py-1.5 text-sm text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors disabled:opacity-50 flex items-center gap-1"

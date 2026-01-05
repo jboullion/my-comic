@@ -39,9 +39,11 @@ const HtmlCanvas = forwardRef(function HtmlCanvas(props, ref) {
   const [contextMenu, setContextMenu] = useState({ visible: false, x: 0, y: 0 })
 
   const currentPage = currentProject?.pages[activePageIndex]
-  const projectSettings = currentProject?.settings || { width: 800, height: 1200 }
-  const pageWidth = projectSettings.width
-  const pageHeight = projectSettings.height
+  const projectSettings = currentProject?.settings || { width: 800, height: 1200, backgroundColor: '#ffffff' }
+  // Per-page settings with fallback to project settings for backward compatibility
+  const pageSettings = currentPage?.settings || projectSettings
+  const pageWidth = pageSettings.width
+  const pageHeight = pageSettings.height
 
   // Close context menu on click elsewhere
   useEffect(() => {
@@ -388,7 +390,7 @@ const HtmlCanvas = forwardRef(function HtmlCanvas(props, ref) {
           style={{
             width: pageWidth,
             height: pageHeight,
-            backgroundColor: currentPage?.backgroundColor || projectSettings.backgroundColor || '#ffffff',
+            backgroundColor: pageSettings.backgroundColor || '#ffffff',
             position: 'relative',
             boxShadow: '5px 5px 20px rgba(0,0,0,0.5)'
           }}
