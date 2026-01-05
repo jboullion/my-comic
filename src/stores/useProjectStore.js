@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { temporal } from 'zundo'
-import { projectsDb, createBlankPage } from '../lib/db'
+import { projectsDb, createBlankPage, DEFAULT_PROJECT_SETTINGS } from '../lib/db'
 import { imageAssets } from '../lib/images'
 import { saveProjectToFile, loadProjectFromFile } from '../lib/projectFile'
 
@@ -374,7 +374,7 @@ export const useProjectStore = create(
        * Save project settings without updating existing pages
        * Used when user wants to change defaults for new pages only
        */
-      saveProjectSettings: (settings) => {
+      saveProjectSettings: async (settings) => {
         const { currentProject } = get()
         if (!currentProject) return
 
@@ -382,13 +382,16 @@ export const useProjectStore = create(
         get().updateCurrentProjectLocal({
           settings: newProjectSettings
         })
+
+        // Persist to IndexedDB immediately
+        await get().saveCurrentProject()
       },
 
       /**
        * Update project settings AND apply to all pages
        * Used when user wants to sync all pages to project defaults
        */
-      updateProjectSettings: (settings) => {
+      updateProjectSettings: async (settings) => {
         const { currentProject } = get()
         if (!currentProject) return
 
@@ -405,6 +408,9 @@ export const useProjectStore = create(
           settings: newProjectSettings,
           pages: updatedPages
         })
+
+        // Persist to IndexedDB immediately
+        await get().saveCurrentProject()
       },
 
       /**
@@ -753,13 +759,16 @@ export const useProjectStore = create(
 
       /**
        * Add a speech bubble to the current page
+       * Uses project settings for default styling
        */
       addSpeechBubble: async (position = { x: 200, y: 200 }) => {
         const { currentProject, activePageIndex } = get()
         if (!currentProject) return
 
-        // Use project's default font or fallback
-        const defaultFont = currentProject.settings?.defaultFont || 'Comic Neue, cursive'
+        // Get speech bubble defaults from project settings (with backward compatibility)
+        const bubbleDefaults = currentProject.settings?.speechBubble || DEFAULT_PROJECT_SETTINGS.speechBubble
+        // Backward compatibility: check for old defaultFont at root level
+        const fontFamily = bubbleDefaults.fontFamily || currentProject.settings?.defaultFont || 'Comic Neue, cursive'
 
         const newElement = {
           type: 'speechBubble',
@@ -772,15 +781,15 @@ export const useProjectStore = create(
           scaleX: 1,
           scaleY: 1,
           opacity: 1,
-          fill: '#FFFFFF',
-          stroke: '#000000',
-          strokeWidth: 2,
-          bubbleStyle: 'round',
+          fill: bubbleDefaults.fill || '#FFFFFF',
+          stroke: bubbleDefaults.stroke || '#000000',
+          strokeWidth: bubbleDefaults.strokeWidth || 2,
+          bubbleStyle: bubbleDefaults.bubbleStyle || 'round',
           cornerRadius: 20,
           text: 'Double-click to edit',
-          fontSize: 16,
-          fontFamily: defaultFont,
-          textColor: '#000000',
+          fontSize: bubbleDefaults.fontSize || 16,
+          fontFamily: fontFamily,
+          textColor: bubbleDefaults.textColor || '#000000',
           textAlign: 'center',
           verticalAlign: 'middle',
           padding: 10,
@@ -799,13 +808,16 @@ export const useProjectStore = create(
 
       /**
        * Add a text element to the current page
+       * Uses project settings for default styling
        */
       addText: async (position = { x: 200, y: 200 }) => {
         const { currentProject, activePageIndex } = get()
         if (!currentProject) return
 
-        // Use project's default font or fallback
-        const defaultFont = currentProject.settings?.defaultFont || 'Comic Neue, cursive'
+        // Get text defaults from project settings (with backward compatibility)
+        const textDefaults = currentProject.settings?.text || DEFAULT_PROJECT_SETTINGS.text
+        // Backward compatibility: check for old defaultFont at root level
+        const fontFamily = textDefaults.fontFamily || currentProject.settings?.defaultFont || 'Comic Neue, cursive'
 
         const newElement = {
           type: 'text',
@@ -819,12 +831,14 @@ export const useProjectStore = create(
           scaleY: 1,
           opacity: 1,
           text: 'Double-click to edit',
-          fontSize: 24,
-          fontFamily: defaultFont,
-          fontWeight: 'normal',
+          fontSize: textDefaults.fontSize || 24,
+          fontFamily: fontFamily,
+          fontWeight: textDefaults.fontWeight || 'normal',
           fontStyle: 'normal',
-          textColor: '#000000',
-          textAlign: 'center',
+          textColor: textDefaults.textColor || '#000000',
+          strokeColor: textDefaults.strokeColor || '#000000',
+          strokeWidth: textDefaults.strokeWidth || 0,
+          textAlign: textDefaults.textAlign || 'center',
           verticalAlign: 'middle',
           padding: 8,
           zIndex: (currentProject.pages[activePageIndex].elements?.length || 0) + 1
@@ -842,60 +856,14 @@ export const useProjectStore = create(
 
       /**
        * Add a text effect element to the current page
+       * Uses project settings for default styling
        */
-      addTextEffect: async (preset = 'custom', position = { x: 200, y: 200 }) => {
+      addTextEffect: async (position = { x: 200, y: 200 }) => {
         const { currentProject, activePageIndex } = get()
         if (!currentProject) return
 
-        const presets = {
-          pow: {
-            text: 'POW!',
-            fontSize: 64,
-            fill: '#FFFF00',
-            stroke: '#000000',
-            strokeWidth: 3,
-            outerStroke: '#FF0000',
-            outerStrokeWidth: 4,
-          },
-          bam: {
-            text: 'BAM!',
-            fontSize: 64,
-            fill: '#FF6B00',
-            stroke: '#000000',
-            strokeWidth: 3,
-            outerStroke: '#FFFFFF',
-            outerStrokeWidth: 0,
-          },
-          boom: {
-            text: 'BOOM!',
-            fontSize: 64,
-            fill: '#FF0000',
-            stroke: '#FFFFFF',
-            strokeWidth: 4,
-            outerStroke: '#000000',
-            outerStrokeWidth: 2,
-          },
-          zap: {
-            text: 'ZAP!',
-            fontSize: 64,
-            fill: '#00FFFF',
-            stroke: '#000000',
-            strokeWidth: 3,
-            outerStroke: '#FF00FF',
-            outerStrokeWidth: 0,
-          },
-          custom: {
-            text: 'TEXT',
-            fontSize: 48,
-            fill: '#FFFFFF',
-            stroke: '#000000',
-            strokeWidth: 2,
-            outerStroke: '#FF0000',
-            outerStrokeWidth: 0,
-          }
-        }
-
-        const presetData = presets[preset] || presets.custom
+        // Get text effect defaults from project settings
+        const defaults = currentProject.settings?.textEffect || DEFAULT_PROJECT_SETTINGS.textEffect
 
         const newElement = {
           type: 'textEffect',
@@ -908,12 +876,17 @@ export const useProjectStore = create(
           scaleX: 1,
           scaleY: 1,
           opacity: 1,
-          fontFamily: 'Bangers, cursive',
+          text: defaults.text || 'EFFECT!',
+          fontFamily: defaults.fontFamily || 'Bangers, cursive',
           fontWeight: 'bold',
+          fontSize: defaults.fontSize || 64,
+          letterSpacing: defaults.letterSpacing || 2,
           textAlign: 'center',
-          letterSpacing: 2,
-          preset: preset,
-          ...presetData,
+          fill: defaults.fill || '#FFFF00',
+          stroke: defaults.stroke || '#000000',
+          strokeWidth: defaults.strokeWidth || 3,
+          outerStroke: defaults.outerStroke || '#FF0000',
+          outerStrokeWidth: defaults.outerStrokeWidth || 4,
           zIndex: (currentProject.pages[activePageIndex].elements?.length || 0) + 1
         }
 

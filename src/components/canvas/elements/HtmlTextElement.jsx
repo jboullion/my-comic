@@ -146,6 +146,9 @@ export default function HtmlTextElement({ element, onSelect, onChange, onContext
     pointerEvents: 'auto',
     userSelect: isEditing ? 'text' : 'none',
     boxSizing: 'border-box',
+    // Text stroke (border)
+    WebkitTextStroke: element.strokeWidth ? `${element.strokeWidth}px ${element.strokeColor || '#000000'}` : 'none',
+    paintOrder: 'stroke fill',
   }
 
   return (

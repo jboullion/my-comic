@@ -1,5 +1,5 @@
-import { Link } from 'react-router-dom'
-import { FiChevronLeft, FiCheck, FiDownload, FiSettings } from 'react-icons/fi'
+import { Link, useNavigate, useParams } from 'react-router-dom'
+import { FiChevronLeft, FiDownload, FiSettings } from 'react-icons/fi'
 import EditableTitle from './ui/EditableTitle'
 import FloatingToolbar from './FloatingToolbar'
 
@@ -15,7 +15,6 @@ export default function ProjectHeader({
   onTitleChange,
   onSaveToFile,
   onExport,
-  onOpenProjectSettings,
   // Toolbar props
   tool,
   onToolChange,
@@ -25,6 +24,8 @@ export default function ProjectHeader({
   onAddTextEffect,
   fileInputRef
 }) {
+  const navigate = useNavigate()
+  const { projectId } = useParams()
   return (
     <div className="border-b border-slate-800 px-4 py-2 flex items-center justify-between bg-slate-900">
       <div className="flex items-center gap-4 min-w-[240px]">
@@ -66,7 +67,7 @@ export default function ProjectHeader({
       
       <div className="flex items-center gap-2 min-w-[240px] justify-end">
         <button
-          onClick={onOpenProjectSettings}
+          onClick={() => navigate(`/project/${projectId}/settings`)}
           className="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
           title="Project Settings"
         >

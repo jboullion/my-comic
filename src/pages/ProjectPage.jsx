@@ -7,7 +7,6 @@ import HtmlCanvas from '../components/HtmlCanvas'
 import ProjectHeader from '../components/editor/ProjectHeader'
 import PagesSidebar from '../components/editor/PagesSidebar'
 import PropertiesSidebar from '../components/editor/PropertiesSidebar'
-import ProjectSettingsModal from '../components/editor/ProjectSettingsModal'
 import ExportModal from '../components/editor/ExportModal'
 import { exportPagesToZip } from '../lib/export'
 
@@ -30,8 +29,6 @@ export default function ProjectPage() {
     saveAsMyComic,
     addPage,
     updateCurrentProject,
-    updateProjectSettings,
-    saveProjectSettings,
     activePageIndex,
     setActivePageIndex,
     tool,
@@ -48,7 +45,6 @@ export default function ProjectPage() {
   } = useProjectStore()
 
   const [isDraggingOver, setIsDraggingOver] = useState(false)
-  const [showProjectSettings, setShowProjectSettings] = useState(false)
   const [showExportModal, setShowExportModal] = useState(false)
   const [isExporting, setIsExporting] = useState(false)
 
@@ -211,8 +207,8 @@ export default function ProjectPage() {
     addText()
   }
 
-  const handleAddTextEffect = (preset) => {
-    addTextEffect(preset)
+  const handleAddTextEffect = () => {
+    addTextEffect()
   }
 
   const handleDragOver = (e) => {
@@ -327,7 +323,6 @@ export default function ProjectPage() {
           onSave={saveCurrentProject}
           onSaveToFile={handleSaveToFile}
           onExport={() => setShowExportModal(true)}
-          onOpenProjectSettings={() => setShowProjectSettings(true)}
           tool={tool}
           onToolChange={setTool}
           onImageUpload={handleImageUpload}
@@ -371,15 +366,6 @@ export default function ProjectPage() {
             onAddAsset={addAssetToPage}
           />
         </div>
-
-        {/* Project Settings Modal */}
-        <ProjectSettingsModal
-          isOpen={showProjectSettings}
-          onClose={() => setShowProjectSettings(false)}
-          settings={currentProject.settings}
-          onSave={saveProjectSettings}
-          onApply={updateProjectSettings}
-        />
 
         {/* Export Modal */}
         <ExportModal

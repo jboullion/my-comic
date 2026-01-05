@@ -25,26 +25,16 @@ db.version(3).stores({
  *   createdAt: Date
  *   updatedAt: Date
  *   fileHandle: FileSystemFileHandle | null (for File System Access API)
- *   settings: {
- *     width: number (default 800)
- *     height: number (default 1200)
- *     backgroundColor: string
- *   }
- *   assets: {
- *     imageIds: string[]
- *   }
+ *   settings: ProjectSettings
+ *   assets: { imageIds: string[] }
  *   pages: Page[]
  * }
- * 
+ *
  * Page schema:
  * {
  *   id: string
  *   pageNumber: number
- *   settings: {
- *     width: number
- *     height: number
- *     backgroundColor: string
- *   }
+ *   settings: { width, height, backgroundColor }
  *   panels: Panel[]
  *   elements: Element[]
  *   createdAt: Date
@@ -52,11 +42,47 @@ db.version(3).stores({
  * }
  */
 
-// Default project settings
+// Default project settings with nested element defaults
 export const DEFAULT_PROJECT_SETTINGS = {
+  // Page defaults
   width: 800,
   height: 1200,
   backgroundColor: '#ffffff',
+
+  // Text element defaults
+  text: {
+    fontFamily: 'Comic Neue, cursive',
+    fontSize: 24,
+    fontWeight: 'normal',
+    textColor: '#FFFFFF',
+    strokeColor: '#000000',
+    strokeWidth: 3,
+    textAlign: 'center'
+  },
+
+  // Speech bubble defaults
+  speechBubble: {
+    fontFamily: 'Comic Neue, cursive',
+    fontSize: 16,
+    textColor: '#000000',
+    fill: '#FFFFFF',
+    stroke: '#000000',
+    strokeWidth: 3,
+    bubbleStyle: 'round'
+  },
+
+  // Text effect defaults
+  textEffect: {
+    text: 'EFFECT!',
+    fontFamily: 'Bangers, cursive',
+    fontSize: 64,
+    letterSpacing: 2,
+    fill: '#FFFF00',
+    stroke: '#000000',
+    strokeWidth: 3,
+    outerStroke: '#FF0000',
+    outerStrokeWidth: 4
+  }
 }
 
 // Create a new blank page (inherits settings from project)

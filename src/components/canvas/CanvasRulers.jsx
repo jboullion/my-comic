@@ -97,11 +97,11 @@ export default function CanvasRulers({
         style={{
           left: RULER_SIZE,
           height: RULER_SIZE,
-          width: containerWidth - RULER_SIZE
+          width: Math.max(0, containerWidth - RULER_SIZE)
         }}
       >
         <svg
-          width={containerWidth - RULER_SIZE}
+          width={Math.max(0, containerWidth - RULER_SIZE)}
           height={RULER_SIZE}
           className="text-slate-400"
         >
@@ -166,12 +166,12 @@ export default function CanvasRulers({
         style={{
           top: RULER_SIZE,
           width: RULER_SIZE,
-          height: containerHeight - RULER_SIZE
+          height: Math.max(0, containerHeight - RULER_SIZE)
         }}
       >
         <svg
           width={RULER_SIZE}
-          height={containerHeight - RULER_SIZE}
+          height={Math.max(0, containerHeight - RULER_SIZE)}
           className="text-slate-400"
         >
           {/* Page bounds indicator */}
