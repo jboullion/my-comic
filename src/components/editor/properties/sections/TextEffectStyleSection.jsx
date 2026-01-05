@@ -1,11 +1,20 @@
 import NumberInput from '../../ui/NumberInput'
+import RangeInput from '../../ui/RangeInput'
 import FontSelect from '../../ui/FontSelect'
+
+const EFFECT_TYPES = [
+  { value: 'none', label: 'None' },
+  { value: 'bend', label: 'Bend' },
+  { value: 'perspective', label: 'Skew' },
+]
 
 /**
  * TextEffectStyleSection Component
- * Styling controls for text effect elements (fill, stroke, outer stroke)
+ * Styling controls for text effect elements (fill, stroke, outer stroke, path effects)
  */
 export default function TextEffectStyleSection({ element, onUpdate }) {
+  const effectType = element.effectType || 'none'
+
   return (
     <div className="space-y-3">
       {/* Text content */}
@@ -46,6 +55,63 @@ export default function TextEffectStyleSection({ element, onUpdate }) {
           step={1}
         />
       </div>
+
+      {/* Effect Type */}
+      <div className="space-y-1.5">
+        <label className="text-[10px] text-slate-500 uppercase font-bold">Text Effect</label>
+        <div className="flex flex-wrap gap-1">
+          {EFFECT_TYPES.map((effect) => (
+            <button
+              key={effect.value}
+              onClick={() => onUpdate({ effectType: effect.value })}
+              className={`py-1.5 px-3 text-xs rounded transition-colors ${
+                effectType === effect.value
+                  ? 'bg-indigo-500 text-white'
+                  : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
+              }`}
+              type="button"
+            >
+              {effect.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Bend controls */}
+      {effectType === 'bend' && (
+        <RangeInput
+          label="Bend Amount"
+          value={element.bend || 0}
+          onChange={(val) => onUpdate({ bend: val })}
+          min={-100}
+          max={100}
+          step={5}
+        />
+      )}
+
+      {/* Skew controls */}
+      {effectType === 'perspective' && (
+        <>
+          <RangeInput
+            label="Skew X"
+            value={element.skewX || 0}
+            onChange={(val) => onUpdate({ skewX: val })}
+            min={-45}
+            max={45}
+            step={5}
+            suffix="°"
+          />
+          <RangeInput
+            label="Skew Y"
+            value={element.skewY || 0}
+            onChange={(val) => onUpdate({ skewY: val })}
+            min={-45}
+            max={45}
+            step={5}
+            suffix="°"
+          />
+        </>
+      )}
 
       {/* Fill color */}
       <div className="space-y-1.5">
