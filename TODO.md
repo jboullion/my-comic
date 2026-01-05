@@ -19,8 +19,6 @@
 
 - Selection area
 
-- On image import use the page size to set the image resize. So if a user imports a 2000 pixel wide image and we have a max page size of 800 px set to 800 px.
-
 - Allow page settings to have rounded edges? Same with export?
 
 - Do we need the top header? Potentially merge the top two headers to save space

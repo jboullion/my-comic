@@ -554,12 +554,18 @@ export const useProjectStore = create(
             return asset
           }
 
-          // 3. Calculate element size maintaining aspect ratio (max 400px on longest side)
-          const maxSize = 400
+          // 3. Calculate element size maintaining aspect ratio (max = page dimensions)
+          const currentPage = currentProject.pages[activePageIndex]
+          const pageSettings = currentPage?.settings || currentProject.settings || { width: 800, height: 1200 }
+          const maxWidth = pageSettings.width
+          const maxHeight = pageSettings.height
           let width = asset.width || 300
           let height = asset.height || 300
-          if (width > maxSize || height > maxSize) {
-            const scale = maxSize / Math.max(width, height)
+          // Scale down if image exceeds page dimensions
+          if (width > maxWidth || height > maxHeight) {
+            const scaleX = maxWidth / width
+            const scaleY = maxHeight / height
+            const scale = Math.min(scaleX, scaleY)
             width = Math.round(width * scale)
             height = Math.round(height * scale)
           }
@@ -613,12 +619,18 @@ export const useProjectStore = create(
         // Get asset to retrieve dimensions
         const asset = await imageAssets.get(assetId)
 
-        // Calculate element size maintaining aspect ratio (max 400px on longest side)
-        const maxSize = 400
+        // Calculate element size maintaining aspect ratio (max = page dimensions)
+        const currentPage = currentProject.pages[activePageIndex]
+        const pageSettings = currentPage?.settings || currentProject.settings || { width: 800, height: 1200 }
+        const maxWidth = pageSettings.width
+        const maxHeight = pageSettings.height
         let width = asset?.width || 300
         let height = asset?.height || 300
-        if (width > maxSize || height > maxSize) {
-          const scale = maxSize / Math.max(width, height)
+        // Scale down if image exceeds page dimensions
+        if (width > maxWidth || height > maxHeight) {
+          const scaleX = maxWidth / width
+          const scaleY = maxHeight / height
+          const scale = Math.min(scaleX, scaleY)
           width = Math.round(width * scale)
           height = Math.round(height * scale)
         }

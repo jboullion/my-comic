@@ -82,6 +82,12 @@ export default function AssetPropertiesWidget({ assetId, onAdd }) {
           <span className="text-xs text-slate-400">Size</span>
           <span className="text-xs text-slate-200 font-medium">{fileSize}</span>
         </div>
+        {asset.width && asset.height && (
+          <div className="flex justify-between items-center">
+            <span className="text-xs text-slate-400">Dimensions</span>
+            <span className="text-xs text-slate-200 font-medium">{asset.width} × {asset.height}</span>
+          </div>
+        )}
         <div className="flex justify-between items-center">
           <span className="text-xs text-slate-400">Type</span>
           <span className="text-xs text-slate-200 font-medium uppercase">{asset.type.split('/')[1]}</span>
