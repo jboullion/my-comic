@@ -1,23 +1,15 @@
 ## Current TODOs
 
-- Text bubble font. Set up google font selection for bubble and regular text elements
-
-- Separate non bubble text. Both for dialog but also for effects?
-
 - Add basic instructions somewhere. And / or add a link to the docs and the top of the app nav
 
 ## Bugs
 
-- App header should expand full screen. No container.
-- Ratio lock on page size
-- Remove the image icon from the floating menu.
 - - Cloud SVG is overflowing container.
 - Fix the projects page. Broken layout.
 - - Could probably just do a general refactor.
 - - Setup project settings page. Including Thumbnail / cover
 - Some actions don't seem to get caught in the undo. Is there a redo?
 - Snap to grid not working with keyboard movement on elements
-- Sometimes the save will "hijack" the ui a bit. Try to prevent that.
 
 
 ## Ideas and Brainstorming
@@ -31,6 +23,7 @@
 - Allow page settings to have rounded edges? Same with export?
 
 - Probably remove the "Layers" panel for now. Potentially turn it into shapes / decals later
+
 
 
 ### Text
@@ -58,6 +51,7 @@ Add "arcs" and other common SVG text effects to our text elements
 - Show original size in properties
 - Need a search system.
 - Search by name. Filter by pages placed on and date added
+- We DO have limits on space with IndexDB and so we might need to warn users or ask users to install locally if they want to have more working space.
 
 ### Canvas
 

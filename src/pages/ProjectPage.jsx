@@ -7,6 +7,7 @@ import HtmlCanvas from '../components/HtmlCanvas'
 import ProjectHeader from '../components/editor/ProjectHeader'
 import PagesSidebar from '../components/editor/PagesSidebar'
 import PropertiesSidebar from '../components/editor/PropertiesSidebar'
+import ProjectSettingsModal from '../components/editor/ProjectSettingsModal'
 
 export default function ProjectPage() {
   const { projectId } = useParams()
@@ -27,11 +28,11 @@ export default function ProjectPage() {
     saveToFile,
     addPage,
     updateCurrentProject,
+    updateProjectSettings,
     activePageIndex,
     setActivePageIndex,
     tool,
     setTool,
-    updateCurrentProjectLocal,
     addImage,
     addAssetToPage,
     addSpeechBubble,
@@ -44,6 +45,7 @@ export default function ProjectPage() {
   } = useProjectStore()
 
   const [isDraggingOver, setIsDraggingOver] = useState(false)
+  const [showProjectSettings, setShowProjectSettings] = useState(false)
 
   // Load project on mount
   useEffect(() => {
@@ -178,26 +180,6 @@ export default function ProjectPage() {
     }
   }
 
-  const handleSettingsChange = (key, value) => {
-    const numValue = parseInt(value, 10) || 0
-    updateCurrentProjectLocal({
-      settings: {
-        ...currentProject.settings,
-        [key]: numValue
-      }
-    })
-  }
-
-  const applyPreset = (width, height) => {
-    updateCurrentProjectLocal({
-      settings: {
-        ...currentProject.settings,
-        width,
-        height
-      }
-    })
-  }
-
   const handleImageUpload = async (e) => {
     const file = e.target.files?.[0]
     if (!file) return
@@ -315,6 +297,7 @@ export default function ProjectPage() {
           onTitleChange={handleTitleChange}
           onSave={saveCurrentProject}
           onSaveToFile={handleSaveToFile}
+          onOpenProjectSettings={() => setShowProjectSettings(true)}
           tool={tool}
           onToolChange={setTool}
           onImageUpload={handleImageUpload}
@@ -350,20 +333,22 @@ export default function ProjectPage() {
           </main>
 
           {/* Right Sidebar - Properties Panel */}
-          <PropertiesSidebar 
+          <PropertiesSidebar
             currentProject={currentProject}
-            currentPage={currentPage}
-            activePageIndex={activePageIndex}
             selectedElement={selectedElement}
-            selectedElementIds={selectedElementIds}
             selectedAssetId={selectedAssetId}
-            onSelectElement={(id) => setSelectedElementIds([id])}
             onSelectAsset={setSelectedAssetId}
             onAddAsset={addAssetToPage}
-            onSettingsChange={handleSettingsChange}
-            onApplyPreset={applyPreset}
           />
         </div>
+
+        {/* Project Settings Modal */}
+        <ProjectSettingsModal
+          isOpen={showProjectSettings}
+          onClose={() => setShowProjectSettings(false)}
+          settings={currentProject.settings}
+          onApply={updateProjectSettings}
+        />
       </div>
     </AppLayout>
   )
