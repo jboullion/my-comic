@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState, useCallback, useImperativeHandle, forwardRef } from 'react'
-import { toPng } from 'html-to-image'
+import { toPng, toCanvas } from 'html-to-image'
 import useProjectStore from '../stores/useProjectStore'
 import { getEmbeddedFontCSS, preloadFonts } from '../utils/fontEmbed'
 import HtmlImageElement from './canvas/elements/HtmlImageElement'
@@ -327,7 +327,13 @@ const HtmlCanvas = forwardRef(function HtmlCanvas(props, ref) {
         capture.cleanup()
       }
     },
-    captureFullPage: async () => {
+    /**
+     * Capture full page as image
+     * @param {Object} options - Capture options
+     * @param {string} options.format - 'webp' | 'png' (default: 'webp')
+     * @param {number} options.quality - Quality for webp (0-1, default: 0.9)
+     */
+    captureFullPage: async ({ format = 'webp', quality = 0.9 } = {}) => {
       if (!pageRef.current) return null
 
       // Create off-screen clone without selection UI
@@ -338,16 +344,21 @@ const HtmlCanvas = forwardRef(function HtmlCanvas(props, ref) {
         // Get embedded font CSS for proper font rendering
         const fontEmbedCSS = await getEmbeddedFontCSS()
 
-        const result = await toPng(capture.clone, {
+        // Use toCanvas for format flexibility
+        const canvas = await toCanvas(capture.clone, {
           width: pageWidth,
           height: pageHeight,
           pixelRatio: 2,
-          fontEmbedCSS, // Embed fonts to avoid cross-origin errors
+          fontEmbedCSS,
           style: {
             transform: 'none',
             transformOrigin: 'top left'
           }
         })
+
+        // Convert to desired format
+        const mimeType = format === 'png' ? 'image/png' : 'image/webp'
+        const result = canvas.toDataURL(mimeType, format === 'png' ? undefined : quality)
 
         return result
       } catch (error) {
@@ -384,15 +395,37 @@ const HtmlCanvas = forwardRef(function HtmlCanvas(props, ref) {
           left: 0
         }}
       >
+        {/* Checkerboard background for transparent pages (not captured in exports) */}
+        {pageSettings.backgroundColor === 'transparent' && (
+          <div
+            style={{
+              position: 'absolute',
+              width: pageWidth,
+              height: pageHeight,
+              backgroundImage: `
+                linear-gradient(45deg, #404040 25%, transparent 25%),
+                linear-gradient(-45deg, #404040 25%, transparent 25%),
+                linear-gradient(45deg, transparent 75%, #404040 75%),
+                linear-gradient(-45deg, transparent 75%, #404040 75%)
+              `,
+              backgroundSize: '20px 20px',
+              backgroundPosition: '0 0, 0 10px, 10px -10px, -10px 0px',
+              backgroundColor: '#303030',
+              boxShadow: '5px 5px 20px rgba(0,0,0,0.5)',
+              pointerEvents: 'none'
+            }}
+          />
+        )}
+
         {/* Page - the capturable element */}
         <div
           ref={pageRef}
           style={{
             width: pageWidth,
             height: pageHeight,
-            backgroundColor: pageSettings.backgroundColor || '#ffffff',
+            backgroundColor: pageSettings.backgroundColor === 'transparent' ? 'transparent' : (pageSettings.backgroundColor || '#ffffff'),
             position: 'relative',
-            boxShadow: '5px 5px 20px rgba(0,0,0,0.5)'
+            boxShadow: pageSettings.backgroundColor === 'transparent' ? 'none' : '5px 5px 20px rgba(0,0,0,0.5)'
           }}
           onClick={(e) => {
             if (e.target === pageRef.current) {
@@ -549,7 +582,7 @@ async function scaleThumbnail(dataUrl, sourceWidth, sourceHeight) {
       // Draw the scaled image
       ctx.drawImage(img, offsetX, offsetY, scaledWidth, scaledHeight)
 
-      resolve(canvas.toDataURL('image/png', 0.8))
+      resolve(canvas.toDataURL('image/webp', 0.8))
     }
     img.onerror = () => {
       console.error('Failed to load image for thumbnail scaling')

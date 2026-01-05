@@ -91,22 +91,37 @@ export default function PageSettingsPanel() {
       </CollapsibleSection>
 
       <CollapsibleSection title="Background" storageKey="page-background">
-        <div className="space-y-2">
-          <label className="text-[10px] text-slate-500 uppercase font-bold">Background Color</label>
-          <div className="flex items-center gap-3">
+        <div className="space-y-3">
+          {/* Transparent toggle */}
+          <label className="flex items-center gap-3 cursor-pointer">
             <input
-              type="color"
-              value={pageSettings.backgroundColor || '#ffffff'}
-              onChange={(e) => handleSettingsChange('backgroundColor', e.target.value)}
-              className="w-10 h-10 bg-slate-800 border border-slate-700 rounded cursor-pointer"
+              type="checkbox"
+              checked={pageSettings.backgroundColor === 'transparent'}
+              onChange={(e) => handleSettingsChange('backgroundColor', e.target.checked ? 'transparent' : '#ffffff')}
             />
-            <input
-              type="text"
-              value={pageSettings.backgroundColor || '#ffffff'}
-              onChange={(e) => handleSettingsChange('backgroundColor', e.target.value)}
-              className="flex-1 bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 uppercase"
-            />
-          </div>
+            <span className="text-sm text-slate-300">Transparent background</span>
+          </label>
+
+          {/* Color picker - disabled when transparent */}
+          {pageSettings.backgroundColor !== 'transparent' && (
+            <div className="space-y-2">
+              <label className="text-[10px] text-slate-500 uppercase font-bold">Background Color</label>
+              <div className="flex items-center gap-3">
+                <input
+                  type="color"
+                  value={pageSettings.backgroundColor || '#ffffff'}
+                  onChange={(e) => handleSettingsChange('backgroundColor', e.target.value)}
+                  className="w-10 h-10 bg-slate-800 border border-slate-700 rounded cursor-pointer"
+                />
+                <input
+                  type="text"
+                  value={pageSettings.backgroundColor || '#ffffff'}
+                  onChange={(e) => handleSettingsChange('backgroundColor', e.target.value)}
+                  className="flex-1 bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 uppercase"
+                />
+              </div>
+            </div>
+          )}
         </div>
       </CollapsibleSection>
 
