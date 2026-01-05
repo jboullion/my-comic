@@ -8,6 +8,8 @@ import HtmlTextElement from './canvas/elements/HtmlTextElement'
 import HtmlTextEffect from './canvas/elements/HtmlTextEffect'
 import ZoomControls from './canvas/ZoomControls'
 import CanvasContextMenu from './canvas/CanvasContextMenu'
+import CanvasRulers from './canvas/CanvasRulers'
+import GridOverlay from './canvas/GridOverlay'
 
 /**
  * HtmlCanvas Component
@@ -29,7 +31,10 @@ const HtmlCanvas = forwardRef(function HtmlCanvas(props, ref) {
     updateElement,
     addAssetToPage,
     reorderElements,
-    deleteSelectedElements
+    deleteSelectedElements,
+    showRulers,
+    showGrid,
+    snapGridSize
   } = useProjectStore()
 
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 })
@@ -68,8 +73,9 @@ const HtmlCanvas = forwardRef(function HtmlCanvas(props, ref) {
     if (!containerRef.current) return
 
     const padding = 40
-    const availableWidth = containerRef.current.offsetWidth - padding
-    const availableHeight = containerRef.current.offsetHeight - padding
+    const rulerOffset = showRulers ? 20 : 0
+    const availableWidth = containerRef.current.offsetWidth - padding - rulerOffset
+    const availableHeight = containerRef.current.offsetHeight - padding - rulerOffset
 
     const scaleX = availableWidth / pageWidth
     const scaleY = availableHeight / pageHeight
@@ -77,12 +83,12 @@ const HtmlCanvas = forwardRef(function HtmlCanvas(props, ref) {
 
     setZoom(newZoom)
 
-    // Center position
+    // Center position (pan is relative to the area after rulers)
     setPanOffset({
-      x: (containerRef.current.offsetWidth - pageWidth * newZoom) / 2,
-      y: (containerRef.current.offsetHeight - pageHeight * newZoom) / 2
+      x: (containerRef.current.offsetWidth - rulerOffset - pageWidth * newZoom) / 2,
+      y: (containerRef.current.offsetHeight - rulerOffset - pageHeight * newZoom) / 2
     })
-  }, [pageWidth, pageHeight, setZoom])
+  }, [pageWidth, pageHeight, setZoom, showRulers])
 
   // Handle window resize
   useEffect(() => {
@@ -119,8 +125,10 @@ const HtmlCanvas = forwardRef(function HtmlCanvas(props, ref) {
     if (isPanning) return
 
     const rect = containerRef.current.getBoundingClientRect()
-    const mouseX = e.clientX - rect.left
-    const mouseY = e.clientY - rect.top
+    const rulerOffset = showRulers ? 20 : 0
+    // Mouse position relative to the canvas area (after rulers)
+    const mouseX = e.clientX - rect.left - rulerOffset
+    const mouseY = e.clientY - rect.top - rulerOffset
 
     // Calculate point on page that mouse is over
     const pointOnPageX = (mouseX - panOffset.x) / zoom
@@ -137,7 +145,7 @@ const HtmlCanvas = forwardRef(function HtmlCanvas(props, ref) {
 
     setZoom(newZoom)
     setPanOffset({ x: newPanX, y: newPanY })
-  }, [zoom, panOffset, setZoom, isPanning])
+  }, [zoom, panOffset, setZoom, isPanning, showRulers])
 
   /**
    * Handle zoom reset (100%)
@@ -145,12 +153,13 @@ const HtmlCanvas = forwardRef(function HtmlCanvas(props, ref) {
   const handleZoomReset = useCallback(() => {
     setZoom(1)
     if (containerRef.current) {
+      const rulerOffset = showRulers ? 20 : 0
       setPanOffset({
-        x: (containerRef.current.offsetWidth - pageWidth) / 2,
-        y: (containerRef.current.offsetHeight - pageHeight) / 2
+        x: (containerRef.current.offsetWidth - rulerOffset - pageWidth) / 2,
+        y: (containerRef.current.offsetHeight - rulerOffset - pageHeight) / 2
       })
     }
-  }, [pageWidth, pageHeight, setZoom])
+  }, [pageWidth, pageHeight, setZoom, showRulers])
 
   /**
    * Handle panning (Space + Drag or Middle Mouse)
@@ -236,11 +245,12 @@ const HtmlCanvas = forwardRef(function HtmlCanvas(props, ref) {
    */
   const screenToPage = useCallback((screenX, screenY) => {
     const rect = containerRef.current.getBoundingClientRect()
+    const rulerOffset = showRulers ? 20 : 0
     return {
-      x: (screenX - rect.left - panOffset.x) / zoom,
-      y: (screenY - rect.top - panOffset.y) / zoom
+      x: (screenX - rect.left - panOffset.x - rulerOffset) / zoom,
+      y: (screenY - rect.top - panOffset.y - rulerOffset) / zoom
     }
-  }, [panOffset, zoom])
+  }, [panOffset, zoom, showRulers])
 
   /**
    * Handle drop from sidebar
@@ -443,6 +453,9 @@ const HtmlCanvas = forwardRef(function HtmlCanvas(props, ref) {
     }
   }), [pageWidth, pageHeight, createCaptureClone])
 
+  // Ruler size constant
+  const RULER_SIZE = showRulers ? 20 : 0
+
   if (!currentProject) return null
 
   return (
@@ -457,10 +470,23 @@ const HtmlCanvas = forwardRef(function HtmlCanvas(props, ref) {
       onDragOver={(e) => e.preventDefault()}
       onDrop={handleDrop}
     >
+      {/* Canvas Rulers */}
+      {showRulers && (
+        <CanvasRulers
+          zoom={zoom}
+          panOffset={panOffset}
+          pageWidth={pageWidth}
+          pageHeight={pageHeight}
+          containerWidth={containerSize.width}
+          containerHeight={containerSize.height}
+          gridSize={snapGridSize}
+        />
+      )}
+
       {/* Transform container - applies zoom and pan */}
       <div
         style={{
-          transform: `translate(${panOffset.x}px, ${panOffset.y}px) scale(${zoom})`,
+          transform: `translate(${panOffset.x + RULER_SIZE}px, ${panOffset.y + RULER_SIZE}px) scale(${zoom})`,
           transformOrigin: '0 0',
           position: 'absolute',
           top: 0,
@@ -506,6 +532,9 @@ const HtmlCanvas = forwardRef(function HtmlCanvas(props, ref) {
           }}
           onContextMenu={handleContextMenu}
         >
+          {/* Grid overlay (visual grid lines) */}
+          {showGrid && <GridOverlay gridSize={snapGridSize} />}
+
           {/* Render all elements */}
           {currentPage?.elements?.map((element) => {
             if (element.type === 'speechBubble') {

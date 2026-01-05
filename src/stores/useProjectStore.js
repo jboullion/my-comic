@@ -34,6 +34,8 @@ export const useProjectStore = create(
       tool: 'select',
       snapToGrid: false,
       snapGridSize: 20,
+      showRulers: true,
+      showGrid: false,
 
       // ==================
       // Project List Actions
@@ -262,22 +264,71 @@ export const useProjectStore = create(
       },
 
       /**
-       * Nudge selected elements
+       * Nudge selected elements (snap-aware)
+       * Note: Elements use center-point positioning, but we snap the TOP-LEFT corner to grid
        */
       nudgeSelectedElements: (dx, dy) => {
-        const { currentProject, activePageIndex, selectedElementIds } = get()
+        const { currentProject, activePageIndex, selectedElementIds, snapToGrid, snapGridSize } = get()
         if (!currentProject || selectedElementIds.length === 0) return
+
+        // Check if value is on a grid line (with small tolerance for floating point)
+        const isOnGrid = (val) => {
+          const remainder = Math.abs(val % snapGridSize)
+          return remainder < 0.001 || remainder > snapGridSize - 0.001
+        }
 
         const pages = [...currentProject.pages]
         const page = { ...pages[activePageIndex] }
-        
+
         const elements = page.elements.map(el => {
           if (selectedElementIds.includes(el.id)) {
-            return { ...el, x: (el.x || 0) + dx, y: (el.y || 0) + dy }
+            let newX = el.x || 0
+            let newY = el.y || 0
+            const width = el.width || 0
+            const height = el.height || 0
+
+            if (snapToGrid) {
+              // Convert center position to top-left corner position
+              let topLeftX = newX - width / 2
+              let topLeftY = newY - height / 2
+
+              // Snap the top-left corner to grid lines
+              if (dx !== 0) {
+                if (isOnGrid(topLeftX)) {
+                  // Already on grid, move to next grid line
+                  topLeftX = dx > 0 ? topLeftX + snapGridSize : topLeftX - snapGridSize
+                } else {
+                  // Not on grid, snap to grid line in direction of movement
+                  topLeftX = dx > 0
+                    ? Math.ceil(topLeftX / snapGridSize) * snapGridSize
+                    : Math.floor(topLeftX / snapGridSize) * snapGridSize
+                }
+              }
+              if (dy !== 0) {
+                if (isOnGrid(topLeftY)) {
+                  // Already on grid, move to next grid line
+                  topLeftY = dy > 0 ? topLeftY + snapGridSize : topLeftY - snapGridSize
+                } else {
+                  // Not on grid, snap to grid line in direction of movement
+                  topLeftY = dy > 0
+                    ? Math.ceil(topLeftY / snapGridSize) * snapGridSize
+                    : Math.floor(topLeftY / snapGridSize) * snapGridSize
+                }
+              }
+
+              // Convert back to center position
+              newX = topLeftX + width / 2
+              newY = topLeftY + height / 2
+            } else {
+              newX += dx
+              newY += dy
+            }
+
+            return { ...el, x: newX, y: newY }
           }
           return el
         })
-        
+
         page.elements = elements
         pages[activePageIndex] = page
 
@@ -308,6 +359,16 @@ export const useProjectStore = create(
        * Set snap grid size
        */
       setSnapGridSize: (snapGridSize) => set({ snapGridSize }),
+
+      /**
+       * Set show rulers
+       */
+      setShowRulers: (showRulers) => set({ showRulers }),
+
+      /**
+       * Set show grid
+       */
+      setShowGrid: (showGrid) => set({ showGrid }),
 
       /**
        * Update project settings AND apply to all pages

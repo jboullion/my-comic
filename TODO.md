@@ -9,8 +9,7 @@
 - - Could probably just do a general refactor.
 - - Setup project settings page. Including Thumbnail / cover
 - Some actions don't seem to get caught in the undo. Is there a redo?
-- Snap to grid not working with keyboard movement on elements
-
+- I still get the forced zoom every now and then
 
 ## Ideas and Brainstorming
 
@@ -18,17 +17,18 @@
 
 ### UI / UX
 
+- Selection area
+
 - On image import use the page size to set the image resize. So if a user imports a 2000 pixel wide image and we have a max page size of 800 px set to 800 px.
 
 - Allow page settings to have rounded edges? Same with export?
 
-- Probably remove the "Layers" panel for now. Potentially turn it into shapes / decals later
+- Do we need the top header? Potentially merge the top two headers to save space
 
 
 
 ### Text
 
-Add "arcs" and other common SVG text effects to our text elements
 
 
 ### Projects
@@ -38,7 +38,6 @@ Add "arcs" and other common SVG text effects to our text elements
 - - Image Border color and size
 - - Page background color (can probably edit per page if needed)
 
-- Page Previews
 
 - Reorder pages
 
@@ -55,26 +54,14 @@ Add "arcs" and other common SVG text effects to our text elements
 
 ### Canvas
 
-- What "paper" is "beneath" the black background? The drage handles and images are hidden on overflow. We should allow images to overflow the white area.
-
 - Increase drag handle size
 
 - Toggle / Checkbox each corner for rounding. Users might only want to have one corner "rounded". We could even do each corner with separate rounding in an "advanced" mode.
 
-- Chat Bubbles
-- Customizable chat bubbles.
-- Text
-- - Use Google fonts with "suggested" options?
-
-- Text elements
-- - Should be highly customizable SVG elements. Not standard text.
-  
-Ruler on left and top of page to show pixel positions? Perhaps a toggle in the interaction menu?
 
 
 ### Export
 
--Static Webp export and html export
 - HTML export could have a "read" mode if wanted where each click shows the next panel? Or there is a next page button. The comic might have a button for how to read
 - 
 

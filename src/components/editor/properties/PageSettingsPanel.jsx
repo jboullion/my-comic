@@ -15,7 +15,11 @@ export default function PageSettingsPanel() {
     snapToGrid,
     setSnapToGrid,
     snapGridSize,
-    setSnapGridSize
+    setSnapGridSize,
+    showRulers,
+    setShowRulers,
+    showGrid,
+    setShowGrid
   } = useProjectStore()
 
   const currentPage = currentProject?.pages?.[activePageIndex]
@@ -125,26 +129,49 @@ export default function PageSettingsPanel() {
         </div>
       </CollapsibleSection>
 
-      <CollapsibleSection title="Interaction" storageKey="page-interaction">
-        <div className="flex items-center justify-between gap-3">
+      <CollapsibleSection title="Grid & Rulers" storageKey="page-interaction">
+        <div className="space-y-3">
+          {/* Show Rulers toggle */}
           <label className="flex items-center gap-3 cursor-pointer">
             <input
               type="checkbox"
-              checked={snapToGrid}
-              onChange={(e) => setSnapToGrid(e.target.checked)}
+              checked={showRulers}
+              onChange={(e) => setShowRulers(e.target.checked)}
             />
-            <span className="text-sm text-slate-300">Snap to Grid</span>
+            <span className="text-sm text-slate-300">Show Rulers</span>
           </label>
-          <div className="w-20">
-            <NumberInput
-              value={snapGridSize}
-              onChange={(val) => setSnapGridSize(val)}
-              min={1}
-              max={100}
-              step={1}
-              suffix="px"
-            />
+
+          {/* Snap to Grid with size */}
+          <div className="flex items-center justify-between gap-3">
+            <label className="flex items-center gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={snapToGrid}
+                onChange={(e) => setSnapToGrid(e.target.checked)}
+              />
+              <span className="text-sm text-slate-300">Snap to Grid</span>
+            </label>
+            <div className="w-20">
+              <NumberInput
+                value={snapGridSize}
+                onChange={(val) => setSnapGridSize(val)}
+                min={5}
+                max={100}
+                step={5}
+                suffix="px"
+              />
+            </div>
           </div>
+
+          {/* Show Grid Lines toggle */}
+          <label className="flex items-center gap-3 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={showGrid}
+              onChange={(e) => setShowGrid(e.target.checked)}
+            />
+            <span className="text-sm text-slate-300">Show Grid Lines</span>
+          </label>
         </div>
       </CollapsibleSection>
     </div>
