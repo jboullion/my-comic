@@ -10,7 +10,7 @@
 - - Setup project settings page. Including Thumbnail / cover
 - Some actions don't seem to get caught in the undo. Is there a redo?
 - Snap to grid not working with keyboard movement on elements
-
+- I still get the forced zoom every now and then
 
 ## Ideas and Brainstorming
 
@@ -18,11 +18,13 @@
 
 ### UI / UX
 
+- Selection area
+
 - On image import use the page size to set the image resize. So if a user imports a 2000 pixel wide image and we have a max page size of 800 px set to 800 px.
 
 - Allow page settings to have rounded edges? Same with export?
 
-- Probably remove the "Layers" panel for now. Potentially turn it into shapes / decals later
+- Do we need the top header? Potentially merge the top two headers to save space
 
 
 

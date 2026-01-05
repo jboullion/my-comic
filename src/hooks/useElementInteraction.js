@@ -60,10 +60,12 @@ export default function useElementInteraction({
       startY: e.clientY,
       startElemX: element.x,
       startElemY: element.y,
+      startWidth: element.width,
+      startHeight: element.height,
     }
 
     onSelect()
-  }, [isDisabled, element.x, element.y, onSelect])
+  }, [isDisabled, element.x, element.y, element.width, element.height, onSelect])
 
   const handleResizeStart = useCallback((e, handle) => {
     // Only respond to left mouse button (0), ignore middle (1) and right (2)
@@ -116,9 +118,25 @@ export default function useElementInteraction({
       const dx = (e.clientX - startX) / zoom
       const dy = (e.clientY - startY) / zoom
 
+      // Calculate new center position
+      const newCenterX = startElemX + dx
+      const newCenterY = startElemY + dy
+
+      if (snapToGrid) {
+        // Snap the top-left corner to grid, not the center
+        const topLeftX = newCenterX - startWidth / 2
+        const topLeftY = newCenterY - startHeight / 2
+        const snappedTopLeftX = snapValue(topLeftX)
+        const snappedTopLeftY = snapValue(topLeftY)
+        return {
+          x: snappedTopLeftX + startWidth / 2,
+          y: snappedTopLeftY + startHeight / 2,
+        }
+      }
+
       return {
-        x: snapValue(startElemX + dx),
-        y: snapValue(startElemY + dy),
+        x: newCenterX,
+        y: newCenterY,
       }
     } else if (interactionMode === 'resize') {
       const rotation = (startRotation || 0) * Math.PI / 180
