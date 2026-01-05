@@ -52,10 +52,11 @@ export default function HtmlImageElement({ element, onSelect, onChange, onContex
 
   const wrapperStyle = {
     position: 'absolute',
-    left: `${currentX - currentWidth / 2}px`,
-    top: `${currentY - currentHeight / 2}px`,
-    width: `${currentWidth}px`,
-    height: `${currentHeight}px`,
+    // Round to avoid subpixel rendering artifacts
+    left: `${Math.round(currentX - currentWidth / 2)}px`,
+    top: `${Math.round(currentY - currentHeight / 2)}px`,
+    width: `${Math.round(currentWidth)}px`,
+    height: `${Math.round(currentHeight)}px`,
     transform: `rotate(${currentRotation}deg)`,
     transformOrigin: 'center center',
     opacity: element.opacity ?? 1,
