@@ -113,6 +113,9 @@ const HtmlCanvas = forwardRef(function HtmlCanvas(props, ref) {
   const handleWheel = useCallback((e) => {
     e.preventDefault()
 
+    // Ignore wheel events while panning (prevents accidental zoom during middle-click drag)
+    if (isPanning) return
+
     const rect = containerRef.current.getBoundingClientRect()
     const mouseX = e.clientX - rect.left
     const mouseY = e.clientY - rect.top
@@ -132,7 +135,7 @@ const HtmlCanvas = forwardRef(function HtmlCanvas(props, ref) {
 
     setZoom(newZoom)
     setPanOffset({ x: newPanX, y: newPanY })
-  }, [zoom, panOffset, setZoom])
+  }, [zoom, panOffset, setZoom, isPanning])
 
   /**
    * Handle zoom reset (100%)
