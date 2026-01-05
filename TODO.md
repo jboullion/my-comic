@@ -21,6 +21,8 @@
 
 ## Ideas and Brainstorming
 
+
+
 ### UI / UX
 
 - On image import use the page size to set the image resize. So if a user imports a 2000 pixel wide image and we have a max page size of 800 px set to 800 px.
@@ -28,6 +30,12 @@
 - Allow page settings to have rounded edges? Same with export?
 
 - Probably remove the "Layers" panel for now. Potentially turn it into shapes / decals later
+
+
+### Text
+
+Add "arcs" and other common SVG text effects to our text elements
+
 
 ### Projects
 - Lots of project default settings

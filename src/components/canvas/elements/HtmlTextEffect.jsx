@@ -190,11 +190,12 @@ export default function HtmlTextEffect({ element, onSelect, onChange, onContextM
         />
       )}
 
-      {/* Interaction Handles - only show when selected and not editing */}
+      {/* Interaction Handles - hide resize handles for text effects */}
       {isSelected && !isEditing && (
         <SelectionHandles
           onResizeStart={handleResizeStart}
           onRotateStart={handleRotateStart}
+          hideResizeHandles
         />
       )}
     </div>
