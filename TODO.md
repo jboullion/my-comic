@@ -34,12 +34,6 @@
 - - Our Text effects will need to be in these languages as well
 
 ### Projects
-- Lots of project default settings
-- - Default font
-- - Page type
-- - Image Border color and size
-- - Page background color (can probably edit per page if needed)
-
 
 - Reorder pages
 
@@ -49,7 +43,6 @@
 
 ### Assets
 
-- Show original size in properties
 - Need a search system.
 - Search by name. Filter by pages placed on and date added
 - We DO have limits on space with IndexDB and so we might need to warn users or ask users to install locally if they want to have more working space.

@@ -1,6 +1,6 @@
 import { useRef, useEffect, useCallback, useMemo } from 'react'
 import useElementInteraction from '../../../hooks/useElementInteraction'
-import SelectionHandles, { selectionBorderStyle } from './SelectionHandles'
+import SelectionHandles, { selectionBorderStyle, secondarySelectionBorderStyle } from './SelectionHandles'
 
 /**
  * Generate SVG path for bend/arc effect
@@ -29,7 +29,7 @@ function generateBendPath(width, height, bend) {
  * Supports fill color, stroke, outer stroke, and path effects (bend, skew).
  * Text editing is done via properties panel only.
  */
-export default function HtmlTextEffect({ element, onSelect, onChange, onContextMenu, isSelected, zoom = 1 }) {
+export default function HtmlTextEffect({ element, onSelect, onChange, onDragStart, onContextMenu, isSelected, isPrimary = true, zoom = 1 }) {
   const wrapperRef = useRef(null)
   const svgTextRef = useRef(null)
 
@@ -48,12 +48,9 @@ export default function HtmlTextEffect({ element, onSelect, onChange, onContextM
     wrapperRef,
     onChange,
     onSelect,
+    onDragStart,
     zoom,
   })
-
-  const handleWrapperClick = () => {
-    onSelect()
-  }
 
   const {
     text = 'POW!',
@@ -258,17 +255,21 @@ export default function HtmlTextEffect({ element, onSelect, onChange, onContextM
     <div
       ref={wrapperRef}
       style={wrapperStyle}
-      onClick={handleWrapperClick}
       onMouseDown={handleDragStart}
       onContextMenu={(e) => {
         e.preventDefault()
         e.stopPropagation()
-        onSelect()
+        onSelect(e)
         onContextMenu?.(e)
       }}
     >
       {/* Selection border */}
-      {isSelected && <div className="selection-ui" style={selectionBorderStyle} />}
+      {isSelected && (
+        <div
+          className="selection-ui"
+          style={isPrimary ? selectionBorderStyle : secondarySelectionBorderStyle}
+        />
+      )}
 
       {/* SVG Text Effect */}
       <svg
@@ -293,6 +294,7 @@ export default function HtmlTextEffect({ element, onSelect, onChange, onContextM
           onResizeStart={handleResizeStart}
           onRotateStart={handleRotateStart}
           hideResizeHandles
+          isPrimary={isPrimary}
         />
       )}
     </div>

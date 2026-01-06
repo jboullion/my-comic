@@ -10,6 +10,7 @@ export default function useElementInteraction({
   wrapperRef,
   onChange,
   onSelect,
+  onDragStart: onDragStartCallback, // Callback when drag starts (for multi-drag coordination)
   zoom = 1,
   isDisabled = false, // e.g., when editing text in speech bubble
   lockAspectRatio = false,
@@ -53,6 +54,13 @@ export default function useElementInteraction({
     e.preventDefault()
     e.stopPropagation()
 
+    onSelect(e)
+
+    // Call onDragStartCallback first - if it returns true, multi-drag is handling this
+    // and we should NOT enter our own drag mode
+    const multiDragActive = onDragStartCallback?.(e)
+    if (multiDragActive) return
+
     setInteractionMode('drag')
     interactionRef.current = {
       ...interactionRef.current,
@@ -63,9 +71,7 @@ export default function useElementInteraction({
       startWidth: element.width,
       startHeight: element.height,
     }
-
-    onSelect()
-  }, [isDisabled, element.x, element.y, element.width, element.height, onSelect])
+  }, [isDisabled, element.x, element.y, element.width, element.height, onSelect, onDragStartCallback])
 
   const handleResizeStart = useCallback((e, handle) => {
     // Only respond to left mouse button (0), ignore middle (1) and right (2)

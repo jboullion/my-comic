@@ -60,11 +60,29 @@ export const selectionBorderStyle = {
   zIndex: 5,
 }
 
+// Secondary selection border style (dashed, for multi-select non-primary elements)
+export const secondarySelectionBorderStyle = {
+  position: 'absolute',
+  top: 0,
+  left: 0,
+  right: 0,
+  bottom: 0,
+  border: '2px dashed #818cf8',
+  pointerEvents: 'none',
+  zIndex: 5,
+}
+
 /**
  * Selection handles component for resize and rotate interactions
+ * @param {boolean} isPrimary - If true (default), shows resize/rotate handles. If false, shows only dashed border.
  * @param {boolean} hideResizeHandles - If true, hides resize handles but keeps rotate handle
  */
-export default function SelectionHandles({ onResizeStart, onRotateStart, hideResizeHandles = false }) {
+export default function SelectionHandles({ onResizeStart, onRotateStart, hideResizeHandles = false, isPrimary = true }) {
+  // Secondary selection shows no handles, just the selection border is shown by parent
+  if (!isPrimary) {
+    return null
+  }
+
   return (
     <div className="selection-ui">
       {/* Rotate handle */}

@@ -308,7 +308,10 @@ export default function ProjectPage() {
 
   const pages = currentProject.pages || []
   const currentPage = pages[activePageIndex]
-  const selectedElement = currentPage?.elements?.find(el => el.id === selectedElementIds[0])
+  // Get all selected elements for multi-select support
+  const selectedElements = (currentPage?.elements || []).filter(el =>
+    selectedElementIds.includes(el.id)
+  )
 
   return (
     <AppLayout>
@@ -335,7 +338,7 @@ export default function ProjectPage() {
         {/* Editor Area */}
         <div className="flex-1 flex overflow-hidden">
           {/* Left Sidebar - Page Thumbnails */}
-          <PagesSidebar 
+          <PagesSidebar
             pages={pages}
             activePageIndex={activePageIndex}
             onPageSelect={setActivePageIndex}
@@ -343,14 +346,14 @@ export default function ProjectPage() {
           />
 
           {/* Main Canvas Area */}
-          <main 
+          <main
             className="flex-1 min-w-0 relative"
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
           >
             <HtmlCanvas ref={canvasRef} />
-            
+
             {/* Drag & Drop Overlay */}
             {isDraggingOver && (
               <DragDropOverlay />
@@ -360,7 +363,7 @@ export default function ProjectPage() {
           {/* Right Sidebar - Properties Panel */}
           <PropertiesSidebar
             currentProject={currentProject}
-            selectedElement={selectedElement}
+            selectedElements={selectedElements}
             selectedAssetId={selectedAssetId}
             onSelectAsset={setSelectedAssetId}
             onAddAsset={addAssetToPage}
