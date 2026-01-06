@@ -4,7 +4,7 @@
 
 A Progressive Web App (PWA) for creating digital comic books. Client-centric architecture where all creative work happens in the browser—no backend storage for user content.
 
-**Current State:** Phase 7 - Full canvas editor with HTML/CSS canvas, text elements, text effects, and comprehensive element editing.
+**Current State:** Phase 8 - Multi-select support, rulers, grid overlay, snap-to-grid, and project/page settings.
 
 ## Tech Stack
 
@@ -30,6 +30,7 @@ npm run lint     # ESLint check
 - `src/components/HtmlCanvas.jsx` - Main canvas with zoom, pan, element rendering
 - `src/components/canvas/elements/` - Element type renderers
 - `src/hooks/useElementInteraction.js` - Shared drag/resize/rotate logic
+- `src/hooks/useMultiElementDrag.js` - Coordinated multi-element dragging
 - `src/utils/fontEmbed.js` - Font embedding for capture
 
 ### Element Types
@@ -42,16 +43,19 @@ npm run lint     # ESLint check
 ```javascript
 // src/stores/useProjectStore.js
 updateElement(elementId, updates)
+updateElements(elementIds, updates)  // Batch update multiple elements
 addImage(file)
 addSpeechBubble(position)
 addText(position)
 addTextEffect(preset, position)  // 'pow', 'bam', 'boom', 'zap'
 deleteSelectedElements()
 reorderElements(ids, direction)
+nudgeSelectedElements(direction)  // 'left', 'right', 'up', 'down'
 ```
 
 ### Properties Panel
-- `src/components/editor/properties/ElementProperties.jsx` - Orchestrator
+- `src/components/editor/properties/ElementProperties.jsx` - Single element properties
+- `src/components/editor/properties/MultiElementProperties.jsx` - Multi-select shared properties
 - `src/components/editor/properties/sections/` - Modular sections per element type
 - `src/components/editor/ui/` - Reusable controls (NumberInput, FontSelect, etc.)
 
@@ -84,8 +88,10 @@ reorderElements(ids, direction)
 | `src/components/HtmlCanvas.jsx` | Canvas with capture |
 | `src/components/canvas/elements/*.jsx` | Element renderers |
 | `src/hooks/useElementInteraction.js` | Drag/resize/rotate |
+| `src/hooks/useMultiElementDrag.js` | Multi-element drag coordination |
 | `src/utils/fontEmbed.js` | Font embedding for export |
 | `src/components/editor/properties/` | Property panels |
+| `src/pages/ProjectSettingsPage.jsx` | Project defaults configuration |
 
 ## Current Features
 
@@ -98,9 +104,16 @@ reorderElements(ids, direction)
 - Zoom, pan, undo/redo
 - Asset gallery with IndexedDB
 - Z-order management
+- Multi-select with Ctrl+Click (toggle) and Shift+Click (add)
+- Coordinated multi-element dragging
+- Shared properties panel for multi-selection
+- Rulers and grid overlay
+- Snap-to-grid functionality
+- Project settings with element defaults
+- Per-page settings (dimensions, background)
+- Export all pages as ZIP (WebP, PNG, JPEG)
 
 ## Planned
 
 - Panel/frame elements
-- Export to PNG/JPG/PDF
-- Multi-select and grouping
+- Element grouping
