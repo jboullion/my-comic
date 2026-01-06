@@ -10,6 +10,7 @@ import ZoomControls from './canvas/ZoomControls'
 import CanvasContextMenu from './canvas/CanvasContextMenu'
 import CanvasRulers from './canvas/CanvasRulers'
 import GridOverlay from './canvas/GridOverlay'
+import useMultiElementDrag from '../hooks/useMultiElementDrag'
 
 /**
  * HtmlCanvas Component
@@ -49,6 +50,54 @@ const HtmlCanvas = forwardRef(function HtmlCanvas(props, ref) {
   const pageSettings = currentPage?.settings || projectSettings
   const pageWidth = pageSettings.width
   const pageHeight = pageSettings.height
+
+  // Multi-element drag coordination hook
+  const { startDrag: startMultiDrag } = useMultiElementDrag({
+    selectedElementIds,
+    elements: currentPage?.elements || [],
+    updateElement,
+    zoom,
+  })
+
+  /**
+   * Handle element selection with modifier key support
+   * - Click (no modifier): Replace selection with clicked element
+   * - Ctrl/Cmd+Click: Toggle element in/out of selection
+   * - Shift+Click: Add element to selection
+   */
+  const handleElementSelect = useCallback((elementId, event) => {
+    if (event?.ctrlKey || event?.metaKey) {
+      // Toggle selection
+      if (selectedElementIds.includes(elementId)) {
+        setSelectedElementIds(selectedElementIds.filter(id => id !== elementId))
+      } else {
+        setSelectedElementIds([...selectedElementIds, elementId])
+      }
+    } else if (event?.shiftKey) {
+      // Add to selection (if not already selected)
+      if (!selectedElementIds.includes(elementId)) {
+        setSelectedElementIds([...selectedElementIds, elementId])
+      }
+    } else {
+      // Replace selection
+      setSelectedElementIds([elementId])
+    }
+  }, [selectedElementIds, setSelectedElementIds])
+
+  /**
+   * Handle element drag start for multi-drag coordination
+   * When dragging starts on an element that's part of a multi-selection,
+   * trigger multi-drag so all selected elements move together
+   * Returns true if multi-drag is handling the drag (so individual element should skip its own drag)
+   */
+  const handleElementDragStart = useCallback((elementId, event) => {
+    // If multiple elements are selected and this element is one of them, start multi-drag
+    if (selectedElementIds.length > 1 && selectedElementIds.includes(elementId)) {
+      startMultiDrag(event, elementId)
+      return true // Signal that multi-drag is handling this
+    }
+    return false
+  }, [selectedElementIds, startMultiDrag])
 
   // Close context menu on click elsewhere
   useEffect(() => {
@@ -537,14 +586,20 @@ const HtmlCanvas = forwardRef(function HtmlCanvas(props, ref) {
 
           {/* Render all elements */}
           {currentPage?.elements?.map((element) => {
+            const isSelected = selectedElementIds.includes(element.id)
+            // Primary selection = first in the array, gets full handles
+            const isPrimary = selectedElementIds.length <= 1 || selectedElementIds[0] === element.id
+
             if (element.type === 'speechBubble') {
               return (
                 <HtmlSpeechBubble
                   key={element.id}
                   element={element}
-                  isSelected={selectedElementIds.includes(element.id)}
-                  onSelect={() => setSelectedElementIds([element.id])}
+                  isSelected={isSelected}
+                  isPrimary={isPrimary}
+                  onSelect={(e) => handleElementSelect(element.id, e)}
                   onChange={(updates) => updateElement(element.id, updates)}
+                  onDragStart={(e) => handleElementDragStart(element.id, e)}
                   onContextMenu={(e) => {
                     e.preventDefault()
                     setContextMenu({
@@ -563,9 +618,11 @@ const HtmlCanvas = forwardRef(function HtmlCanvas(props, ref) {
                 <HtmlImageElement
                   key={element.id}
                   element={element}
-                  isSelected={selectedElementIds.includes(element.id)}
-                  onSelect={() => setSelectedElementIds([element.id])}
+                  isSelected={isSelected}
+                  isPrimary={isPrimary}
+                  onSelect={(e) => handleElementSelect(element.id, e)}
                   onChange={(updates) => updateElement(element.id, updates)}
+                  onDragStart={(e) => handleElementDragStart(element.id, e)}
                   onContextMenu={(e) => {
                     e.preventDefault()
                     setContextMenu({
@@ -584,9 +641,11 @@ const HtmlCanvas = forwardRef(function HtmlCanvas(props, ref) {
                 <HtmlTextElement
                   key={element.id}
                   element={element}
-                  isSelected={selectedElementIds.includes(element.id)}
-                  onSelect={() => setSelectedElementIds([element.id])}
+                  isSelected={isSelected}
+                  isPrimary={isPrimary}
+                  onSelect={(e) => handleElementSelect(element.id, e)}
                   onChange={(updates) => updateElement(element.id, updates)}
+                  onDragStart={(e) => handleElementDragStart(element.id, e)}
                   onContextMenu={(e) => {
                     e.preventDefault()
                     setContextMenu({
@@ -605,9 +664,11 @@ const HtmlCanvas = forwardRef(function HtmlCanvas(props, ref) {
                 <HtmlTextEffect
                   key={element.id}
                   element={element}
-                  isSelected={selectedElementIds.includes(element.id)}
-                  onSelect={() => setSelectedElementIds([element.id])}
+                  isSelected={isSelected}
+                  isPrimary={isPrimary}
+                  onSelect={(e) => handleElementSelect(element.id, e)}
                   onChange={(updates) => updateElement(element.id, updates)}
+                  onDragStart={(e) => handleElementDragStart(element.id, e)}
                   onContextMenu={(e) => {
                     e.preventDefault()
                     setContextMenu({

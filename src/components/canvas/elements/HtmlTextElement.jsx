@@ -1,6 +1,6 @@
 import { useRef, useState, useEffect, useCallback } from 'react'
 import useElementInteraction from '../../../hooks/useElementInteraction'
-import SelectionHandles, { selectionBorderStyle } from './SelectionHandles'
+import SelectionHandles, { selectionBorderStyle, secondarySelectionBorderStyle } from './SelectionHandles'
 
 /**
  * HTML Text Element Component
@@ -9,7 +9,7 @@ import SelectionHandles, { selectionBorderStyle } from './SelectionHandles'
  * Uses contentEditable for inline text editing.
  * Auto-resizes to fit text content.
  */
-export default function HtmlTextElement({ element, onSelect, onChange, onContextMenu, isSelected, zoom = 1 }) {
+export default function HtmlTextElement({ element, onSelect, onChange, onDragStart, onContextMenu, isSelected, isPrimary = true, zoom = 1 }) {
   const wrapperRef = useRef(null)
   const textRef = useRef(null)
   const measureRef = useRef(null)
@@ -31,20 +31,15 @@ export default function HtmlTextElement({ element, onSelect, onChange, onContext
     wrapperRef,
     onChange,
     onSelect,
+    onDragStart,
     zoom,
     isDisabled: isEditing,
   })
 
-  const handleWrapperClick = () => {
-    if (!isEditing) {
-      onSelect()
-    }
-  }
-
   const handleTextDoubleClick = (e) => {
     e.stopPropagation()
     setIsEditing(true)
-    onSelect()
+    onSelect(e)
 
     setTimeout(() => {
       if (textRef.current) {
@@ -167,17 +162,21 @@ export default function HtmlTextElement({ element, onSelect, onChange, onContext
       <div
         ref={wrapperRef}
         style={wrapperStyle}
-        onClick={handleWrapperClick}
         onMouseDown={handleDragStart}
         onContextMenu={(e) => {
           e.preventDefault()
           e.stopPropagation()
-          onSelect()
+          onSelect(e)
           onContextMenu?.(e)
         }}
       >
         {/* Selection border */}
-        {isSelected && <div className="selection-ui" style={selectionBorderStyle} />}
+        {isSelected && (
+          <div
+            className="selection-ui"
+            style={isPrimary ? selectionBorderStyle : secondarySelectionBorderStyle}
+          />
+        )}
 
         {/* Text Layer */}
         <div
@@ -203,6 +202,7 @@ export default function HtmlTextElement({ element, onSelect, onChange, onContext
           <SelectionHandles
             onResizeStart={handleResizeStart}
             onRotateStart={handleRotateStart}
+            isPrimary={isPrimary}
           />
         )}
       </div>

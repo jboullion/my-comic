@@ -181,10 +181,30 @@ export const useProjectStore = create(
 
         const pages = [...currentProject.pages]
         const page = { ...pages[activePageIndex] }
-        const elements = page.elements.map(el => 
+        const elements = page.elements.map(el =>
           el.id === elementId ? { ...el, ...updates } : el
         )
-        
+
+        page.elements = elements
+        pages[activePageIndex] = page
+
+        get().updateCurrentProjectLocal({ pages })
+      },
+
+      /**
+       * Update multiple elements on the current page with the same changes
+       * Used for multi-select property editing
+       */
+      updateElements: (elementIds, updates) => {
+        const { currentProject, activePageIndex } = get()
+        if (!currentProject || !elementIds.length) return
+
+        const pages = [...currentProject.pages]
+        const page = { ...pages[activePageIndex] }
+        const elements = page.elements.map(el =>
+          elementIds.includes(el.id) ? { ...el, ...updates } : el
+        )
+
         page.elements = elements
         pages[activePageIndex] = page
 

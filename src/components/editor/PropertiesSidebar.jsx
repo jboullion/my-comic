@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import ElementProperties from './properties/ElementProperties'
+import MultiElementProperties from './properties/MultiElementProperties'
 import PageSettingsPanel from './properties/PageSettingsPanel'
 import AssetGallery from './properties/AssetGallery'
 import AssetPropertiesWidget from './properties/AssetPropertiesWidget'
@@ -10,7 +11,7 @@ import AssetPropertiesWidget from './properties/AssetPropertiesWidget'
  */
 export default function PropertiesSidebar({
   currentProject,
-  selectedElement,
+  selectedElements = [],
   selectedAssetId,
   onSelectAsset,
   onAddAsset,
@@ -21,14 +22,14 @@ export default function PropertiesSidebar({
     <aside className="w-72 shrink-0 border-l border-slate-800 flex flex-col bg-slate-900">
       {/* Tabs */}
       <div className="flex border-b border-slate-800">
-        <TabButton 
-          label="Properties" 
-          active={activeTab === 'properties'} 
+        <TabButton
+          label="Properties"
+          active={activeTab === 'properties'}
           onClick={() => setActiveTab('properties')}
         />
-        <TabButton 
-          label="Assets" 
-          active={activeTab === 'assets'} 
+        <TabButton
+          label="Assets"
+          active={activeTab === 'assets'}
           onClick={() => setActiveTab('assets')}
         />
         <TabButton
@@ -41,8 +42,10 @@ export default function PropertiesSidebar({
       <div className="flex-1 overflow-y-auto p-4">
         {activeTab === 'properties' && (
           <div className="space-y-6">
-            {selectedElement ? (
-              <ElementProperties element={selectedElement} />
+            {selectedElements.length > 1 ? (
+              <MultiElementProperties elements={selectedElements} />
+            ) : selectedElements.length === 1 ? (
+              <ElementProperties element={selectedElements[0]} />
             ) : (
               <div className="text-center py-8 text-slate-500 text-sm">
                 Select an element to edit its properties

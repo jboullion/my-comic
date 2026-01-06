@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react'
 import useElementInteraction from '../../../hooks/useElementInteraction'
-import SelectionHandles, { selectionBorderStyle } from './SelectionHandles'
+import SelectionHandles, { selectionBorderStyle, secondarySelectionBorderStyle } from './SelectionHandles'
 
 /**
  * HTML Speech Bubble Component
@@ -10,7 +10,7 @@ import SelectionHandles, { selectionBorderStyle } from './SelectionHandles'
  * 2. SVG element - renders the bubble shape (100% of wrapper size)
  * 3. Text div - contenteditable for inline text editing
  */
-export default function HtmlSpeechBubble({ element, onSelect, onChange, onContextMenu, isSelected, zoom = 1 }) {
+export default function HtmlSpeechBubble({ element, onSelect, onChange, onDragStart, onContextMenu, isSelected, isPrimary = true, zoom = 1 }) {
   const wrapperRef = useRef(null)
   const textRef = useRef(null)
 
@@ -31,20 +31,15 @@ export default function HtmlSpeechBubble({ element, onSelect, onChange, onContex
     wrapperRef,
     onChange,
     onSelect,
+    onDragStart,
     zoom,
     isDisabled: isEditing,
   })
 
-  const handleWrapperClick = () => {
-    if (!isEditing) {
-      onSelect()
-    }
-  }
-
   const handleTextDoubleClick = (e) => {
     e.stopPropagation()
     setIsEditing(true)
-    onSelect()
+    onSelect(e)
 
     setTimeout(() => {
       if (textRef.current) {
@@ -202,17 +197,21 @@ export default function HtmlSpeechBubble({ element, onSelect, onChange, onContex
     <div
       ref={wrapperRef}
       style={wrapperStyle}
-      onClick={handleWrapperClick}
       onMouseDown={handleDragStart}
       onContextMenu={(e) => {
         e.preventDefault()
         e.stopPropagation()
-        onSelect()
+        onSelect(e)
         onContextMenu?.(e)
       }}
     >
       {/* Selection border */}
-      {isSelected && <div className="selection-ui" style={selectionBorderStyle} />}
+      {isSelected && (
+        <div
+          className="selection-ui"
+          style={isPrimary ? selectionBorderStyle : secondarySelectionBorderStyle}
+        />
+      )}
 
       {/* SVG Bubble Shape */}
       {renderBubbleSvg()}
@@ -236,11 +235,12 @@ export default function HtmlSpeechBubble({ element, onSelect, onChange, onContex
         {element.text || 'Double-click to edit'}
       </div>
 
-      {/* Interaction Handles - only show when selected and not editing */}
+      {/* Interaction Handles - only show when selected, primary, and not editing */}
       {isSelected && !isEditing && (
         <SelectionHandles
           onResizeStart={handleResizeStart}
           onRotateStart={handleRotateStart}
+          isPrimary={isPrimary}
         />
       )}
     </div>

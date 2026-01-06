@@ -1,7 +1,7 @@
 import { useRef } from 'react'
 import { useImageUrl } from '../../../hooks/useImage'
 import useElementInteraction from '../../../hooks/useElementInteraction'
-import SelectionHandles, { selectionBorderStyle } from './SelectionHandles'
+import SelectionHandles, { selectionBorderStyle, secondarySelectionBorderStyle } from './SelectionHandles'
 
 /**
  * HTML Image Element Component
@@ -9,7 +9,7 @@ import SelectionHandles, { selectionBorderStyle } from './SelectionHandles'
  * Renders images with CSS transforms and corner-shape.
  * Supports drag, resize, rotate interactions.
  */
-export default function HtmlImageElement({ element, onSelect, onChange, onContextMenu, isSelected, zoom = 1 }) {
+export default function HtmlImageElement({ element, onSelect, onChange, onDragStart, onContextMenu, isSelected, isPrimary = true, zoom = 1 }) {
   const imageUrl = useImageUrl(element.assetId)
   const wrapperRef = useRef(null)
 
@@ -28,14 +28,10 @@ export default function HtmlImageElement({ element, onSelect, onChange, onContex
     wrapperRef,
     onChange,
     onSelect,
+    onDragStart,
     zoom,
     lockAspectRatio: element.lockAspectRatio,
   })
-
-  const handleWrapperClick = (e) => {
-    e.stopPropagation()
-    onSelect()
-  }
 
   const handleMouseDown = (e) => {
     if (e.target !== wrapperRef.current && e.target.tagName !== 'IMG') return
@@ -82,17 +78,21 @@ export default function HtmlImageElement({ element, onSelect, onChange, onContex
     <div
       ref={wrapperRef}
       style={wrapperStyle}
-      onClick={handleWrapperClick}
       onMouseDown={handleMouseDown}
       onContextMenu={(e) => {
         e.preventDefault()
         e.stopPropagation()
-        onSelect()
+        onSelect(e)
         onContextMenu?.(e)
       }}
     >
       {/* Selection border */}
-      {isSelected && <div className="selection-ui" style={selectionBorderStyle} />}
+      {isSelected && (
+        <div
+          className="selection-ui"
+          style={isPrimary ? selectionBorderStyle : secondarySelectionBorderStyle}
+        />
+      )}
 
       {/* Image */}
       {imageUrl ? (
@@ -118,11 +118,12 @@ export default function HtmlImageElement({ element, onSelect, onChange, onContex
         </div>
       )}
 
-      {/* Interaction Handles - only show when selected */}
+      {/* Interaction Handles - only show when selected and primary */}
       {isSelected && (
         <SelectionHandles
           onResizeStart={handleResizeStart}
           onRotateStart={handleRotateStart}
+          isPrimary={isPrimary}
         />
       )}
     </div>
