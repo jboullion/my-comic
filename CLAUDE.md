@@ -113,8 +113,27 @@ nudgeSelectedElements(direction)  // 'left', 'right', 'up', 'down'
 - Project settings with element defaults (page, images, text, speech bubbles, text effects)
 - Per-page settings (dimensions, background)
 - Export all pages as ZIP (WebP, PNG, JPEG)
-
-## Planned
-
-- Panel/frame elements
 - Element grouping
+
+## Custom Commands
+
+### `/features` - Documentation Update
+
+After completing a feature, run `/features` to update all documentation:
+
+1. Updates `CLAUDE.md` (Current Features, Important Files)
+2. Updates relevant `src/docs/*.md` page(s)
+3. Updates `CHANGELOG.md`
+4. Syncs `.github/copilot-instructions.md`
+
+See `.github/instructions/features-checklist.md` for the full checklist.
+
+## Shared Instructions
+
+This project uses shared instruction files for both Claude Code and GitHub Copilot:
+
+| Location | Purpose |
+|----------|---------|
+| `.github/instructions/` | Shared checklists and guidelines |
+| `.github/agents/` | Copilot agent definitions |
+| `.claude/commands/` | Claude Code skill definitions |
