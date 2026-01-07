@@ -23,7 +23,7 @@ A guide to creating digital comics with the Comic Book Maker app.
 
 ## Getting Started
 
-Comic Book Maker is a browser-based application for creating digital comic books. All your work is saved locally in your browser - no account required.
+Comic Book Maker is a browser-based application for creating digital comic books. All your work is saved locally in your browser.
 
 ### Requirements
 - Modern web browser (Chrome, Firefox, Edge, Safari)

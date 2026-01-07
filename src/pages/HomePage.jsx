@@ -12,8 +12,7 @@ export default function HomePage() {
             Create Amazing Comics
           </h1>
           <p className="text-xl text-slate-400 mb-8 max-w-2xl mx-auto">
-            A powerful, free comic book editor that works entirely in your browser. 
-            No account required. Your data stays on your device.
+            A powerful, free comic book editor that works entirely in your browser. Your data stays on your device.
           </p>
           <button className="px-8 py-4 bg-indigo-500 hover:bg-indigo-600 rounded-xl text-lg font-semibold transition-colors shadow-lg shadow-indigo-500/25">
             Start Creating
