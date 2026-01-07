@@ -82,6 +82,15 @@ export const DEFAULT_PROJECT_SETTINGS = {
     strokeWidth: 3,
     outerStroke: '#FF0000',
     outerStrokeWidth: 4
+  },
+
+  // Image element defaults
+  image: {
+    opacity: 1,
+    stroke: '#000000',
+    strokeWidth: 0,
+    cornerRadius: 0,
+    cornerShape: 'round'
   }
 }
 

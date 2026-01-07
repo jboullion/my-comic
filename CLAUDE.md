@@ -91,6 +91,7 @@ nudgeSelectedElements(direction)  // 'left', 'right', 'up', 'down'
 | `src/hooks/useMultiElementDrag.js` | Multi-element drag coordination |
 | `src/utils/fontEmbed.js` | Font embedding for export |
 | `src/components/editor/properties/` | Property panels |
+| `src/components/settings/` | Settings tabs (Page, Images, Text, Speech Bubbles, Text Effects) |
 | `src/pages/ProjectSettingsPage.jsx` | Project defaults configuration |
 
 ## Current Features
@@ -109,7 +110,7 @@ nudgeSelectedElements(direction)  // 'left', 'right', 'up', 'down'
 - Shared properties panel for multi-selection
 - Rulers and grid overlay
 - Snap-to-grid functionality
-- Project settings with element defaults
+- Project settings with element defaults (page, images, text, speech bubbles, text effects)
 - Per-page settings (dimensions, background)
 - Export all pages as ZIP (WebP, PNG, JPEG)
 

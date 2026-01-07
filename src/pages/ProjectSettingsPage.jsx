@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { FiArrowLeft, FiLayout, FiType, FiMessageCircle, FiZap } from 'react-icons/fi'
+import { FiArrowLeft, FiLayout, FiType, FiMessageCircle, FiZap, FiImage } from 'react-icons/fi'
 import AppLayout from '../layouts/AppLayout'
 import useProjectStore from '../stores/useProjectStore'
 import { DEFAULT_PROJECT_SETTINGS } from '../lib/db'
@@ -8,9 +8,11 @@ import PageSettingsTab from '../components/settings/PageSettingsTab'
 import TextSettingsTab from '../components/settings/TextSettingsTab'
 import SpeechBubbleSettingsTab from '../components/settings/SpeechBubbleSettingsTab'
 import TextEffectSettingsTab from '../components/settings/TextEffectSettingsTab'
+import ImageSettingsTab from '../components/settings/ImageSettingsTab'
 
 const TABS = [
   { id: 'page', label: 'Page', icon: FiLayout },
+  { id: 'image', label: 'Images', icon: FiImage },
   { id: 'text', label: 'Text', icon: FiType },
   { id: 'speechBubble', label: 'Speech Bubbles', icon: FiMessageCircle },
   { id: 'textEffect', label: 'Text Effects', icon: FiZap }
@@ -54,6 +56,7 @@ export default function ProjectSettingsPage() {
         width: currentProject.settings.width || DEFAULT_PROJECT_SETTINGS.width,
         height: currentProject.settings.height || DEFAULT_PROJECT_SETTINGS.height,
         backgroundColor: currentProject.settings.backgroundColor || DEFAULT_PROJECT_SETTINGS.backgroundColor,
+        image: { ...DEFAULT_PROJECT_SETTINGS.image, ...currentProject.settings.image },
         text: { ...DEFAULT_PROJECT_SETTINGS.text, ...currentProject.settings.text },
         speechBubble: { ...DEFAULT_PROJECT_SETTINGS.speechBubble, ...currentProject.settings.speechBubble },
         textEffect: { ...DEFAULT_PROJECT_SETTINGS.textEffect, ...currentProject.settings.textEffect }
@@ -173,6 +176,12 @@ export default function ProjectSettingsPage() {
               <PageSettingsTab
                 settings={localSettings}
                 onUpdate={updateLocalSettings}
+              />
+            )}
+            {activeTab === 'image' && (
+              <ImageSettingsTab
+                settings={localSettings.image}
+                onUpdate={(updates) => updateNestedSettings('image', updates)}
               />
             )}
             {activeTab === 'text' && (

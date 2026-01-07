@@ -611,6 +611,8 @@ export const useProjectStore = create(
           }
 
           // 4. Create element on current page (x,y is center point)
+          // Get image defaults from project settings
+          const imageDefaults = currentProject.settings?.image || DEFAULT_PROJECT_SETTINGS.image
           const newElement = {
             type: 'image',
             id: `elem-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
@@ -622,11 +624,11 @@ export const useProjectStore = create(
             rotation: 0,
             scaleX: 1,
             scaleY: 1,
-            opacity: 1,
-            stroke: '#000000',
-            strokeWidth: 0,
-            cornerRadius: 0,
-            cornerShape: 'round',
+            opacity: imageDefaults.opacity ?? 1,
+            stroke: imageDefaults.stroke || '#000000',
+            strokeWidth: imageDefaults.strokeWidth ?? 0,
+            cornerRadius: imageDefaults.cornerRadius ?? 0,
+            cornerShape: imageDefaults.cornerShape || 'round',
             lockAspectRatio: true,
             zIndex: (currentProject.pages[activePageIndex].elements?.length || 0) + 1
           }
@@ -675,6 +677,8 @@ export const useProjectStore = create(
           height = Math.round(height * scale)
         }
 
+        // Get image defaults from project settings
+        const imageDefaults = currentProject.settings?.image || DEFAULT_PROJECT_SETTINGS.image
         const newElement = {
           type: 'image',
           id: `elem-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
@@ -690,11 +694,11 @@ export const useProjectStore = create(
           rotation: 0,
           scaleX: 1,
           scaleY: 1,
-          opacity: 1,
-          stroke: '#000000',
-          strokeWidth: 0,
-          cornerRadius: 0,
-          cornerShape: 'round',
+          opacity: imageDefaults.opacity ?? 1,
+          stroke: imageDefaults.stroke || '#000000',
+          strokeWidth: imageDefaults.strokeWidth ?? 0,
+          cornerRadius: imageDefaults.cornerRadius ?? 0,
+          cornerShape: imageDefaults.cornerShape || 'round',
           lockAspectRatio: true,
           zIndex: (currentProject.pages[activePageIndex].elements?.length || 0) + 1
         }

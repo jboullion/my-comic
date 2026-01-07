@@ -7,6 +7,7 @@ const FONTS = [
   // Comic style
   { value: 'Bangers, cursive', label: 'Bangers', category: 'comic' },
   { value: 'Comic Neue, cursive', label: 'Comic Neue', category: 'comic' },
+  { value: '"Comic Sans MS", cursive', label: 'Comic Sans MS', category: 'comic' },
   { value: 'Permanent Marker, cursive', label: 'Permanent Marker', category: 'comic' },
   { value: 'Caveat, cursive', label: 'Caveat', category: 'comic' },
   // Display

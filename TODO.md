@@ -2,6 +2,10 @@
 
 - Potentially remove the PWA functionality to avoid weird issues like the target="_blank" issue Weigh the pros and cons again
 
+- Create a various instructions files
+
+- Create a features agent which knows to add to our documentation page and other common things we need to do for tasks. Perhaps it even knows to check out a branch...request a PR...? Can we use a GitHub MCP to create PRs?
+
 ## Bugs
 
 - - Cloud SVG is overflowing container.
@@ -24,8 +28,6 @@
 
 
 ### Text
-
-- Add Comic Sans Font
 
 - We want Japanese and Korean comics to be made here.
 - - How can we enable these languages?

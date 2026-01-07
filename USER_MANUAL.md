@@ -56,6 +56,7 @@ Your work is **automatically saved** as you make changes. You'll see a "Saving..
 Click the **Settings** button (gear icon) to configure project defaults:
 
 - **Page Settings:** Default dimensions and background color
+- **Image Defaults:** Opacity, border, and corner styling for new images
 - **Text Defaults:** Font, size, color for new text elements
 - **Speech Bubble Defaults:** Style, colors, fonts for new bubbles
 - **Text Effect Defaults:** Styling for POW!/BAM! effects
