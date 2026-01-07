@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom'
-import PublicNav from '../PublicNav'
+import DocsNav from '../DocsNav'
 import PublicFooter from '../PublicFooter'
 import MarkdownRenderer from './MarkdownRenderer'
 import TableOfContents from './TableOfContents'
@@ -49,7 +49,7 @@ export default function DocPageTemplate({ content }) {
 
   return (
     <div className="min-h-screen bg-slate-900 text-white flex flex-col">
-      <PublicNav />
+      <DocsNav />
 
       <div className="flex-1 flex">
         {/* Left Sidebar - Navigation */}

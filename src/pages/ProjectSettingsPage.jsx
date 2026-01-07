@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { FiArrowLeft, FiLayout, FiType, FiMessageCircle, FiZap, FiImage } from 'react-icons/fi'
-import AppLayout from '../layouts/AppLayout'
+import EditorLayout from '../layouts/EditorLayout'
 import useProjectStore from '../stores/useProjectStore'
 import { DEFAULT_PROJECT_SETTINGS } from '../lib/db'
 import PageSettingsTab from '../components/settings/PageSettingsTab'
@@ -100,17 +100,17 @@ export default function ProjectSettingsPage() {
 
   if (currentProjectLoading || !localSettings) {
     return (
-      <AppLayout>
-        <div className="flex items-center justify-center h-[calc(100vh-61px)]">
+      <EditorLayout>
+        <div className="flex items-center justify-center h-screen">
           <div className="animate-spin w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full" />
         </div>
-      </AppLayout>
+      </EditorLayout>
     )
   }
 
   return (
-    <AppLayout>
-      <div className="flex flex-col h-[calc(100vh-61px)] bg-slate-950">
+    <EditorLayout>
+      <div className="flex flex-col h-screen bg-slate-950">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800">
           <div className="flex items-center gap-4">
@@ -212,6 +212,6 @@ export default function ProjectSettingsPage() {
           </p>
         </div>
       </div>
-    </AppLayout>
+    </EditorLayout>
   )
 }

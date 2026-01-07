@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef, useCallback } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { FiLoader, FiFrown, FiUploadCloud } from 'react-icons/fi'
-import AppLayout from '../layouts/AppLayout'
+import EditorLayout from '../layouts/EditorLayout'
 import useProjectStore from '../stores/useProjectStore'
 import HtmlCanvas from '../components/HtmlCanvas'
 import ProjectHeader from '../components/editor/ProjectHeader'
@@ -281,24 +281,24 @@ export default function ProjectPage() {
   // Loading state
   if (currentProjectLoading) {
     return (
-      <AppLayout>
-        <div className="flex items-center justify-center h-[calc(100vh-61px)]">
+      <EditorLayout>
+        <div className="flex items-center justify-center h-screen">
           <FiLoader className="w-8 h-8 animate-spin text-indigo-500" />
         </div>
-      </AppLayout>
+      </EditorLayout>
     )
   }
 
   // Error state
   if (currentProjectError || !currentProject) {
     return (
-      <AppLayout>
-        <div className="flex flex-col items-center justify-center h-[calc(100vh-61px)]">
+      <EditorLayout>
+        <div className="flex flex-col items-center justify-center h-screen">
           <div className="text-center">
             <FiFrown className="w-16 h-16 mx-auto text-slate-600 mb-4" />
             <h2 className="text-xl font-semibold mb-2">Project not found</h2>
             <p className="text-slate-400 mb-6">{currentProjectError || "This project doesn't exist or was deleted."}</p>
-            <Link 
+            <Link
               to="/projects"
               className="px-5 py-2.5 bg-indigo-500 hover:bg-indigo-600 rounded-lg font-medium transition-colors"
             >
@@ -306,7 +306,7 @@ export default function ProjectPage() {
             </Link>
           </div>
         </div>
-      </AppLayout>
+      </EditorLayout>
     )
   }
 
@@ -318,8 +318,8 @@ export default function ProjectPage() {
   )
 
   return (
-    <AppLayout>
-      <div className="flex flex-col h-[calc(100vh-61px)]">
+    <EditorLayout>
+      <div className="flex flex-col h-screen">
         {/* Project Header */}
         <ProjectHeader
           project={currentProject}
@@ -382,7 +382,7 @@ export default function ProjectPage() {
           isExporting={isExporting}
         />
       </div>
-    </AppLayout>
+    </EditorLayout>
   )
 }
 

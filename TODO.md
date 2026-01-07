@@ -6,6 +6,10 @@
 
 - Create a features agent which knows to add to our documentation page and other common things we need to do for tasks. Perhaps it even knows to check out a branch...request a PR...? Can we use a GitHub MCP to create PRs?
 
+- Add a cover feature which shows up on the projects page.
+
+- Show available space if possible somewhere so a user doesn't fill up their indexDB.
+
 ## Bugs
 
 - - Cloud SVG is overflowing container.
@@ -17,15 +21,15 @@
 
 ## Ideas and Brainstorming
 
+### References
+
+- Excalidraw 
+- - They have an interesting shortcuts button which may be useful in the log run.
 
 
 ### UI / UX
 
 - Allow page settings to have rounded edges? Same with export?
-
-- Do we need the top header? Potentially merge the top two headers to save space
-
-
 
 ### Text
 
