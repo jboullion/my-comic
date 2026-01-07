@@ -4,8 +4,6 @@
 
 - Create a various instructions files
 
-- Create a features agent which knows to add to our documentation page and other common things we need to do for tasks. Perhaps it even knows to check out a branch...request a PR...? Can we use a GitHub MCP to create PRs?
-
 - Add a cover feature which shows up on the projects page.
 
 - Show available space if possible somewhere so a user doesn't fill up their indexDB.
@@ -53,16 +51,14 @@
 
 ### Canvas
 
-- Increase drag handle size
-
 - Toggle / Checkbox each corner for rounding. Users might only want to have one corner "rounded". We could even do each corner with separate rounding in an "advanced" mode.
-
 
 
 ### Export
 
 - HTML export could have a "read" mode if wanted where each click shows the next panel? Or there is a next page button. The comic might have a button for how to read
-- 
+- - Relatedly the user could enter a "Read" mode for their comic? Perhaps we even generate their comic for them and when they click on it we can display it for them? Perhaps in an iframe or something?
+- - Or more likely just build a comic reader functionality inside of the comic maker. Problem there is it will be a different experience than the export if they export the index.html file. Ideally they would have the same experience as the users and only one codebase to manage.
 
 ### a11y
 
@@ -110,7 +106,7 @@ For image consistance and Dialog consistancy.
 
 #### Voice?!?
 
-Could we set up the comic to "read"
+Could we set up the comic to "read"? Can each character have a voice? Plus a Narrator?
 
 
 

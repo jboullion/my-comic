@@ -85,3 +85,230 @@ Advanced users can input a Civitai Version ID.
 
 * **Mapping:** App converts ID to download URL: https://civitai.com/api/download/models/{VERSION\_ID}.  
 * **API Call:** The URL is passed as an object in the loras array of the Fal.ai request.
+
+## **9\. Voice AI (Optional / Long Term)**
+
+### **9.1 Overview**
+
+Enable a "Read Mode" where AI narrates comic dialog and narrative text aloud.
+
+* **Primary Model:** fal-ai/dia-tts (multi-speaker dialogue).
+* **Fallback Model:** fal-ai/orpheus-tts (emotional presets).
+* **Use Case:** Accessibility, immersive reading, content preview.
+
+### **9.2 Model Selection**
+
+| Model | Endpoint | Cost | Best For |
+| :---- | :---- | :---- | :---- |
+| **Dia TTS** | fal-ai/dia-tts | $0.04/1K chars | Multi-character dialogue |
+| **Orpheus TTS** | fal-ai/orpheus-tts | $0.05/1K chars | Emotional narration |
+
+### **9.3 Voice Mapping Strategy**
+
+**Character Voices:**
+
+1. Each character gets a unique voice via Dia voice cloning.
+2. User uploads/records a voice sample per character.
+3. System stores voice reference in character profile.
+
+**Element Type Mapping:**
+
+* **Speech Bubbles:** Character's cloned voice with speaker tag.
+* **Narrative Boxes:** Dedicated "Narrator" voice (neutral tone).
+* **Text Effects (POW!/BAM!):** Dramatic voice with emphasis.
+
+### **9.4 Text Processing Pipeline**
+
+1. **Extract:** Collect all text elements from page in z-order.
+2. **Format:** Convert to Dia TTS format:
+   ```
+   [S1] Hero dialog here. (laughs)
+   [S2] Villain response here.
+   [NARRATOR] Meanwhile, in the city...
+   ```
+3. **Generate:** Call fal-ai/dia-tts with formatted script.
+4. **Cache:** Store audio URL in page metadata for replay.
+
+### **9.5 API Integration**
+
+**Dia TTS Request:**
+
+```javascript
+const result = await fal.subscribe("fal-ai/dia-tts", {
+  input: {
+    text: "[S1] I'll save the city! [S2] Not if I stop you first. (evil laugh)"
+  }
+});
+// Returns: { audio: { url: "https://...", content_type: "audio/mpeg" } }
+```
+
+**With Voice Cloning:**
+
+```javascript
+const result = await fal.subscribe("fal-ai/dia-tts/voice-clone", {
+  input: {
+    text: "[S1] My signature line!",
+    ref_audio_url: "https://storage.../character-voice-sample.mp3",
+    ref_text: "This is the reference text matching the audio sample."
+  }
+});
+```
+
+### **9.6 Credit Consumption**
+
+| Action | Credits |
+| :---- | :---- |
+| 1 Page Narration (avg 500 chars) | 5 Credits |
+| Voice Clone Setup | 10 Credits |
+| Re-generate Page Audio | 5 Credits |
+
+### **9.7 UI Components (Future)**
+
+* **Read Mode Toggle:** Play/pause button in page toolbar.
+* **Voice Settings:** Per-character voice assignment in Character panel.
+* **Audio Timeline:** Scrubber synced to panel highlights.
+* **Speed Control:** 0.5x to 2x playback speed.
+
+### **9.8 Implementation Phases**
+
+**Phase A: Basic Narration**
+
+* Single narrator voice for all text.
+* Sequential page-by-page playback.
+* No voice cloning.
+
+**Phase B: Character Voices**
+
+* Multi-speaker with Dia \[S1\]/\[S2\] tags.
+* Voice cloning per character.
+* Speaker assignment UI.
+
+**Phase C: Interactive Read Mode**
+
+* Panel-by-panel highlighting during playback.
+* Audio timeline with seek.
+* Export audio with comic (MP4/video).
+
+## **10\. Motion Animation (Optional / Long Term)**
+
+### **10.1 Overview**
+
+Add subtle ambient motion to static comic images, creating "living" panels where hair blows, smoke wafts, leaves rustle, and environments feel alive.
+
+* **Primary Model:** fal-ai/ltx-video/image-to-video (cost-effective).
+* **Alternative Model:** fal-ai/wan/v2.2-a14b/image-to-video (fine control).
+* **Use Case:** Ambient motion, cinemagraph-style effects, immersive reading.
+
+### **10.2 Model Selection**
+
+| Model | Endpoint | Cost | Best For |
+| :---- | :---- | :---- | :---- |
+| **LTX Video** | fal-ai/ltx-video/image-to-video | $0.02/video | Cost-effective subtle motion |
+| **WAN 2.2** | fal-ai/wan/v2.2-a14b/image-to-video | $0.04-$0.08/sec | Fine motion control |
+
+### **10.3 Workflow**
+
+1. **Select:** User clicks "Add Motion" button on an image element.
+2. **Describe:** Prompt dialog appears for motion description.
+3. **Generate:** Send image + prompt to LTX Video API.
+4. **Save:** Store resulting video as new asset in gallery.
+5. **Replace:** Swap static image element with looping video.
+
+### **10.4 Motion Prompt Examples**
+
+| Effect | Prompt |
+| :---- | :---- |
+| Hair/Cloth | "Hair gently blowing in a light breeze, fabric rippling softly" |
+| Smoke/Steam | "Wisps of smoke rising slowly, steam drifting upward" |
+| Nature | "Leaves rustling gently, grass swaying in the wind" |
+| Water | "Water surface with subtle ripples, gentle reflections" |
+| Atmosphere | "Dust particles floating in light beam, slow ambient drift" |
+| Fire/Glow | "Flames flickering gently, warm light pulsing softly" |
+
+**Prompt Tips:**
+
+* Use "slowly", "gently", "subtly" for ambient effects.
+* Specify "static camera" or "fixed shot" to prevent camera movement.
+* Describe only the elements that should move.
+
+### **10.5 API Integration**
+
+**LTX Video Request:**
+
+```javascript
+const result = await fal.subscribe("fal-ai/ltx-video/image-to-video", {
+  input: {
+    prompt: "Hair gently blowing in breeze, static camera, subtle movement",
+    image_url: "https://storage.../panel-image.png",
+    negative_prompt: "fast motion, camera shake, dramatic movement",
+    num_inference_steps: 30,
+    guidance_scale: 3
+  }
+});
+// Returns: { video: { url: "https://...", content_type: "video/mp4" } }
+```
+
+**WAN 2.2 Request (Fine Control):**
+
+```javascript
+const result = await fal.subscribe("fal-ai/wan/v2.2-a14b/image-to-video", {
+  input: {
+    prompt: "Smoke rising slowly, fixed shot, gentle ambient motion",
+    image_url: "https://storage.../panel-image.png",
+    num_frames: 81,
+    frames_per_second: 16,
+    resolution: "720p"
+  }
+});
+```
+
+### **10.6 Asset Management**
+
+**Storage Strategy:**
+
+* Original static image preserved in gallery.
+* Animated version saved as separate video asset.
+* Link between static and animated versions for easy switching.
+
+**Element Handling:**
+
+* Extend image element to support video sources.
+* Add `isAnimated` flag and `videoUrl` property.
+* Video elements auto-loop with no controls visible.
+
+### **10.7 Credit Consumption**
+
+| Action | Credits |
+| :---- | :---- |
+| Add Motion (LTX Video) | 10 Credits |
+| Add Motion (WAN 2.2 - 5 sec) | 25 Credits |
+| Re-generate Motion | 10 Credits |
+
+### **10.8 Export Considerations**
+
+| Export Type | Handling |
+| :---- | :---- |
+| Static Image (PNG/JPEG) | Use first frame of video |
+| Animated Page (GIF) | Composite all animated elements |
+| Video Export (MP4) | Full motion with audio (if enabled) |
+
+### **10.9 Implementation Phases**
+
+**Phase A: Basic Motion**
+
+* "Add Motion" button on image elements.
+* Simple prompt input dialog.
+* LTX Video integration only.
+* Replace image with video in-place.
+
+**Phase B: Motion Presets**
+
+* Pre-built prompt templates (hair, smoke, water, etc.).
+* Motion intensity slider (subtle → moderate).
+* Preview before applying.
+
+**Phase C: Advanced Controls**
+
+* WAN 2.2 integration for fine control.
+* Custom duration and frame rate.
+* Motion masking (animate only part of image).
