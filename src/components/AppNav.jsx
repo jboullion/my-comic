@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import { useState, useEffect } from 'react'
-import { FiBook, FiChevronDown, FiDownload, FiGrid, FiUser, FiLogOut } from 'react-icons/fi'
+import { FiBook, FiChevronDown, FiDownload, FiGrid, FiUser, FiLogOut, FiHelpCircle } from 'react-icons/fi'
 import { useAuth } from '../contexts/AuthContext'
 
 export default function AppNav() {
@@ -47,6 +47,16 @@ export default function AppNav() {
             <FiBook className="w-5 h-5 text-white" />
           </div>
         </Link>
+
+        {/* Center - Docs Link */}
+        <a
+          href="/docs"
+          rel="noopener noreferrer"
+          className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors text-sm"
+        >
+          <FiHelpCircle className="w-4 h-4" />
+          <span>Docs</span>
+        </a>
 
         {/* User Menu */}
         <div className="relative">
