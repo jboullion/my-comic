@@ -1,6 +1,6 @@
 ## Current TODOs
 
-- Add basic instructions somewhere. And / or add a link to the docs and the top of the app nav
+- Potentially remove the PWA functionality to avoid weird issues like the target="_blank" issue Weigh the pros and cons again
 
 ## Bugs
 
@@ -16,8 +16,6 @@
 
 
 ### UI / UX
-
-- Selection area
 
 - Allow page settings to have rounded edges? Same with export?
 

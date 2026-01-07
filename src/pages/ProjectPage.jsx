@@ -121,42 +121,46 @@ export default function ProjectPage() {
   // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e) => {
-      // Don't trigger shortcuts if user is typing in an input
-      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return
+      // Don't trigger shortcuts if user is typing in an input or contentEditable
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable) return
 
       // Ctrl+S to save
       if ((e.metaKey || e.ctrlKey) && e.key === 's') {
         e.preventDefault()
         saveCurrentProject()
       }
-      
+
       // Ctrl+Z to undo
       if ((e.metaKey || e.ctrlKey) && e.key === 'z' && !e.shiftKey) {
         e.preventDefault()
         useProjectStore.temporal.getState().undo()
       }
-      
+
       // Ctrl+Shift+Z or Ctrl+Y to redo
       if (((e.metaKey || e.ctrlKey) && e.key === 'z' && e.shiftKey) || ((e.metaKey || e.ctrlKey) && e.key === 'y')) {
         e.preventDefault()
         useProjectStore.temporal.getState().redo()
       }
 
-      // Delete / Backspace to delete selected
+      // Delete / Backspace to delete selected (prevent browser back navigation)
       if (e.key === 'Delete' || e.key === 'Backspace') {
+        e.preventDefault()
         useProjectStore.getState().deleteSelectedElements()
       }
 
-      // Arrow keys to nudge
+      // Arrow keys to nudge selected elements
       if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.key)) {
-        e.preventDefault()
-        const amount = e.shiftKey ? 10 : 1
-        let dx = 0, dy = 0
-        if (e.key === 'ArrowLeft') dx = -amount
-        if (e.key === 'ArrowRight') dx = amount
-        if (e.key === 'ArrowUp') dy = -amount
-        if (e.key === 'ArrowDown') dy = amount
-        useProjectStore.getState().nudgeSelectedElements(dx, dy)
+        const { selectedElementIds } = useProjectStore.getState()
+        if (selectedElementIds.length > 0) {
+          e.preventDefault()
+          const amount = e.shiftKey ? 10 : 1
+          let dx = 0, dy = 0
+          if (e.key === 'ArrowLeft') dx = -amount
+          if (e.key === 'ArrowRight') dx = amount
+          if (e.key === 'ArrowUp') dy = -amount
+          if (e.key === 'ArrowDown') dy = amount
+          useProjectStore.getState().nudgeSelectedElements(dx, dy)
+        }
       }
     }
     window.addEventListener('keydown', handleKeyDown)

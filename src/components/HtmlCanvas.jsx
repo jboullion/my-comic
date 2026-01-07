@@ -66,6 +66,11 @@ const HtmlCanvas = forwardRef(function HtmlCanvas(props, ref) {
    * - Shift+Click: Add element to selection
    */
   const handleElementSelect = useCallback((elementId, event) => {
+    // Blur any focused element to ensure keyboard shortcuts work
+    if (document.activeElement && document.activeElement !== document.body) {
+      document.activeElement.blur()
+    }
+
     if (event?.ctrlKey || event?.metaKey) {
       // Toggle selection
       if (selectedElementIds.includes(elementId)) {
