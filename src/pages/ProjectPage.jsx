@@ -8,6 +8,7 @@ import ProjectHeader from '../components/editor/ProjectHeader'
 import PagesSidebar from '../components/editor/PagesSidebar'
 import PropertiesSidebar from '../components/editor/PropertiesSidebar'
 import ExportModal from '../components/editor/ExportModal'
+import AIImageModal from '../components/editor/AIImageModal'
 import { exportPagesToZip } from '../lib/export'
 
 export default function ProjectPage() {
@@ -47,6 +48,7 @@ export default function ProjectPage() {
 
   const [isDraggingOver, setIsDraggingOver] = useState(false)
   const [showExportModal, setShowExportModal] = useState(false)
+  const [showAIModal, setShowAIModal] = useState(false)
   const [isExporting, setIsExporting] = useState(false)
 
   // Load project on mount
@@ -216,6 +218,18 @@ export default function ProjectPage() {
     addTextEffect()
   }
 
+  const handleAISave = async (file, metadata) => {
+    try {
+      await addImage(file, {
+        addToCanvas: true,
+        aiMetadata: metadata
+      })
+    } catch (error) {
+      console.error('Failed to save AI image:', error)
+      throw error
+    }
+  }
+
   const handleDragOver = (e) => {
     e.preventDefault()
     e.stopPropagation()
@@ -337,6 +351,7 @@ export default function ProjectPage() {
           onAddSpeechBubble={handleAddSpeechBubble}
           onAddText={handleAddText}
           onAddTextEffect={handleAddTextEffect}
+          onOpenAIModal={() => setShowAIModal(true)}
           fileInputRef={fileInputRef}
         />
 
@@ -383,6 +398,13 @@ export default function ProjectPage() {
           onClose={() => setShowExportModal(false)}
           onExport={handleExport}
           isExporting={isExporting}
+        />
+
+        {/* AI Image Modal */}
+        <AIImageModal
+          isOpen={showAIModal}
+          onClose={() => setShowAIModal(false)}
+          onSave={handleAISave}
         />
       </div>
     </EditorLayout>

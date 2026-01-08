@@ -72,24 +72,33 @@ export async function generateHash(blob) {
 export const imageAssets = {
   /**
    * Upload and store an image
+   * @param {number} projectId - Project ID
+   * @param {File} file - Image file to upload
+   * @param {Object} metadata - Optional AI metadata
+   * @param {string} metadata.prompt - AI prompt used
+   * @param {string} metadata.model - AI model used (e.g., 'draft', 'production')
+   * @param {string} metadata.style - AI style preset used
+   * @param {number} metadata.seed - AI generation seed
    */
-  async upload(projectId, file) {
+  async upload(projectId, file, metadata = {}) {
     // 1. Optimize (returns { blob, width, height })
     const { blob: optimizedBlob, width, height } = await optimizeImage(file)
 
     // 2. Hash for deduplication
     const hash = await generateHash(optimizedBlob)
 
-    // 3. Check if already exists in this project
-    const existing = await db.images
-      .where({ projectId, hash })
-      .first()
+    // 3. Check if already exists in this project (skip for AI images as each is unique)
+    if (!metadata.prompt) {
+      const existing = await db.images
+        .where({ projectId, hash })
+        .first()
 
-    if (existing) {
-      return existing
+      if (existing) {
+        return existing
+      }
     }
 
-    // 4. Store in IndexedDB with dimensions
+    // 4. Store in IndexedDB with dimensions and optional AI metadata
     const imageAsset = {
       projectId,
       hash,
@@ -99,7 +108,12 @@ export const imageAssets = {
       blob: optimizedBlob,
       width,
       height,
-      createdAt: new Date()
+      createdAt: new Date(),
+      // AI metadata (optional - null if not AI-generated)
+      aiPrompt: metadata.prompt || null,
+      aiModel: metadata.model || null,
+      aiStyle: metadata.style || null,
+      aiSeed: metadata.seed || null
     }
 
     const id = await db.images.add(imageAsset)

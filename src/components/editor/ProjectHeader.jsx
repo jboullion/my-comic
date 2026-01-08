@@ -24,6 +24,7 @@ export default function ProjectHeader({
   onAddSpeechBubble,
   onAddText,
   onAddTextEffect,
+  onOpenAIModal,
   fileInputRef
 }) {
   const navigate = useNavigate()
@@ -96,6 +97,7 @@ export default function ProjectHeader({
             onAddSpeechBubble={onAddSpeechBubble}
             onAddText={onAddText}
             onAddTextEffect={onAddTextEffect}
+            onOpenAIModal={onOpenAIModal}
             fileInputRef={fileInputRef}
           />
         </div>
