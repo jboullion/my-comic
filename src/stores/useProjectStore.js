@@ -967,10 +967,41 @@ export const useProjectStore = create(
         const updatedPages = currentProject.pages
           .filter((_, i) => i !== pageIndex)
           .map((page, i) => ({ ...page, pageNumber: i + 1 }))
-        
+
         let newActiveIndex = activePageIndex
         if (activePageIndex >= updatedPages.length) {
           newActiveIndex = updatedPages.length - 1
+        }
+
+        await get().updateCurrentProject({ pages: updatedPages })
+        set({ activePageIndex: newActiveIndex })
+      },
+
+      /**
+       * Reorder pages by moving a page from one index to another
+       */
+      reorderPages: async (fromIndex, toIndex) => {
+        const { currentProject, activePageIndex } = get()
+        if (!currentProject) return
+        if (fromIndex === toIndex) return
+        if (fromIndex < 0 || fromIndex >= currentProject.pages.length) return
+        if (toIndex < 0 || toIndex >= currentProject.pages.length) return
+
+        const pages = [...currentProject.pages]
+        const [movedPage] = pages.splice(fromIndex, 1)
+        pages.splice(toIndex, 0, movedPage)
+
+        // Update page numbers
+        const updatedPages = pages.map((page, i) => ({ ...page, pageNumber: i + 1 }))
+
+        // Update active page index to follow the moved page if needed
+        let newActiveIndex = activePageIndex
+        if (activePageIndex === fromIndex) {
+          newActiveIndex = toIndex
+        } else if (fromIndex < activePageIndex && toIndex >= activePageIndex) {
+          newActiveIndex = activePageIndex - 1
+        } else if (fromIndex > activePageIndex && toIndex <= activePageIndex) {
+          newActiveIndex = activePageIndex + 1
         }
 
         await get().updateCurrentProject({ pages: updatedPages })
