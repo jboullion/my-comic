@@ -218,9 +218,12 @@ export default function ProjectPage() {
     addTextEffect()
   }
 
-  const handleAISave = async (file) => {
+  const handleAISave = async (file, metadata) => {
     try {
-      await addImage(file)
+      await addImage(file, {
+        addToCanvas: true,
+        aiMetadata: metadata
+      })
     } catch (error) {
       console.error('Failed to save AI image:', error)
       throw error

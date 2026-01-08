@@ -571,14 +571,15 @@ export const useProjectStore = create(
        * @param {File} file - The image file to upload
        * @param {Object} options - Options
        * @param {boolean} options.addToCanvas - Whether to add to canvas (default: true)
+       * @param {Object} options.aiMetadata - AI generation metadata (prompt, model, style, seed)
        */
-      addImage: async (file, { addToCanvas = true } = {}) => {
+      addImage: async (file, { addToCanvas = true, aiMetadata = null } = {}) => {
         const { currentProject, activePageIndex } = get()
         if (!currentProject) return
 
         try {
-          // 1. Upload to IndexedDB
-          const asset = await imageAssets.upload(currentProject.id, file)
+          // 1. Upload to IndexedDB (with optional AI metadata)
+          const asset = await imageAssets.upload(currentProject.id, file, aiMetadata || {})
 
           // 2. Add to project assets if not already there
           const imageIds = [...(currentProject.assets?.imageIds || [])]

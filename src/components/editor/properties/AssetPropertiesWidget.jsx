@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
-import { FiPlus, FiEdit2, FiCheck, FiTrash2 } from 'react-icons/fi'
+import { FiPlus, FiEdit2, FiCheck, FiTrash2, FiCpu, FiCopy } from 'react-icons/fi'
 import { useAsset } from '../../../hooks/useAsset'
 import useProjectStore from '../../../stores/useProjectStore'
+import { AI_STYLES, AI_MODELS } from '../../../lib/falai'
 
 /**
  * AssetPropertiesWidget Component
@@ -98,6 +99,57 @@ export default function AssetPropertiesWidget({ assetId, onAdd }) {
             {new Date(asset.createdAt).toLocaleDateString()}
           </span>
         </div>
+
+        {/* AI Generated Section */}
+        {asset.aiPrompt && (
+          <div className="mt-4 pt-4 border-t border-slate-800">
+            <div className="flex items-center gap-2 mb-3">
+              <FiCpu className="w-4 h-4 text-indigo-400" />
+              <span className="text-xs font-bold text-indigo-400 uppercase tracking-wider">AI Generated</span>
+            </div>
+
+            <div className="space-y-3">
+              <div>
+                <span className="text-[10px] text-slate-500 uppercase font-bold block mb-1">Prompt</span>
+                <p className="text-xs text-slate-300 bg-slate-800 rounded-lg p-2 line-clamp-3">
+                  {asset.aiPrompt}
+                </p>
+                <button
+                  onClick={() => navigator.clipboard.writeText(asset.aiPrompt)}
+                  className="mt-1 flex items-center gap-1 text-[10px] text-slate-500 hover:text-indigo-400 transition-colors"
+                >
+                  <FiCopy className="w-3 h-3" />
+                  Copy Prompt
+                </button>
+              </div>
+
+              {asset.aiStyle && (
+                <div className="flex justify-between items-center">
+                  <span className="text-xs text-slate-400">Style</span>
+                  <span className="text-xs text-slate-200 font-medium">
+                    {AI_STYLES[asset.aiStyle]?.name || asset.aiStyle}
+                  </span>
+                </div>
+              )}
+
+              {asset.aiModel && (
+                <div className="flex justify-between items-center">
+                  <span className="text-xs text-slate-400">Model</span>
+                  <span className="text-xs text-slate-200 font-medium">
+                    {AI_MODELS[asset.aiModel]?.name || asset.aiModel}
+                  </span>
+                </div>
+              )}
+
+              {asset.aiSeed && (
+                <div className="flex justify-between items-center">
+                  <span className="text-xs text-slate-400">Seed</span>
+                  <span className="text-xs text-slate-200 font-mono">{asset.aiSeed}</span>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         <div className="flex gap-2 mt-2">
           <button
