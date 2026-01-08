@@ -9,9 +9,7 @@ export default function PublicFooter() {
             Comic Book Maker v1.0 • Built with ❤️
           </div>
           <div className="flex gap-6 text-sm">
-            <Link to="/docs" className="text-slate-400 hover:text-white transition-colors">
-              Documentation
-            </Link>
+
             <Link to="/contact" className="text-slate-400 hover:text-white transition-colors">
               Contact
             </Link>

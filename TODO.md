@@ -35,6 +35,10 @@
 
 ### UI / UX
 
+- Improve public navigation.
+- - Add documentation and pricing page
+- the header should be the same size as the documentation header (slightly shorter)
+
 - Allow page settings to have rounded edges? Same with export?
 
 ### Text
@@ -116,10 +120,15 @@ Could we set up the comic to "read"? Can each character have a voice? Plus a Nar
 
 ## Marketing
 
-- Various Styles (Western, Japanese, Korean)
-- Save Unlimited Projects Locally!
-- Free plan, with Paid tiers later (start with Buy me a coffee?)
-- Use for story boarding as well!
-- Export static or "motion" comics.
-- Use the latest AI models for image generation and story / dialog assistance. (Pro)
+- Need a new logo.
+
+- Work with a UI designer for help on improving logo and ui
+
+- Callouts
+- - Various Styles (Western, Japanese, Korean)
+- - Save Unlimited Projects Locally!
+- - Free plan, with Paid tiers later (start with Buy me a coffee?)
+- - Use for story boarding as well!
+- - Export static or "motion" comics.
+- - Use the latest AI models for image generation and story / dialog assistance. (Pro)
 

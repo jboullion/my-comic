@@ -11,6 +11,7 @@ export default function FloatingToolbar({
   onAddSpeechBubble,
   onAddText,
   onAddTextEffect,
+  onOpenAIModal,
   fileInputRef
 }) {
   return (
@@ -38,6 +39,12 @@ export default function FloatingToolbar({
         icon="zap"
         label="Text Effect (E)"
         onClick={onAddTextEffect}
+      />
+      <div className="w-px h-6 bg-slate-700 mx-1" />
+      <ToolButton
+        icon="cpu"
+        label="AI Image (A)"
+        onClick={onOpenAIModal}
       />
 
       <input
