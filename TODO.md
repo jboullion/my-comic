@@ -1,14 +1,8 @@
 ## Current TODOs
-
-- Reorder pages
   
 - Potentially remove the PWA functionality to avoid weird issues like the target="_blank" issue Weigh the pros and cons again
 
 - Create various instructions files
-
-- Add a cover feature which shows up on the projects page.
-
-- Show available space if possible somewhere so a user doesn't fill up their indexDB.
 
 - Once all needed features are in place START IMPLEMENTING AI?!?
 
@@ -28,6 +22,16 @@
 - Excalidraw 
 - - They have an interesting shortcuts button which may be useful in the log run.
 
+### Profile
+
+- Update our profile page
+- Delete profile / account
+- Membership
+- API Keys?
+
+### Mobile
+- How do we want to handle mobile? Do we want to support it?
+
 
 ### UI / UX
 
@@ -41,7 +45,6 @@
 
 ### Projects
 
-- Reorder pages
 
 - Have an alternate "Korean" aspect ratio / style which is essentially one long comic where the page transitions are vertical instead of page to page. Meant for digital and scrolling platforms.
 - - I think we could still probably use the page concepts except ther would bea "preview" section where we could see the whole comic? Or at least scroll through it?
@@ -49,9 +52,6 @@
 
 ### Assets
 
-- Need a search system.
-- Search by name. Filter by pages placed on and date added
-- We DO have limits on space with IndexDB and so we might need to warn users or ask users to install locally if they want to have more working space.
 
 ### Canvas
 

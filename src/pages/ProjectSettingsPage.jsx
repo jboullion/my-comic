@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { FiArrowLeft, FiLayout, FiType, FiMessageCircle, FiZap, FiImage } from 'react-icons/fi'
+import { FiArrowLeft, FiLayout, FiType, FiMessageCircle, FiZap, FiImage, FiHardDrive } from 'react-icons/fi'
 import EditorLayout from '../layouts/EditorLayout'
 import useProjectStore from '../stores/useProjectStore'
 import { DEFAULT_PROJECT_SETTINGS } from '../lib/db'
@@ -9,13 +9,15 @@ import TextSettingsTab from '../components/settings/TextSettingsTab'
 import SpeechBubbleSettingsTab from '../components/settings/SpeechBubbleSettingsTab'
 import TextEffectSettingsTab from '../components/settings/TextEffectSettingsTab'
 import ImageSettingsTab from '../components/settings/ImageSettingsTab'
+import StorageSettingsTab from '../components/settings/StorageSettingsTab'
 
 const TABS = [
   { id: 'page', label: 'Page', icon: FiLayout },
   { id: 'image', label: 'Images', icon: FiImage },
   { id: 'text', label: 'Text', icon: FiType },
   { id: 'speechBubble', label: 'Speech Bubbles', icon: FiMessageCircle },
-  { id: 'textEffect', label: 'Text Effects', icon: FiZap }
+  { id: 'textEffect', label: 'Text Effects', icon: FiZap },
+  { id: 'storage', label: 'Storage', icon: FiHardDrive }
 ]
 
 /**
@@ -30,7 +32,6 @@ export default function ProjectSettingsPage() {
     currentProjectLoading,
     loadProject,
     saveProjectSettings,
-    updateProjectSettings
   } = useProjectStore()
 
   // Tab state with localStorage persistence
@@ -80,12 +81,6 @@ export default function ProjectSettingsPage() {
     }
   }
 
-  const handleApplyToAll = async () => {
-    if (localSettings) {
-      await updateProjectSettings(localSettings)
-      navigate(`/project/${projectId}`)
-    }
-  }
 
   const updateLocalSettings = (updates) => {
     setLocalSettings(prev => ({ ...prev, ...updates }))
@@ -139,12 +134,7 @@ export default function ProjectSettingsPage() {
             >
               Save
             </button>
-            <button
-              onClick={handleApplyToAll}
-              className="px-4 py-2 text-sm bg-indigo-500 hover:bg-indigo-600 text-white rounded-lg font-medium transition-colors"
-            >
-              Apply to All Pages
-            </button>
+            
           </div>
         </div>
 
@@ -201,6 +191,9 @@ export default function ProjectSettingsPage() {
                 settings={localSettings.textEffect}
                 onUpdate={(updates) => updateNestedSettings('textEffect', updates)}
               />
+            )}
+            {activeTab === 'storage' && (
+              <StorageSettingsTab projectId={Number(projectId)} />
             )}
           </div>
         </div>

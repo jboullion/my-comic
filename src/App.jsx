@@ -22,6 +22,7 @@ import DocsPageSettings from './pages/docs/DocsPageSettings'
 import DocsCanvas from './pages/docs/DocsCanvas'
 import DocsShortcuts from './pages/docs/DocsShortcuts'
 import DocsExporting from './pages/docs/DocsExporting'
+import DocsStorage from './pages/docs/DocsStorage'
 
 function App() {
   return (
@@ -49,7 +50,8 @@ function App() {
         <Route path="/docs/canvas" element={<DocsCanvas />} />
         <Route path="/docs/shortcuts" element={<DocsShortcuts />} />
         <Route path="/docs/exporting" element={<DocsExporting />} />
-        
+        <Route path="/docs/storage" element={<DocsStorage />} />
+
         {/* Protected Routes (App Area) */}
         <Route path="/projects" element={<ProjectsPage />} />
         <Route path="/project/:projectId" element={<ProjectPage />} />

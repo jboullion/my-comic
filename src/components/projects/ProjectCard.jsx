@@ -1,16 +1,20 @@
 import { Link } from 'react-router-dom'
 import { FiTrash2, FiCheckCircle, FiBook } from 'react-icons/fi'
 import { formatDate } from '../../lib/utils'
+import { formatBytes } from '../../lib/storage'
+import { useProjectSize } from '../../hooks/useProjectSize'
 
 /**
  * ProjectCard Component
  * Display card for a single project with thumbnail and metadata
  */
 export default function ProjectCard({ project, onDelete }) {
+  const { size } = useProjectSize(project.id)
+
   const handleDelete = async (e) => {
     e.preventDefault()
     e.stopPropagation()
-    
+
     if (window.confirm(`Delete "${project.title}"? This cannot be undone.`)) {
       await onDelete()
     }
@@ -58,7 +62,10 @@ export default function ProjectCard({ project, onDelete }) {
           {project.title}
         </h3>
         <div className="flex items-center justify-between mt-2 text-sm text-slate-500">
-          <span>{pageCount} {pageCount === 1 ? 'page' : 'pages'}</span>
+          <span>
+            {pageCount} {pageCount === 1 ? 'page' : 'pages'}
+            {size !== null && <> · {formatBytes(size)}</>}
+          </span>
           <span>{formatDate(project.updatedAt)}</span>
         </div>
       </div>

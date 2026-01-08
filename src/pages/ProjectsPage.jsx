@@ -43,7 +43,7 @@ export default function ProjectsPage() {
     <AppLayout>
       <div className="max-w-6xl mx-auto px-4 py-8">
         {/* Header */}
-        <ProjectsHeader 
+        <ProjectsHeader
           userName={userName}
           onOpenFile={handleOpenFromFile}
           onCreateNew={openNewProjectModal}
