@@ -17,6 +17,16 @@ db.version(3).stores({
   images: '++id, projectId, hash, [projectId+hash], name, size, type, createdAt',
 })
 
+// Version 4: Add Characters feature (global user-level characters)
+db.version(4).stores({
+  projects: '++id, title, createdAt, updatedAt, fileHandle',
+  images: '++id, projectId, hash, [projectId+hash], name, size, type, createdAt',
+  // Characters table - user-level, not tied to projects
+  characters: '++id, name, createdAt, updatedAt',
+  // Character images - profile pictures and reference images
+  characterImages: '++id, characterId, type, createdAt'
+})
+
 /**
  * Project schema:
  * {
@@ -39,6 +49,28 @@ db.version(3).stores({
  *   elements: Element[]
  *   createdAt: Date
  *   updatedAt: Date
+ * }
+ *
+ * Character schema:
+ * {
+ *   id: number (auto-increment)
+ *   name: string
+ *   description: string (AI prompt description)
+ *   profileImageId: number | null (FK to characterImages)
+ *   createdAt: Date
+ *   updatedAt: Date
+ * }
+ *
+ * CharacterImage schema:
+ * {
+ *   id: number (auto-increment)
+ *   characterId: number (FK to characters)
+ *   type: 'profile' | 'reference'
+ *   blob: Blob (WebP image data)
+ *   width: number
+ *   height: number
+ *   name: string
+ *   createdAt: Date
  * }
  */
 

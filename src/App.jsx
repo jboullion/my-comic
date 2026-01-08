@@ -8,6 +8,7 @@ import ProjectsPage from './pages/ProjectsPage'
 import ProjectPage from './pages/ProjectPage'
 import ProjectSettingsPage from './pages/ProjectSettingsPage'
 import ProfilePage from './pages/ProfilePage'
+import CharactersPage from './pages/CharactersPage'
 import PWAUpdatePrompt from './components/PWAUpdatePrompt'
 import OfflineIndicator from './components/OfflineIndicator'
 
@@ -54,6 +55,7 @@ function App() {
 
         {/* Protected Routes (App Area) */}
         <Route path="/projects" element={<ProjectsPage />} />
+        <Route path="/characters" element={<CharactersPage />} />
         <Route path="/project/:projectId" element={<ProjectPage />} />
         <Route path="/project/:projectId/settings" element={<ProjectSettingsPage />} />
         <Route path="/profile" element={<ProfilePage />} />

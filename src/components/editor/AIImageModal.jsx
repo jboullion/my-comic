@@ -2,6 +2,8 @@ import { useState, useCallback, useEffect } from 'react'
 import { useParams } from 'react-router-dom'
 import { FiX, FiZap, FiRefreshCw, FiCheck, FiAlertCircle, FiCpu, FiClock, FiTrash2 } from 'react-icons/fi'
 import { generateImage, fetchImageAsBlob, AI_MODELS, AI_STYLES, isFalConfigured } from '../../lib/falai'
+import CharacterPicker from './CharacterPicker'
+import useCharactersStore from '../../stores/useCharactersStore'
 
 // History storage helpers
 const getHistoryKey = (projectId) => `ai-history:${projectId}`
@@ -64,6 +66,10 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
   const [style, setStyle] = useState('comic')
   const [mode, setMode] = useState('draft')
   const [imageSize, setImageSize] = useState('portrait_16_9')
+  const [selectedCharacterIds, setSelectedCharacterIds] = useState([])
+
+  // Get characters from store for prompt building
+  const { characters } = useCharactersStore()
 
   // Generation state
   const [isGenerating, setIsGenerating] = useState(false)
@@ -92,6 +98,21 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
     { value: 'landscape_16_9', label: '1024x576', description: 'Landscape 16:9' },
   ]
 
+  // Build prompt with character descriptions
+  const buildPromptWithCharacters = useCallback((basePrompt) => {
+    if (selectedCharacterIds.length === 0) return basePrompt
+
+    const selectedChars = characters.filter(c => selectedCharacterIds.includes(c.id))
+    const charDescriptions = selectedChars
+      .filter(c => c.description)
+      .map(c => `${c.name}: ${c.description}`)
+      .join('\n')
+
+    if (!charDescriptions) return basePrompt
+
+    return `Characters in scene:\n${charDescriptions}\n\nScene: ${basePrompt}`
+  }, [selectedCharacterIds, characters])
+
   const handleGenerate = useCallback(async () => {
     if (!prompt.trim()) {
       setError('Please enter a prompt')
@@ -103,8 +124,11 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
     setProgress(null)
 
     try {
+      // Build prompt with character descriptions
+      const fullPrompt = buildPromptWithCharacters(prompt.trim())
+
       const result = await generateImage({
-        prompt: prompt.trim(),
+        prompt: fullPrompt,
         style,
         mode,
         imageSize,
@@ -131,7 +155,7 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
       setIsGenerating(false)
       setProgress(null)
     }
-  }, [prompt, style, mode, imageSize, projectId])
+  }, [prompt, style, mode, imageSize, projectId, buildPromptWithCharacters])
 
   const handleSave = useCallback(async () => {
     if (!generatedImage?.imageUrl) return
@@ -177,6 +201,7 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
     setError(null)
     setProgress(null)
     setActiveTab('generate')
+    setSelectedCharacterIds([])
     onClose()
   }, [onClose])
 
@@ -304,6 +329,13 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
                   className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 resize-none disabled:opacity-50"
                 />
               </div>
+
+              {/* Character Picker */}
+              <CharacterPicker
+                selectedIds={selectedCharacterIds}
+                onChange={setSelectedCharacterIds}
+                disabled={isGenerating}
+              />
 
               {/* Style Dropdown */}
               <div className="space-y-2">
@@ -483,14 +515,7 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
             <div className="flex gap-2">
               {generatedImage && !isGenerating && (
                 <>
-                  <button
-                    onClick={handleGenerate}
-                    disabled={isGenerating}
-                    className="px-4 py-2 text-sm bg-slate-700 hover:bg-slate-600 text-white rounded-lg font-medium transition-colors flex items-center gap-2 disabled:opacity-50"
-                  >
-                    <FiRefreshCw className="w-4 h-4" />
-                    Regenerate
-                  </button>
+                  
                   <button
                     onClick={handleSave}
                     disabled={isSaving}
@@ -498,6 +523,14 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
                   >
                     <FiCheck className="w-4 h-4" />
                     {isSaving ? 'Saving...' : 'Save to Canvas'}
+                  </button>
+                  <button
+                    onClick={handleGenerate}
+                    disabled={isGenerating}
+                    className="px-4 py-2 text-sm bg-slate-700 hover:bg-slate-600 text-white rounded-lg font-medium transition-colors flex items-center gap-2 disabled:opacity-50"
+                  >
+                    <FiRefreshCw className="w-4 h-4" />
+                    Regenerate
                   </button>
                 </>
               )}
