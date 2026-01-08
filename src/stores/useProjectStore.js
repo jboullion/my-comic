@@ -743,6 +743,39 @@ export const useProjectStore = create(
       },
 
       /**
+       * Count how many times an asset is used across all pages
+       */
+      getAssetUsageCount: (assetId) => {
+        const { currentProject } = get()
+        if (!currentProject) return 0
+
+        let count = 0
+        for (const page of currentProject.pages) {
+          count += (page.elements || []).filter(el => el.assetId === assetId).length
+        }
+        return count
+      },
+
+      /**
+       * Get asset IDs used on a specific page
+       */
+      getAssetsOnPage: (pageIndex) => {
+        const { currentProject } = get()
+        if (!currentProject) return []
+
+        const page = currentProject.pages[pageIndex]
+        if (!page?.elements) return []
+
+        const assetIds = new Set()
+        for (const el of page.elements) {
+          if (el.assetId) {
+            assetIds.add(el.assetId)
+          }
+        }
+        return Array.from(assetIds)
+      },
+
+      /**
        * Delete an asset and remove it from all pages
        */
       deleteAsset: async (assetId) => {

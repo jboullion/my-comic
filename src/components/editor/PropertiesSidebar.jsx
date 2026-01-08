@@ -15,8 +15,15 @@ export default function PropertiesSidebar({
   selectedAssetId,
   onSelectAsset,
   onAddAsset,
+  activePageIndex = 0,
 }) {
   const [activeTab, setActiveTab] = useState('properties')
+
+  // Asset filter state (persists across tab switches)
+  const [assetSearchQuery, setAssetSearchQuery] = useState('')
+  const [assetSortBy, setAssetSortBy] = useState('name-asc')
+  const [showOnPageOnly, setShowOnPageOnly] = useState(false)
+  const [showUnusedOnly, setShowUnusedOnly] = useState(false)
 
   return (
     <aside className="w-72 shrink-0 border-l border-slate-800 flex flex-col bg-slate-900">
@@ -57,11 +64,20 @@ export default function PropertiesSidebar({
         {activeTab === 'assets' && (
           <div className="flex flex-col h-full">
             <div className="flex-1 overflow-y-auto pr-2">
-              <AssetGallery 
-                imageIds={currentProject.assets?.imageIds || []} 
+              <AssetGallery
+                imageIds={currentProject.assets?.imageIds || []}
                 selectedAssetId={selectedAssetId}
                 onSelect={onSelectAsset}
                 onAdd={onAddAsset}
+                activePageIndex={activePageIndex}
+                searchQuery={assetSearchQuery}
+                onSearchChange={setAssetSearchQuery}
+                sortBy={assetSortBy}
+                onSortChange={setAssetSortBy}
+                showOnPageOnly={showOnPageOnly}
+                onShowOnPageOnlyChange={setShowOnPageOnly}
+                showUnusedOnly={showUnusedOnly}
+                onShowUnusedOnlyChange={setShowUnusedOnly}
               />
             </div>
             

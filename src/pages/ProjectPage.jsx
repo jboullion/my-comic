@@ -371,6 +371,7 @@ export default function ProjectPage() {
             selectedAssetId={selectedAssetId}
             onSelectAsset={setSelectedAssetId}
             onAddAsset={addAssetToPage}
+            activePageIndex={activePageIndex}
           />
         </div>
 
