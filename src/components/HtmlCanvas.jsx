@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState, useCallback, useImperativeHandle, forwardRef } from 'react'
-import { toPng, toCanvas } from 'html-to-image'
+import { toPng, toJpeg, toCanvas } from 'html-to-image'
 import useProjectStore from '../stores/useProjectStore'
 import { getEmbeddedFontCSS, preloadFonts } from '../utils/fontEmbed'
 import HtmlImageElement from './canvas/elements/HtmlImageElement'
@@ -371,19 +371,24 @@ const HtmlCanvas = forwardRef(function HtmlCanvas(props, ref) {
         // Get embedded font CSS for proper font rendering
         const fontEmbedCSS = await getEmbeddedFontCSS()
 
-        const dataUrl = await toPng(capture.clone, {
+        // Scale so smallest dimension is 500px
+        const TARGET_MIN_DIMENSION = 500
+        const smallestDimension = Math.min(pageWidth, pageHeight)
+        const pixelRatio = TARGET_MIN_DIMENSION / smallestDimension
+
+        const dataUrl = await toJpeg(capture.clone, {
           width: pageWidth,
           height: pageHeight,
-          pixelRatio: 0.5,
-          fontEmbedCSS, // Embed fonts to avoid cross-origin errors
+          pixelRatio,
+          quality: 0.85,
+          fontEmbedCSS,
           style: {
             transform: 'none',
             transformOrigin: 'top left'
           }
         })
 
-        // Scale to thumbnail size (150x200)
-        return await scaleThumbnail(dataUrl, pageWidth, pageHeight)
+        return dataUrl
       } catch (error) {
         console.error('Failed to generate thumbnail:', error)
         return null
@@ -720,8 +725,8 @@ const HtmlCanvas = forwardRef(function HtmlCanvas(props, ref) {
  * Scale a data URL to thumbnail size
  */
 async function scaleThumbnail(dataUrl, sourceWidth, sourceHeight) {
-  const THUMBNAIL_WIDTH = 150
-  const THUMBNAIL_HEIGHT = 200
+  const THUMBNAIL_WIDTH = 225
+  const THUMBNAIL_HEIGHT = 300
 
   return new Promise((resolve) => {
     const img = new Image()

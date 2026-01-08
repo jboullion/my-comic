@@ -1,15 +1,10 @@
 ## Current TODOs
 
 - Reorder pages
-
-
-- Assets Need a search system.
-- - Search by name. Filter by pages placed on and date added
-- - We DO have limits on space with IndexDB and so we might need to warn users or ask users to install locally if they want to have more working space.
   
 - Potentially remove the PWA functionality to avoid weird issues like the target="_blank" issue Weigh the pros and cons again
 
-- Create a various instructions files
+- Create various instructions files
 
 - Add a cover feature which shows up on the projects page.
 

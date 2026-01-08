@@ -17,7 +17,7 @@ export default function PageThumbnail({ pageNumber, isActive, onClick, thumbnail
           <img
             src={thumbnail}
             alt={`Page ${pageNumber}`}
-            className="w-full h-full object-cover"
+            className="w-full h-full object-contain"
           />
           <span className={`absolute bottom-1 right-1 text-[10px] px-1.5 py-0.5 rounded ${
             isActive

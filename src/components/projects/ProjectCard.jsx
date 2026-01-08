@@ -40,8 +40,16 @@ export default function ProjectCard({ project, onDelete }) {
       )}
 
       {/* Thumbnail */}
-      <div className="aspect-[4/3] bg-slate-800 flex items-center justify-center">
-        <FiBook className="w-12 h-12 text-slate-700" />
+      <div className="aspect-[4/3] bg-slate-800 flex items-center justify-center overflow-hidden">
+        {project.pages?.[0]?.thumbnail ? (
+          <img
+            src={project.pages[0].thumbnail}
+            alt={project.title}
+            className="w-full h-full object-contain"
+          />
+        ) : (
+          <FiBook className="w-12 h-12 text-slate-700" />
+        )}
       </div>
 
       {/* Info */}
