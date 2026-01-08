@@ -28,6 +28,7 @@ export default function ProjectPage() {
     saveCurrentProject,
     saveAsMyComic,
     addPage,
+    reorderPages,
     updateCurrentProject,
     activePageIndex,
     setActivePageIndex,
@@ -347,6 +348,7 @@ export default function ProjectPage() {
             activePageIndex={activePageIndex}
             onPageSelect={setActivePageIndex}
             onAddPage={handleAddPage}
+            onReorderPages={reorderPages}
           />
 
           {/* Main Canvas Area */}
@@ -371,6 +373,7 @@ export default function ProjectPage() {
             selectedAssetId={selectedAssetId}
             onSelectAsset={setSelectedAssetId}
             onAddAsset={addAssetToPage}
+            activePageIndex={activePageIndex}
           />
         </div>
 

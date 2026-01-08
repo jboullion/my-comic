@@ -12,6 +12,7 @@ const docsSections = [
     group: 'Getting Started',
     items: [
       { title: 'Overview', path: '/docs', icon: null },
+      { title: 'Storage & Saving', path: '/docs/storage', icon: null },
     ]
   },
   {
