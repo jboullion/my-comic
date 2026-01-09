@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { FiChevronDown, FiDownload, FiGrid, FiUsers, FiUser, FiLogOut } from 'react-icons/fi'
+import { FiChevronDown, FiDownload, FiUser, FiLogOut } from 'react-icons/fi'
 import { useAuth } from '../../contexts/AuthContext'
 import usePWAInstall from '../../hooks/usePWAInstall'
+import LoginModal from '../auth/LoginModal'
 
 /**
  * UserMenu Component
@@ -15,6 +16,7 @@ export default function UserMenu({ showSignIn = true, showLoading = true }) {
   const { user, loading, signOut } = useAuth()
   const { isPWAInstallable, handleInstall } = usePWAInstall()
   const [isOpen, setIsOpen] = useState(false)
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false)
 
   const handleSignOut = async () => {
     try {
@@ -33,12 +35,18 @@ export default function UserMenu({ showSignIn = true, showLoading = true }) {
   if (!user) {
     if (!showSignIn) return null
     return (
-      <Link
-        to="/login"
-        className="px-4 py-2 bg-indigo-500 hover:bg-indigo-600 rounded-lg text-sm font-medium transition-colors text-white"
-      >
-        Sign In
-      </Link>
+      <>
+        <button
+          onClick={() => setIsLoginModalOpen(true)}
+          className="px-4 py-2 bg-indigo-500 hover:bg-indigo-600 rounded-lg text-sm font-medium transition-colors text-white"
+        >
+          Sign In
+        </button>
+        <LoginModal
+          isOpen={isLoginModalOpen}
+          onClose={() => setIsLoginModalOpen(false)}
+        />
+      </>
     )
   }
 

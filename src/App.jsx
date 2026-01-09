@@ -2,7 +2,6 @@ import { Routes, Route } from 'react-router-dom'
 import HomePage from './pages/HomePage'
 import PrivacyPage from './pages/PrivacyPage'
 import ContactPage from './pages/ContactPage'
-import LoginPage from './pages/LoginPage'
 import AuthCallbackPage from './pages/AuthCallbackPage'
 import ProjectsPage from './pages/ProjectsPage'
 import ProjectPage from './pages/ProjectPage'
@@ -35,7 +34,6 @@ function App() {
       <Routes>
         {/* Public Routes */}
         <Route path="/" element={<HomePage />} />
-        <Route path="/login" element={<LoginPage />} />
         <Route path="/auth/callback" element={<AuthCallbackPage />} />
         <Route path="/privacy" element={<PrivacyPage />} />
         <Route path="/contact" element={<ContactPage />} />

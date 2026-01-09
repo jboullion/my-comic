@@ -1,5 +1,7 @@
 ## Current TODOs
   
+- Remove login page and just have clicking on the "Sign In" button to have a google or discord login
+
 - Potentially remove the PWA functionality to avoid weird issues like the target="_blank" issue Weigh the pros and cons again
 
 - Create various instructions files
