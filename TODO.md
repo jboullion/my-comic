@@ -4,7 +4,19 @@
 
 - Create various instructions files
 
-- Once all needed features are in place START IMPLEMENTING AI?!?
+- Set up Supabase for saving projects in cloud?
+
+- AI Image Iteration. Could we take a base image and give a prompt for altering it using it as a reference?
+- AI Inpainting
+- Potentially remove image reference for "character" unless we can somehow use them just for character reference. Right now the total image has too much influence on the output that adding more than the description might not be helpful.
+- - Tweak tweak tweak the character integration. THIS IS KEY
+
+- Set up the concept of a series?
+
+- DESIGN REVAMP!
+- - Public page layout and marketing
+- - Privacy and contact page
+- - Images for the header and other areas
 
 ## Bugs
 

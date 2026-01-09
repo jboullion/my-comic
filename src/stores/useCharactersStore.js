@@ -7,7 +7,7 @@ import { charactersDb } from '../lib/characters'
  * Manages the global characters library state.
  * Characters are user-level (not tied to projects).
  */
-export const useCharactersStore = create((set, get) => ({
+export const useCharactersStore = create((set) => ({
   // Characters list
   characters: [],
   charactersLoading: true,

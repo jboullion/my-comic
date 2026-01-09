@@ -46,10 +46,7 @@ export default function LoginPage() {
     <PublicLayout>
       <div className="max-w-md mx-auto px-4 py-16">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold mb-2">Welcome Back</h1>
-          <p className="text-slate-400">
-            Sign in to save your comics to the cloud and access them anywhere.
-          </p>
+          <h1 className="text-3xl font-bold mb-2">Welcome!</h1>
         </div>
 
         <div className="bg-slate-800/50 rounded-xl border border-slate-700 p-6">

@@ -64,12 +64,30 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
   // Form state
   const [prompt, setPrompt] = useState('')
   const [style, setStyle] = useState('comic')
-  const [mode, setMode] = useState('draft')
+  const [model, setModel] = useState('flux-2')
   const [imageSize, setImageSize] = useState('portrait_16_9')
   const [selectedCharacterIds, setSelectedCharacterIds] = useState([])
+  const [referenceStrength, setReferenceStrength] = useState(0.65)
 
   // Get characters from store for prompt building
   const { characters } = useCharactersStore()
+
+  // Get reference image from first selected character with a profile image
+  const getReferenceImage = useCallback(() => {
+    if (selectedCharacterIds.length === 0) return null
+
+    // Find first selected character with a profile image
+    for (const id of selectedCharacterIds) {
+      const char = characters.find(c => c.id === id)
+      if (char?.profileImage?.blob) {
+        return char.profileImage.blob
+      }
+    }
+    return null
+  }, [selectedCharacterIds, characters])
+
+  // Check if we have a reference image available
+  const hasReferenceImage = getReferenceImage() !== null
 
   // Generation state
   const [isGenerating, setIsGenerating] = useState(false)
@@ -127,22 +145,27 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
       // Build prompt with character descriptions
       const fullPrompt = buildPromptWithCharacters(prompt.trim())
 
+      // Get reference image if available
+      const referenceImage = getReferenceImage()
+
       const result = await generateImage({
         prompt: fullPrompt,
         style,
-        mode,
+        model,
         imageSize,
+        referenceImage,
+        referenceStrength,
         onProgress: setProgress
       })
 
-      setGeneratedImage({ ...result, style, mode })
+      setGeneratedImage({ ...result, style })
 
       // Save to history
       const historyEntry = {
         id: Date.now(),
         prompt: prompt.trim(),
         style,
-        mode,
+        model,
         imageSize,
         timestamp: Date.now()
       }
@@ -155,7 +178,7 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
       setIsGenerating(false)
       setProgress(null)
     }
-  }, [prompt, style, mode, imageSize, projectId, buildPromptWithCharacters])
+  }, [prompt, style, model, imageSize, projectId, buildPromptWithCharacters, getReferenceImage, referenceStrength])
 
   const handleSave = useCallback(async () => {
     if (!generatedImage?.imageUrl) return
@@ -174,7 +197,7 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
       // Create metadata for the asset
       const metadata = {
         prompt: prompt.trim(),
-        model: generatedImage.mode,
+        model: generatedImage.model,
         style: generatedImage.style,
         seed: generatedImage.seed
       }
@@ -208,7 +231,14 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
   const handleHistoryClick = (entry) => {
     setPrompt(entry.prompt)
     setStyle(entry.style)
-    setMode(entry.mode)
+    // Handle both old 'mode' format and new 'model' format from history
+    if (entry.model) {
+      setModel(entry.model)
+    } else if (entry.mode === 'draft') {
+      setModel('schnell')
+    } else if (entry.mode === 'production') {
+      setModel('flux-1-dev')
+    }
     setImageSize(entry.imageSize)
     setActiveTab('generate')
   }
@@ -337,6 +367,32 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
                 disabled={isGenerating}
               />
 
+              {/* Reference Strength Slider - only shown when character with profile image is selected */}
+              {hasReferenceImage && (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <label className="text-[10px] text-slate-500 uppercase font-bold">
+                      Reference Strength
+                    </label>
+                    <span className="text-xs text-slate-400">
+                      {Math.round(referenceStrength * 100)}%
+                    </span>
+                  </div>
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    value={referenceStrength * 100}
+                    onChange={(e) => setReferenceStrength(Number(e.target.value) / 100)}
+                    disabled={isGenerating}
+                    className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-indigo-500 disabled:opacity-50"
+                  />
+                  <p className="text-[10px] text-slate-500">
+                    Higher values match the character&apos;s profile image more closely
+                  </p>
+                </div>
+              )}
+
               {/* Style Dropdown */}
               <div className="space-y-2">
                 <label className="text-[10px] text-slate-500 uppercase font-bold">Style</label>
@@ -361,26 +417,24 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
 
               {/* Options Row */}
               <div className="grid grid-cols-2 gap-4">
-                {/* Mode Toggle */}
+                {/* Model Selection */}
                 <div className="space-y-2">
-                  <label className="text-[10px] text-slate-500 uppercase font-bold">Mode</label>
-                  <div className="flex gap-2">
-                    {Object.entries(AI_MODELS).map(([key, model]) => (
-                      <button
-                        key={key}
-                        onClick={() => setMode(key)}
-                        disabled={isGenerating}
-                        className={`flex-1 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
-                          mode === key
-                            ? 'bg-indigo-500 text-white'
-                            : 'bg-slate-800 text-slate-400 hover:text-white border border-slate-700'
-                        } disabled:opacity-50`}
-                      >
-                        {model.name}
-                      </button>
+                  <label className="text-[10px] text-slate-500 uppercase font-bold">Model</label>
+                  <select
+                    value={model}
+                    onChange={(e) => setModel(e.target.value)}
+                    disabled={isGenerating}
+                    className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 disabled:opacity-50"
+                  >
+                    {Object.entries(AI_MODELS).map(([key, modelConfig]) => (
+                      <option key={key} value={key}>
+                        {modelConfig.name}
+                      </option>
                     ))}
-                  </div>
-                  <p className="text-[10px] text-slate-500">{AI_MODELS[mode].cost}</p>
+                  </select>
+                  <p className="text-[10px] text-slate-500">
+                    {AI_MODELS[model].description} ({AI_MODELS[model].cost})
+                  </p>
                 </div>
 
                 {/* Image Size */}
@@ -418,6 +472,7 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
                     <div className="w-5 h-5 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
                     <div>
                       <p className="text-sm text-white">
+                        {progress?.status === 'UPLOADING' && 'Uploading reference image...'}
                         {progress?.status === 'IN_QUEUE' && `In queue${progress.position ? ` (position: ${progress.position})` : '...'}`}
                         {progress?.status === 'IN_PROGRESS' && 'Generating image...'}
                         {(!progress || progress?.status === 'PENDING') && 'Starting...'}
@@ -439,7 +494,8 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
                     />
                   </div>
                   <p className="text-xs text-slate-500">
-                    {generatedImage.width}x{generatedImage.height} - Seed: {generatedImage.seed}
+                    {generatedImage.width}x{generatedImage.height} - {AI_MODELS[generatedImage.model]?.name || generatedImage.model} - Seed: {generatedImage.seed}
+                    {generatedImage.usedReference && ' - Used character reference'}
                   </p>
                 </div>
               )}
@@ -468,9 +524,12 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
                           <p className="text-sm text-white line-clamp-2">
                             {entry.prompt}
                           </p>
-                          <div className="flex items-center gap-2 mt-2">
+                          <div className="flex items-center gap-2 mt-2 flex-wrap">
                             <span className="px-2 py-0.5 text-[10px] bg-indigo-500/20 text-indigo-300 rounded">
                               {AI_STYLES[entry.style]?.name || entry.style}
+                            </span>
+                            <span className="px-2 py-0.5 text-[10px] bg-slate-700 text-slate-300 rounded">
+                              {AI_MODELS[entry.model]?.name || entry.mode || 'Unknown'}
                             </span>
                             <span className="text-[10px] text-slate-500">
                               {formatTimeAgo(entry.timestamp)}

@@ -44,23 +44,66 @@ export const AI_STYLES = {
 }
 
 /**
- * Model configurations for Draft vs Production modes
+ * Available AI models for image generation
+ * Organized by quality tier with FLUX 2 as primary options
  */
 export const AI_MODELS = {
-  draft: {
-    id: 'fal-ai/flux/schnell',
-    name: 'Draft (Fast)',
-    description: 'Quick iterations, lower quality',
-    steps: 4,
-    cost: '~$0.003/image'
+  // FLUX 2 Models (newer, better quality)
+  'flux-2-pro': {
+    id: 'fal-ai/flux-2-pro',
+    name: 'FLUX 2 Pro',
+    description: 'Best quality, production-ready',
+    steps: null, // Pro doesn't use steps parameter
+    cost: '~$0.03/MP',
+    generation: 2
   },
-  production: {
-    id: 'fal-ai/flux/dev',
-    name: 'Production (Quality)',
-    description: 'Higher quality, slower',
+  'flux-2': {
+    id: 'fal-ai/flux-2',
+    name: 'FLUX 2 Dev',
+    description: 'Great quality, faster',
     steps: 28,
-    cost: '~$0.05/image'
+    cost: '~$0.012/MP',
+    generation: 2
+  },
+  // FLUX 1 Models (for compatibility and drafts)
+  'schnell': {
+    id: 'fal-ai/flux/schnell',
+    name: 'FLUX 1 Schnell',
+    description: 'Ultra-fast drafts',
+    steps: 4,
+    cost: '~$0.003/MP',
+    generation: 1
+  },
+  'flux-1-dev': {
+    id: 'fal-ai/flux/dev',
+    name: 'FLUX 1 Dev',
+    description: 'FLUX 1 quality baseline',
+    steps: 28,
+    cost: '~$0.055/MP',
+    generation: 1
   }
+}
+
+// Model for reference-based generation (supports IP-Adapter style reference)
+const FLUX_GENERAL_MODEL = 'fal-ai/flux-general'
+
+/**
+ * Upload an image blob to Fal.ai storage
+ * @param {Blob} blob - Image blob to upload
+ * @param {string} filename - Filename for the upload
+ * @returns {Promise<string>} - URL of the uploaded image
+ */
+export async function uploadImageToFal(blob, filename = 'reference.png') {
+  if (!falApiKey) {
+    throw new Error('Fal.ai API key not configured')
+  }
+
+  // Convert blob to File object
+  const file = new File([blob], filename, { type: blob.type || 'image/png' })
+
+  // Upload to Fal storage
+  const url = await fal.storage.upload(file)
+  return url
 }
 
 /**
@@ -68,39 +111,55 @@ export const AI_MODELS = {
  * @param {Object} options
  * @param {string} options.prompt - Text prompt for image generation
  * @param {string} options.style - Style preset key ('comic', 'manga', 'realistic', 'retro', 'none')
- * @param {string} options.mode - 'draft' or 'production'
+ * @param {string} options.model - Model key from AI_MODELS (e.g., 'flux-2-pro', 'flux-2', 'schnell')
  * @param {string} options.imageSize - Image dimensions preset
  * @param {number} options.seed - Optional seed for reproducibility
+ * @param {Blob} options.referenceImage - Optional reference image blob for character consistency
+ * @param {number} options.referenceStrength - Reference image influence (0-1, default 0.65)
  * @param {function} options.onProgress - Progress callback for queue updates
  * @returns {Promise<{imageUrl: string, seed: number, width: number, height: number, fullPrompt: string}>}
  */
 export async function generateImage({
   prompt,
   style = 'comic',
-  mode = 'draft',
+  model: modelKey = 'flux-2',
   imageSize = 'square_hd',
   seed = null,
+  referenceImage = null,
+  referenceStrength = 0.65,
   onProgress = null
 }) {
   if (!falApiKey) {
     throw new Error('Fal.ai API key not configured. Please add VITE_FAL_AI_KEY to your .env.local file.')
   }
 
-  const model = AI_MODELS[mode]
-  if (!model) {
-    throw new Error(`Invalid mode: ${mode}. Use 'draft' or 'production'.`)
+  const modelConfig = AI_MODELS[modelKey]
+  if (!modelConfig) {
+    throw new Error(`Invalid model: ${modelKey}. Use one of: ${Object.keys(AI_MODELS).join(', ')}`)
   }
 
   // Apply style suffix to prompt
   const styleConfig = AI_STYLES[style] || AI_STYLES.none
   const fullPrompt = prompt + styleConfig.suffix
 
+  // Determine which model to use
+  // If reference image provided and using FLUX 1, use flux-general which supports reference images
+  // FLUX 2 models don't support reference images yet, so we fall back to flux-general
+  const useReference = referenceImage !== null
+  const modelId = useReference ? FLUX_GENERAL_MODEL : modelConfig.id
+
   const input = {
     prompt: fullPrompt,
     image_size: imageSize,
-    num_inference_steps: model.steps,
     num_images: 1,
     output_format: 'png'
+  }
+
+  // Add inference steps if the model supports it (Pro models don't use steps)
+  if (modelConfig.steps !== null && !useReference) {
+    input.num_inference_steps = modelConfig.steps
+  } else if (useReference) {
+    input.num_inference_steps = 28 // Use standard steps for reference mode
   }
 
   // Add seed if provided (for regeneration with same seed)
@@ -108,8 +167,26 @@ export async function generateImage({
     input.seed = seed
   }
 
+  // If reference image provided, upload it and add to input
+  if (useReference) {
+    try {
+      // Update progress to show upload status
+      if (onProgress) {
+        onProgress({ status: 'UPLOADING', message: 'Uploading reference image...' })
+      }
+
+      const referenceUrl = await uploadImageToFal(referenceImage, 'character-reference.png')
+      input.reference_image_url = referenceUrl
+      input.reference_strength = referenceStrength
+      input.reference_end = 0.8 // Stop reference guidance at 80% to allow style to come through
+    } catch (uploadError) {
+      console.error('Failed to upload reference image:', uploadError)
+      throw new Error('Failed to upload reference image. Generating without reference.')
+    }
+  }
+
   try {
-    const result = await fal.subscribe(model.id, {
+    const result = await fal.subscribe(modelId, {
       input,
       logs: true,
       onQueueUpdate: (update) => {
@@ -132,7 +209,9 @@ export async function generateImage({
       height: image.height,
       seed: result.data.seed,
       prompt: prompt,           // Original prompt without style
-      fullPrompt: fullPrompt    // Prompt with style suffix applied
+      fullPrompt: fullPrompt,   // Prompt with style suffix applied
+      model: modelKey,          // Model key used
+      usedReference: useReference
     }
   } catch (error) {
     // Re-throw with more context
