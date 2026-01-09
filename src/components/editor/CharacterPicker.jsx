@@ -138,7 +138,7 @@ export default function CharacterPicker({
           <FiUsers className="w-6 h-6 text-slate-600 mx-auto mb-2" />
           <p className="text-sm text-slate-500 mb-2">No characters yet</p>
           <Link
-            to="/characters"
+            to="/app/characters"
             className="inline-flex items-center gap-1 text-xs text-indigo-400 hover:text-indigo-300"
           >
             Create characters

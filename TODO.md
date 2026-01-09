@@ -1,6 +1,9 @@
 ## Current TODOs
   
-- Remove login page and just have clicking on the "Sign In" button to have a google or discord login
+- Move Set up a "Dashboard"?
+- - User logs in and defaults to the dashboard.
+- - The Dashboard lists the projects and things like the last interaction.
+- - From the admin dashboard we can navigate to our project or character pages
 
 - Potentially remove the PWA functionality to avoid weird issues like the target="_blank" issue Weigh the pros and cons again
 

@@ -67,7 +67,7 @@ export default function ProjectHeader({
     <div className="border-b border-slate-800 px-4 py-2 flex items-center justify-between bg-slate-900">
       <div className="flex items-center gap-4 min-w-[240px]">
         <Link
-          to="/projects"
+          to="/app/projects"
           className="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
         >
           <FiChevronLeft className="w-5 h-5" />
@@ -112,7 +112,7 @@ export default function ProjectHeader({
           <FiHelpCircle className="w-4 h-4" />
         </a>
         <button
-          onClick={() => navigate(`/project/${projectId}/settings`)}
+          onClick={() => navigate(`/app/project/${projectId}/settings`)}
           className="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
           title="Project Settings"
         >
@@ -179,7 +179,7 @@ export default function ProjectHeader({
                     )}
 
                     <Link
-                      to="/projects"
+                      to="/app/projects"
                       onClick={() => setIsUserMenuOpen(false)}
                       className="flex items-center gap-3 px-4 py-2 text-sm text-slate-300 hover:bg-slate-700 hover:text-white transition-colors"
                     >
@@ -188,7 +188,7 @@ export default function ProjectHeader({
                     </Link>
 
                     <Link
-                      to="/profile"
+                      to="/app/profile"
                       onClick={() => setIsUserMenuOpen(false)}
                       className="flex items-center gap-3 px-4 py-2 text-sm text-slate-300 hover:bg-slate-700 hover:text-white transition-colors"
                     >

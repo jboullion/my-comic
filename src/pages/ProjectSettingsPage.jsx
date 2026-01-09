@@ -71,13 +71,13 @@ export default function ProjectSettingsPage() {
   }, [activeTab])
 
   const handleBack = () => {
-    navigate(`/project/${projectId}`)
+    navigate(`/app/project/${projectId}`)
   }
 
   const handleSave = async () => {
     if (localSettings) {
       await saveProjectSettings(localSettings)
-      navigate(`/project/${projectId}`)
+      navigate(`/app/project/${projectId}`)
     }
   }
 

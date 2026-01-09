@@ -14,8 +14,8 @@ export default function PublicNav() {
             Documentation
           </Link>
           {user && (
-            <Link to="/projects" className="text-slate-400 hover:text-white transition-colors">
-              Projects
+            <Link to="/app" className="text-slate-400 hover:text-white transition-colors">
+              Dashboard
             </Link>
           )}
         </div>

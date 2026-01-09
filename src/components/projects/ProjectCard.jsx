@@ -24,7 +24,7 @@ export default function ProjectCard({ project, onDelete }) {
 
   return (
     <Link
-      to={`/project/${project.id}`}
+      to={`/app/project/${project.id}`}
       className="group block bg-slate-800/50 rounded-xl border border-slate-700 hover:border-indigo-500/50 transition-all overflow-hidden relative"
     >
       {/* Delete Button */}

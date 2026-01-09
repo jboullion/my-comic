@@ -314,7 +314,7 @@ export default function ProjectPage() {
             <h2 className="text-xl font-semibold mb-2">Project not found</h2>
             <p className="text-slate-400 mb-6">{currentProjectError || "This project doesn't exist or was deleted."}</p>
             <Link
-              to="/projects"
+              to="/app/projects"
               className="px-5 py-2.5 bg-indigo-500 hover:bg-indigo-600 rounded-lg font-medium transition-colors"
             >
               Back to Projects

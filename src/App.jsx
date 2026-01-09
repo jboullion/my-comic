@@ -1,15 +1,28 @@
-import { Routes, Route } from 'react-router-dom'
+import { Routes, Route, Navigate, useParams } from 'react-router-dom'
 import HomePage from './pages/HomePage'
 import PrivacyPage from './pages/PrivacyPage'
 import ContactPage from './pages/ContactPage'
 import AuthCallbackPage from './pages/AuthCallbackPage'
+import DashboardPage from './pages/DashboardPage'
 import ProjectsPage from './pages/ProjectsPage'
 import ProjectPage from './pages/ProjectPage'
 import ProjectSettingsPage from './pages/ProjectSettingsPage'
 import ProfilePage from './pages/ProfilePage'
 import CharactersPage from './pages/CharactersPage'
+import NotFoundPage from './pages/NotFoundPage'
 import PWAUpdatePrompt from './components/PWAUpdatePrompt'
 import OfflineIndicator from './components/OfflineIndicator'
+
+// Redirect components for backward compatibility
+function ProjectRedirect() {
+  const { projectId } = useParams()
+  return <Navigate to={`/app/project/${projectId}`} replace />
+}
+
+function ProjectSettingsRedirect() {
+  const { projectId } = useParams()
+  return <Navigate to={`/app/project/${projectId}/settings`} replace />
+}
 
 // Documentation pages
 import DocsGettingStarted from './pages/docs/DocsGettingStarted'
@@ -51,12 +64,25 @@ function App() {
         <Route path="/docs/exporting" element={<DocsExporting />} />
         <Route path="/docs/storage" element={<DocsStorage />} />
 
-        {/* Protected Routes (App Area) */}
-        <Route path="/projects" element={<ProjectsPage />} />
-        <Route path="/characters" element={<CharactersPage />} />
-        <Route path="/project/:projectId" element={<ProjectPage />} />
-        <Route path="/project/:projectId/settings" element={<ProjectSettingsPage />} />
-        <Route path="/profile" element={<ProfilePage />} />
+        {/* App Routes (Sidebar Layout) */}
+        <Route path="/app" element={<DashboardPage />} />
+        <Route path="/app/projects" element={<ProjectsPage />} />
+        <Route path="/app/characters" element={<CharactersPage />} />
+        <Route path="/app/profile" element={<ProfilePage />} />
+
+        {/* Editor Routes (Minimal Layout) */}
+        <Route path="/app/project/:projectId" element={<ProjectPage />} />
+        <Route path="/app/project/:projectId/settings" element={<ProjectSettingsPage />} />
+
+        {/* Backward Compatibility Redirects */}
+        <Route path="/projects" element={<Navigate to="/app/projects" replace />} />
+        <Route path="/characters" element={<Navigate to="/app/characters" replace />} />
+        <Route path="/profile" element={<Navigate to="/app/profile" replace />} />
+        <Route path="/project/:projectId" element={<ProjectRedirect />} />
+        <Route path="/project/:projectId/settings" element={<ProjectSettingsRedirect />} />
+
+        {/* 404 Catch-all */}
+        <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </>
   )

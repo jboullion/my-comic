@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { FiPlus, FiUsers } from 'react-icons/fi'
-import AppLayout from '../layouts/AppLayout'
+import AppSidebarLayout from '../layouts/AppSidebarLayout'
 import useCharactersStore from '../stores/useCharactersStore'
 import CharacterCard from '../components/characters/CharacterCard'
 import CharacterModal from '../components/characters/CharacterModal'
@@ -24,7 +24,7 @@ export default function CharactersPage() {
   }, [loadCharacters])
 
   return (
-    <AppLayout>
+    <AppSidebarLayout>
       <div className="max-w-6xl mx-auto px-4 py-8">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
@@ -83,6 +83,6 @@ export default function CharactersPage() {
 
       {/* Character Modal */}
       <CharacterModal />
-    </AppLayout>
+    </AppSidebarLayout>
   )
 }

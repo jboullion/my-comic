@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { useAuth } from '../contexts/AuthContext'
-import AppLayout from '../layouts/AppLayout'
+import AppSidebarLayout from '../layouts/AppSidebarLayout'
 import NewProjectModal from '../components/NewProjectModal'
 import useProjectStore from '../stores/useProjectStore'
 import ProjectsHeader from '../components/projects/ProjectsHeader'
@@ -40,7 +40,7 @@ export default function ProjectsPage() {
   const userName = user?.user_metadata?.full_name || user?.email?.split('@')[0]
 
   return (
-    <AppLayout>
+    <AppSidebarLayout>
       <div className="max-w-6xl mx-auto px-4 py-8">
         {/* Header */}
         <ProjectsHeader
@@ -85,6 +85,6 @@ export default function ProjectsPage() {
 
       {/* New Project Modal */}
       <NewProjectModal />
-    </AppLayout>
+    </AppSidebarLayout>
   )
 }

@@ -1,5 +1,5 @@
 import { useAuth } from '../contexts/AuthContext'
-import AppLayout from '../layouts/AppLayout'
+import AppSidebarLayout from '../layouts/AppSidebarLayout'
 
 export default function ProfilePage() {
   const { user } = useAuth()
@@ -13,7 +13,7 @@ export default function ProfilePage() {
   }
 
   return (
-    <AppLayout>
+    <AppSidebarLayout>
       <div className="max-w-2xl mx-auto px-4 py-8">
         <h1 className="text-2xl font-bold mb-8">Profile</h1>
 
@@ -90,7 +90,7 @@ export default function ProfilePage() {
           </button>
         </div>
       </div>
-    </AppLayout>
+    </AppSidebarLayout>
   )
 }
 
