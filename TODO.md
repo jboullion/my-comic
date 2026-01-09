@@ -1,38 +1,20 @@
 ## Current TODOs
-  
-- Move Set up a "Dashboard"?
-- - User logs in and defaults to the dashboard.
-- - The Dashboard lists the projects and things like the last interaction.
-- - From the admin dashboard we can navigate to our project or character pages
 
-- Potentially remove the PWA functionality to avoid weird issues like the target="_blank" issue Weigh the pros and cons again
+- Update the generate image options to include the size of the comic page?
 
-- Create various instructions files
-
-- Set up Supabase for saving projects in cloud?
-
-- AI Image Iteration. Could we take a base image and give a prompt for altering it using it as a reference?
-- AI Inpainting
-- Potentially remove image reference for "character" unless we can somehow use them just for character reference. Right now the total image has too much influence on the output that adding more than the description might not be helpful.
-- - Tweak tweak tweak the character integration. THIS IS KEY
-
-- Set up the concept of a series?
-
-- DESIGN REVAMP!
-- - Public page layout and marketing
-- - Privacy and contact page
-- - Images for the header and other areas
 
 ## Bugs
 
-- - Cloud SVG is overflowing container.
-- Fix the projects page. Broken layout.
-- - Could probably just do a general refactor.
-- - Setup project settings page. Including Thumbnail / cover
+- Cloud SVG is overflowing container.
 - Some actions don't seem to get caught in the undo. Is there a redo?
 - I still get the forced zoom every now and then
+- Potentially remove the PWA functionality to avoid weird issues like the target="_blank" issue Weigh the pros and cons again
+
 
 ## Ideas and Brainstorming
+
+### General Concepts
+- Set up the concept of a series?
 
 ### References
 
@@ -45,6 +27,7 @@
 - Delete profile / account
 - Membership
 - API Keys?
+- Set up Supabase for saving projects in cloud?
 
 ### Mobile
 - How do we want to handle mobile? Do we want to support it?
@@ -52,9 +35,11 @@
 
 ### UI / UX
 
-- Improve public navigation.
-- - Add documentation and pricing page
-- the header should be the same size as the documentation header (slightly shorter)
+- DESIGN REVAMP!
+- - Public page layout and marketing
+- - Privacy and contact page
+- - Images for the header and other areas
+  
 
 - Allow page settings to have rounded edges? Same with export?
 
@@ -94,12 +79,23 @@
 ### Tools
 
 
+### Testing
+
+- Set up a testing system and write tests for a bunch of stuff
+
+
 ### Internationalization
 
 I think a lot of people in other countries would like this application. Can I keep it in english only? There really isn't much to read. What is for reading should probably be auto transaltable to their language in their browser.
 
 
-### AI
+### AI TODOs
+
+
+- AI Image Iteration. Could we take a base image and give a prompt for altering it using it as a reference?
+- AI Inpainting
+- Potentially remove image reference for "character" unless we can somehow use them just for character reference. Right now the total image has too much influence on the output that adding more than the description might not be helpful.
+- - Tweak tweak tweak the character integration. THIS IS KEY
 
 #### Images
 

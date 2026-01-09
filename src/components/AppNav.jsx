@@ -10,12 +10,6 @@ export default function AppNav() {
           <Link to="/docs" className="text-slate-400 hover:text-white transition-colors">
             Documentation
           </Link>
-          <Link to="/projects" className="text-slate-400 hover:text-white transition-colors">
-            Projects
-          </Link>
-          <Link to="/characters" className="text-slate-400 hover:text-white transition-colors">
-            Characters
-          </Link>
         </div>
         <UserMenu showLoading={false} showSignIn={false} />
       </div>

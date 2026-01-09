@@ -26,7 +26,7 @@ export default function AppSidebar() {
     <aside className="w-60 h-screen bg-slate-950 border-r border-slate-800 flex flex-col sticky top-0">
       {/* Logo */}
       <div className="p-4 border-b border-slate-800">
-        <NavLogo size="md" showText={true} />
+        <NavLogo size="md" showText={false} />
       </div>
 
       {/* Navigation */}

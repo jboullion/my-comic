@@ -112,7 +112,7 @@ export async function uploadImageToFal(blob, filename = 'reference.png') {
  * @param {string} options.prompt - Text prompt for image generation
  * @param {string} options.style - Style preset key ('comic', 'manga', 'realistic', 'retro', 'none')
  * @param {string} options.model - Model key from AI_MODELS (e.g., 'flux-2-pro', 'flux-2', 'schnell')
- * @param {string} options.imageSize - Image dimensions preset
+ * @param {string|{width: number, height: number}} options.imageSize - Image dimensions preset string or custom {width, height}
  * @param {number} options.seed - Optional seed for reproducibility
  * @param {Blob} options.referenceImage - Optional reference image blob for character consistency
  * @param {number} options.referenceStrength - Reference image influence (0-1, default 0.65)

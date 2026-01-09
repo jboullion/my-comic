@@ -1,9 +1,43 @@
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useMemo } from 'react'
 import { useParams } from 'react-router-dom'
 import { FiX, FiZap, FiRefreshCw, FiCheck, FiAlertCircle, FiCpu, FiClock, FiTrash2 } from 'react-icons/fi'
 import { generateImage, fetchImageAsBlob, AI_MODELS, AI_STYLES, isFalConfigured } from '../../lib/falai'
 import CharacterPicker from './CharacterPicker'
 import useCharactersStore from '../../stores/useCharactersStore'
+import useProjectStore from '../../stores/useProjectStore'
+
+/**
+ * Calculate AI-friendly dimensions that match a given aspect ratio
+ * @param {number} pageWidth - Original page width
+ * @param {number} pageHeight - Original page height
+ * @param {number} maxDimension - Maximum dimension (default 1152)
+ * @returns {{ width: number, height: number }} - Dimensions divisible by 64
+ */
+function calculateMatchingDimensions(pageWidth, pageHeight, maxDimension = 1152) {
+  const aspectRatio = pageWidth / pageHeight
+
+  let width, height
+
+  if (aspectRatio > 1) {
+    // Landscape: width is the constraining dimension
+    width = maxDimension
+    height = Math.round(maxDimension / aspectRatio)
+  } else {
+    // Portrait or square: height is the constraining dimension
+    height = maxDimension
+    width = Math.round(maxDimension * aspectRatio)
+  }
+
+  // Round to nearest multiple of 64 for optimal AI generation
+  width = Math.round(width / 64) * 64
+  height = Math.round(height / 64) * 64
+
+  // Ensure minimum dimension of 256
+  width = Math.max(256, width)
+  height = Math.max(256, height)
+
+  return { width, height }
+}
 
 // History storage helpers
 const getHistoryKey = (projectId) => `ai-history:${projectId}`
@@ -58,6 +92,15 @@ const formatTimeAgo = (timestamp) => {
 export default function AIImageModal({ isOpen, onClose, onSave }) {
   const { projectId } = useParams()
 
+  // Get current project settings for "Match Page" option
+  const { currentProject } = useProjectStore()
+  const pageSettings = currentProject?.settings || { width: 800, height: 1200 }
+
+  // Calculate matching dimensions for "Match Page" option
+  const matchPageDimensions = useMemo(() => {
+    return calculateMatchingDimensions(pageSettings.width, pageSettings.height)
+  }, [pageSettings.width, pageSettings.height])
+
   // Tab state
   const [activeTab, setActiveTab] = useState('generate')
 
@@ -65,7 +108,7 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
   const [prompt, setPrompt] = useState('')
   const [style, setStyle] = useState('comic')
   const [model, setModel] = useState('flux-2')
-  const [imageSize, setImageSize] = useState('portrait_16_9')
+  const [imageSize, setImageSize] = useState('match_page')
   const [selectedCharacterIds, setSelectedCharacterIds] = useState([])
   const [referenceStrength, setReferenceStrength] = useState(0.65)
 
@@ -109,6 +152,7 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
   }, [isOpen, projectId])
 
   const imageSizeOptions = [
+    { value: 'match_page', label: `${matchPageDimensions.width}x${matchPageDimensions.height}`, description: 'Match Page' },
     { value: 'square_hd', label: '1024x1024', description: 'Square HD' },
     { value: 'portrait_4_3', label: '768x1024', description: 'Portrait 4:3' },
     { value: 'portrait_16_9', label: '576x1024', description: 'Portrait 16:9' },
@@ -148,11 +192,16 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
       // Get reference image if available
       const referenceImage = getReferenceImage()
 
+      // Use custom dimensions for "match_page", otherwise use preset string
+      const imageSizeParam = imageSize === 'match_page'
+        ? matchPageDimensions
+        : imageSize
+
       const result = await generateImage({
         prompt: fullPrompt,
         style,
         model,
-        imageSize,
+        imageSize: imageSizeParam,
         referenceImage,
         referenceStrength,
         onProgress: setProgress
@@ -178,7 +227,7 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
       setIsGenerating(false)
       setProgress(null)
     }
-  }, [prompt, style, model, imageSize, projectId, buildPromptWithCharacters, getReferenceImage, referenceStrength])
+  }, [prompt, style, model, imageSize, projectId, buildPromptWithCharacters, getReferenceImage, referenceStrength, matchPageDimensions])
 
   const handleSave = useCallback(async () => {
     if (!generatedImage?.imageUrl) return
