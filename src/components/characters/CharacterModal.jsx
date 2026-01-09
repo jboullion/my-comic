@@ -1,13 +1,15 @@
 import { useState, useEffect } from 'react'
 import { FiX, FiLoader, FiInfo } from 'react-icons/fi'
 import useCharactersStore from '../../stores/useCharactersStore'
+import useSeriesStore from '../../stores/useSeriesStore'
 import CharacterImageUpload from './CharacterImageUpload'
+import SeriesSelector from '../series/SeriesSelector'
 
 /**
  * CharacterModal Component
  * Modal for creating and editing characters
  */
-export default function CharacterModal() {
+export default function CharacterModal({ defaultSeriesId = null }) {
   const {
     isCharacterModalOpen,
     editingCharacter,
@@ -16,9 +18,11 @@ export default function CharacterModal() {
     updateCharacter,
     addCharacterImage
   } = useCharactersStore()
+  const { series, loadSeries, refreshSeriesCounts } = useSeriesStore()
 
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
+  const [seriesId, setSeriesId] = useState(null)
   const [profileImage, setProfileImage] = useState(null) // { file, url } for new, { blob, url } for existing
   const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState(null)
@@ -28,9 +32,15 @@ export default function CharacterModal() {
   // Reset form when modal opens/closes or editing character changes
   useEffect(() => {
     if (isCharacterModalOpen) {
+      // Load series if not loaded
+      if (series.length === 0) {
+        loadSeries()
+      }
+
       if (editingCharacter) {
         setName(editingCharacter.name || '')
         setDescription(editingCharacter.description || '')
+        setSeriesId(editingCharacter.seriesId || null)
         // Set existing profile image if available
         if (editingCharacter.profileImage) {
           setProfileImage({
@@ -46,10 +56,29 @@ export default function CharacterModal() {
         setName('')
         setDescription('')
         setProfileImage(null)
+        // Set default series
+        if (defaultSeriesId) {
+          setSeriesId(defaultSeriesId)
+        } else if (series.length > 0) {
+          const uncategorized = series.find(s => s.name === 'Uncategorized')
+          setSeriesId(uncategorized?.id || series[0]?.id)
+        }
       }
       setError(null)
     }
-  }, [isCharacterModalOpen, editingCharacter])
+  }, [isCharacterModalOpen, editingCharacter, defaultSeriesId, series, loadSeries])
+
+  // Update seriesId when series list loads (for new characters)
+  useEffect(() => {
+    if (isCharacterModalOpen && !isEditing && !seriesId && series.length > 0) {
+      if (defaultSeriesId) {
+        setSeriesId(defaultSeriesId)
+      } else {
+        const uncategorized = series.find(s => s.name === 'Uncategorized')
+        setSeriesId(uncategorized?.id || series[0]?.id)
+      }
+    }
+  }, [series, seriesId, defaultSeriesId, isCharacterModalOpen, isEditing])
 
   // Cleanup object URLs on unmount
   useEffect(() => {
@@ -69,6 +98,11 @@ export default function CharacterModal() {
       return
     }
 
+    if (!isEditing && !seriesId) {
+      setError('Please select a series')
+      return
+    }
+
     setIsSaving(true)
 
     try {
@@ -85,12 +119,15 @@ export default function CharacterModal() {
         }
       } else {
         // Create new character
-        const character = await createCharacter(name.trim(), description.trim())
+        const character = await createCharacter(name.trim(), description.trim(), seriesId)
 
         // Upload profile image if provided
         if (profileImage?.file) {
           await addCharacterImage(character.id, profileImage.file, 'profile')
         }
+
+        // Refresh series counts
+        refreshSeriesCounts()
       }
 
       // Modal will be closed by the store actions
@@ -184,6 +221,15 @@ export default function CharacterModal() {
               </div>
             </div>
 
+            {/* Series Selection (only for new characters) */}
+            {!isEditing && (
+              <SeriesSelector
+                value={seriesId}
+                onChange={setSeriesId}
+                disabled={isSaving}
+              />
+            )}
+
             {/* Description */}
             <div>
               <label
@@ -211,8 +257,9 @@ export default function CharacterModal() {
               <div className="flex items-start gap-2">
                 <FiInfo className="w-4 h-4 mt-0.5 flex-shrink-0 text-indigo-400" />
                 <p>
-                  Characters are available across all your projects. Add detailed
-                  descriptions to help AI maintain consistent appearances.
+                  Characters belong to a series and are available to all projects
+                  within that series. Add detailed descriptions to help AI maintain
+                  consistent appearances.
                 </p>
               </div>
             </div>

@@ -1,10 +1,12 @@
 import { useEffect, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { FiFolder, FiUsers, FiPlus, FiArrowRight, FiBook } from 'react-icons/fi'
+import { RiBookShelfFill } from 'react-icons/ri'
 import { useAuth } from '../contexts/AuthContext'
 import AppSidebarLayout from '../layouts/AppSidebarLayout'
 import useProjectStore from '../stores/useProjectStore'
 import useCharactersStore from '../stores/useCharactersStore'
+import useSeriesStore from '../stores/useSeriesStore'
 import NewProjectModal from '../components/NewProjectModal'
 import { formatDate } from '../lib/utils'
 
@@ -75,12 +77,18 @@ export default function DashboardPage() {
     charactersLoading,
     loadCharacters,
   } = useCharactersStore()
+  const {
+    series,
+    seriesLoading,
+    loadSeries,
+  } = useSeriesStore()
 
   // Load data on mount
   useEffect(() => {
     loadProjects()
     loadCharacters()
-  }, [loadProjects, loadCharacters])
+    loadSeries()
+  }, [loadProjects, loadCharacters, loadSeries])
 
   // Get recent projects (last 5 by updatedAt)
   const recentProjects = useMemo(() => {
@@ -95,7 +103,7 @@ export default function DashboardPage() {
   }, [projects])
 
   const userName = user?.user_metadata?.full_name || user?.email?.split('@')[0]
-  const isLoading = projectsLoading || charactersLoading
+  const isLoading = projectsLoading || charactersLoading || seriesLoading
 
   return (
     <AppSidebarLayout>
@@ -111,7 +119,13 @@ export default function DashboardPage() {
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
+          <StatCard
+            icon={RiBookShelfFill}
+            label="Series"
+            value={isLoading ? '...' : series.length}
+            to="/app/series"
+          />
           <StatCard
             icon={FiFolder}
             label="Projects"

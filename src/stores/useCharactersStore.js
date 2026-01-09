@@ -5,7 +5,7 @@ import { charactersDb } from '../lib/characters'
  * Characters Store
  *
  * Manages the global characters library state.
- * Characters are user-level (not tied to projects).
+ * Characters are series-scoped (belong to a specific series).
  */
 export const useCharactersStore = create((set) => ({
   // Characters list
@@ -40,10 +40,16 @@ export const useCharactersStore = create((set) => ({
 
   /**
    * Create a new character
+   * @param {string} name - Character name
+   * @param {string} description - Character description
+   * @param {number} seriesId - Series ID (required)
    */
-  createCharacter: async (name, description = '') => {
+  createCharacter: async (name, description = '', seriesId) => {
+    if (!seriesId) {
+      throw new Error('seriesId is required when creating a character')
+    }
     try {
-      const character = await charactersDb.create(name, description)
+      const character = await charactersDb.create(name, description, seriesId)
       set((state) => ({
         characters: [...state.characters, character].sort((a, b) =>
           a.name.localeCompare(b.name)
@@ -55,6 +61,21 @@ export const useCharactersStore = create((set) => ({
     } catch (error) {
       console.error('Failed to create character:', error)
       throw error
+    }
+  },
+
+  /**
+   * Load characters for a specific series
+   * @param {number} seriesId - Series ID
+   */
+  loadCharactersBySeries: async (seriesId) => {
+    set({ charactersLoading: true, charactersError: null })
+    try {
+      const characters = await charactersDb.getAllWithProfileImagesBySeries(seriesId)
+      set({ characters, charactersLoading: false })
+    } catch (error) {
+      console.error('Failed to load characters by series:', error)
+      set({ charactersError: error.message, charactersLoading: false })
     }
   },
 

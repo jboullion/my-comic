@@ -4,6 +4,8 @@ import PrivacyPage from './pages/PrivacyPage'
 import ContactPage from './pages/ContactPage'
 import AuthCallbackPage from './pages/AuthCallbackPage'
 import DashboardPage from './pages/DashboardPage'
+import SeriesListPage from './pages/SeriesListPage'
+import SeriesPage from './pages/SeriesPage'
 import ProjectsPage from './pages/ProjectsPage'
 import ProjectPage from './pages/ProjectPage'
 import ProjectSettingsPage from './pages/ProjectSettingsPage'
@@ -66,6 +68,8 @@ function App() {
 
         {/* App Routes (Sidebar Layout) */}
         <Route path="/app" element={<DashboardPage />} />
+        <Route path="/app/series" element={<SeriesListPage />} />
+        <Route path="/app/series/:seriesId" element={<SeriesPage />} />
         <Route path="/app/projects" element={<ProjectsPage />} />
         <Route path="/app/characters" element={<CharactersPage />} />
         <Route path="/app/profile" element={<ProfilePage />} />
@@ -75,6 +79,7 @@ function App() {
         <Route path="/app/project/:projectId/settings" element={<ProjectSettingsPage />} />
 
         {/* Backward Compatibility Redirects */}
+        <Route path="/series" element={<Navigate to="/app/series" replace />} />
         <Route path="/projects" element={<Navigate to="/app/projects" replace />} />
         <Route path="/characters" element={<Navigate to="/app/characters" replace />} />
         <Route path="/profile" element={<Navigate to="/app/profile" replace />} />

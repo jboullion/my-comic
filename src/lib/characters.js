@@ -54,13 +54,18 @@ export const charactersDb = {
    * Create a new character
    * @param {string} name - Character name
    * @param {string} description - AI prompt description
+   * @param {number} seriesId - Series ID (required)
    * @returns {Promise<Object>} Created character
    */
-  async create(name, description = '') {
+  async create(name, description = '', seriesId) {
+    if (!seriesId) {
+      throw new Error('seriesId is required when creating a character')
+    }
     const now = new Date()
     const character = {
       name: name || 'Unnamed Character',
       description,
+      seriesId,
       profileImageId: null,
       createdAt: now,
       updatedAt: now
@@ -76,6 +81,15 @@ export const charactersDb = {
    */
   async getAll() {
     return await db.characters.orderBy('name').toArray()
+  },
+
+  /**
+   * Get all characters in a specific series
+   * @param {number} seriesId - Series ID
+   * @returns {Promise<Array>} Characters sorted by name
+   */
+  async getBySeriesId(seriesId) {
+    return await db.characters.where('seriesId').equals(seriesId).sortBy('name')
   },
 
   /**
@@ -222,6 +236,24 @@ export const charactersDb = {
    */
   async getAllWithProfileImages() {
     const characters = await db.characters.orderBy('name').toArray()
+
+    // Load profile images for each character
+    for (const character of characters) {
+      if (character.profileImageId) {
+        character.profileImage = await db.characterImages.get(character.profileImageId)
+      }
+    }
+
+    return characters
+  },
+
+  /**
+   * Get all characters in a series with their profile images
+   * @param {number} seriesId - Series ID
+   * @returns {Promise<Array>} Characters with profileImage property
+   */
+  async getAllWithProfileImagesBySeries(seriesId) {
+    const characters = await db.characters.where('seriesId').equals(seriesId).sortBy('name')
 
     // Load profile images for each character
     for (const character of characters) {

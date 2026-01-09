@@ -1,7 +1,5 @@
 ## Current TODOs
 
-- Update the generate image options to include the size of the comic page?
-
 
 ## Bugs
 
