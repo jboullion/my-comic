@@ -42,7 +42,7 @@ export default function CharactersPage() {
 
           <button
             onClick={() => openCharacterModal()}
-            className="flex items-center gap-2 px-4 py-2.5 bg-indigo-500 hover:bg-indigo-600 rounded-lg font-medium transition-colors"
+            className="px-4 py-2 bg-indigo-500 hover:bg-indigo-600 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
           >
             <FiPlus className="w-5 h-5" />
             New Character

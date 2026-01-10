@@ -637,10 +637,18 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
               ) : (
                 <>
                   {history.map((entry) => (
-                    <button
+                    <div
                       key={entry.id}
+                      role="button"
+                      tabIndex={0}
                       onClick={() => handleHistoryClick(entry)}
-                      className="w-full text-left bg-slate-800 hover:bg-slate-750 border border-slate-700 rounded-lg p-4 transition-colors group"
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault()
+                          handleHistoryClick(entry)
+                        }
+                      }}
+                      className="w-full text-left bg-slate-800 hover:bg-slate-750 border border-slate-700 rounded-lg p-4 transition-colors group cursor-pointer"
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div className="flex-1 min-w-0">
@@ -667,7 +675,7 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
                           <FiTrash2 className="w-4 h-4" />
                         </button>
                       </div>
-                    </button>
+                    </div>
                   ))}
 
                   <div className="pt-4 border-t border-slate-700">

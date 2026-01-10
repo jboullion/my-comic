@@ -51,7 +51,7 @@ export default function SeriesListPage() {
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-indigo-500/10 rounded-lg">
-              <RiBookShelfFill className="w-10 h-10 text-indigo-400" />
+              <RiBookShelfFill className="w-6 h-6 text-indigo-400" />
             </div>
             <div>
               <h1 className="text-2xl font-bold">Series</h1>
@@ -61,11 +61,11 @@ export default function SeriesListPage() {
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             <button
               onClick={handleImport}
               disabled={isImporting}
-              className="flex items-center gap-2 px-4 py-2.5 text-slate-300 hover:text-white hover:bg-slate-800 rounded-lg font-medium transition-colors disabled:opacity-50"
+              className="px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 disabled:opacity-50"
               title="Import series from .myseries file"
             >
               {isImporting ? (
@@ -77,7 +77,7 @@ export default function SeriesListPage() {
             </button>
             <button
               onClick={() => openSeriesModal()}
-              className="flex items-center gap-2 px-4 py-2.5 bg-indigo-500 hover:bg-indigo-600 rounded-lg font-medium transition-colors"
+              className="px-4 py-2 bg-indigo-500 hover:bg-indigo-600 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
             >
               <FiPlus className="w-5 h-5" />
               New Series

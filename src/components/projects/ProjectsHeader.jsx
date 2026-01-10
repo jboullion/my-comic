@@ -1,4 +1,4 @@
-import { FiUpload, FiPlus } from 'react-icons/fi'
+import { FiUpload, FiPlus, FiFolder } from 'react-icons/fi'
 
 /**
  * ProjectsHeader Component
@@ -7,11 +7,16 @@ import { FiUpload, FiPlus } from 'react-icons/fi'
 export default function ProjectsHeader({ userName, onImport, onCreateNew }) {
   return (
     <div className="flex items-center justify-between mb-8">
-      <div>
-        <h1 className="text-2xl font-bold">Your Projects</h1>
-        <p className="text-slate-400 text-sm mt-1">
-          Welcome back!
-        </p>
+      <div className="flex items-center gap-3">
+        <div className="p-2 bg-indigo-500/10 rounded-lg">
+          <FiFolder className="w-6 h-6 text-indigo-400" />
+        </div>
+        <div>
+          <h1 className="text-2xl font-bold">Projects</h1>
+          <p className="text-slate-400 text-sm">
+            All your comic book projects
+          </p>
+        </div>
       </div>
       <div className="flex items-center gap-3">
         <button
