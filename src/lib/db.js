@@ -70,6 +70,37 @@ db.version(7).stores({
   seriesImages: '++id, seriesId, createdAt'
 })
 
+// Version 8: Move customModel from project settings to series level
+// This aligns custom AI models with characters (both at series level)
+db.version(8).stores({
+  projects: '++id, title, seriesId, createdAt, updatedAt, fileHandle',
+  images: '++id, projectId, hash, [projectId+hash], name, size, type, createdAt',
+  characters: '++id, name, seriesId, createdAt, updatedAt',
+  characterImages: '++id, characterId, type, createdAt',
+  series: '++id, name, createdAt, updatedAt',
+  seriesImages: '++id, seriesId, createdAt'
+}).upgrade(async (tx) => {
+  // Migrate customModel from projects to their series
+  const projects = await tx.table('projects').toArray()
+
+  // Track which series already have customModel set
+  const seriesWithModel = new Set()
+
+  for (const project of projects) {
+    // Check if project has customModel enabled
+    if (project.settings?.customModel?.enabled && project.seriesId) {
+      // Only migrate if the series doesn't already have a custom model
+      if (!seriesWithModel.has(project.seriesId)) {
+        await tx.table('series').update(project.seriesId, {
+          customModel: project.settings.customModel,
+          updatedAt: new Date()
+        })
+        seriesWithModel.add(project.seriesId)
+      }
+    }
+  }
+})
+
 /**
  * Series schema:
  * {
@@ -77,6 +108,13 @@ db.version(7).stores({
  *   name: string
  *   description: string
  *   coverImageId: number | null (FK to seriesImages)
+ *   customModel: {                  // Custom AI model settings (v8+)
+ *     enabled: boolean,
+ *     name: string,                 // Display name (e.g., "Pony Diffusion V6")
+ *     type: 'flux' | 'sdxl' | 'sd15',
+ *     url: string,                  // CivitAI download URL
+ *     allowMature: boolean          // Safety filter override
+ *   } | null
  *   createdAt: Date
  *   updatedAt: Date
  * }
@@ -199,7 +237,8 @@ export const DEFAULT_PROJECT_SETTINGS = {
     enabled: false,
     name: '',                // Display name (e.g., "Pony Diffusion V6")
     type: 'sdxl',            // 'flux' | 'sdxl' | 'sd15' | 'pony'
-    url: ''                  // CivitAI download URL
+    url: '',                 // CivitAI download URL
+    allowMature: false       // Allow mature/NSFW content (disables safety filters)
   }
 }
 

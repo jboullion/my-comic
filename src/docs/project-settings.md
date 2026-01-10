@@ -61,10 +61,8 @@ Configure default styling for new text effects:
 ## Saving Settings
 
 - **Save** - Updates defaults for new elements only
-- **Apply to All Pages** - Updates existing pages and elements too
 
 ## Tips
 
 - Set up your preferred defaults before creating content
-- Use "Apply to All Pages" to quickly update an existing project's style
 - Match your defaults to your comic's visual style for consistency

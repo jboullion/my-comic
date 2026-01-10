@@ -18,7 +18,7 @@ export default function CharacterModal({ defaultSeriesId = null }) {
     updateCharacter,
     addCharacterImage
   } = useCharactersStore()
-  const { series, loadSeries, refreshSeriesCounts } = useSeriesStore()
+  const { series, loadSeries, refreshSeriesCounts, getSeriesCustomModel } = useSeriesStore()
 
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
@@ -34,6 +34,12 @@ export default function CharacterModal({ defaultSeriesId = null }) {
   const [loraExpanded, setLoraExpanded] = useState(false)
 
   const isEditing = !!editingCharacter
+
+  // Check if custom model is enabled for the character's series (LoRAs only work with custom models)
+  // Use the current seriesId state, or for editing use the character's seriesId
+  const effectiveSeriesId = isEditing ? editingCharacter?.seriesId : (seriesId || defaultSeriesId)
+  const seriesCustomModel = effectiveSeriesId ? getSeriesCustomModel(effectiveSeriesId) : null
+  const customModelEnabled = seriesCustomModel?.enabled
 
   // Reset form when modal opens/closes or editing character changes
   useEffect(() => {
@@ -280,100 +286,102 @@ export default function CharacterModal({ defaultSeriesId = null }) {
               </p>
             </div>
 
-            {/* LoRA Settings (Collapsible) */}
-            <div className="border border-slate-700 rounded-lg overflow-hidden">
-              <button
-                type="button"
-                onClick={() => setLoraExpanded(!loraExpanded)}
-                className="w-full flex items-center justify-between px-4 py-3 bg-slate-800/50 hover:bg-slate-800 transition-colors"
-              >
-                <span className="text-sm font-medium text-slate-300">
-                  LoRA Settings
-                  {loraUrl && (
-                    <span className="ml-2 text-xs text-indigo-400">(Configured)</span>
+            {/* LoRA Settings (Collapsible) - Only shown when custom model is enabled */}
+            {customModelEnabled && (
+              <div className="border border-slate-700 rounded-lg overflow-hidden">
+                <button
+                  type="button"
+                  onClick={() => setLoraExpanded(!loraExpanded)}
+                  className="w-full flex items-center justify-between px-4 py-3 bg-slate-800/50 hover:bg-slate-800 transition-colors"
+                >
+                  <span className="text-sm font-medium text-slate-300">
+                    LoRA Settings
+                    {loraUrl && (
+                      <span className="ml-2 text-xs text-indigo-400">(Configured)</span>
+                    )}
+                  </span>
+                  {loraExpanded ? (
+                    <FiChevronDown className="w-4 h-4 text-slate-400" />
+                  ) : (
+                    <FiChevronRight className="w-4 h-4 text-slate-400" />
                   )}
-                </span>
-                {loraExpanded ? (
-                  <FiChevronDown className="w-4 h-4 text-slate-400" />
-                ) : (
-                  <FiChevronRight className="w-4 h-4 text-slate-400" />
-                )}
-              </button>
+                </button>
 
-              {loraExpanded && (
-                <div className="px-4 py-4 space-y-4 bg-slate-900/30">
-                  {/* LoRA URL */}
-                  <div>
-                    <label
-                      htmlFor="loraUrl"
-                      className="block text-[10px] text-slate-500 uppercase font-bold mb-2"
-                    >
-                      LoRA URL
-                    </label>
-                    <input
-                      id="loraUrl"
-                      type="text"
-                      value={loraUrl}
-                      onChange={(e) => setLoraUrl(e.target.value)}
-                      placeholder="https://civitai.com/api/download/models/..."
-                      disabled={isSaving}
-                      className="w-full px-4 py-2.5 bg-slate-900 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent disabled:opacity-50 text-sm"
-                    />
-                  </div>
-
-                  {/* Trigger Word */}
-                  <div>
-                    <label
-                      htmlFor="loraTriggerWord"
-                      className="block text-[10px] text-slate-500 uppercase font-bold mb-2"
-                    >
-                      Trigger Word
-                    </label>
-                    <input
-                      id="loraTriggerWord"
-                      type="text"
-                      value={loraTriggerWord}
-                      onChange={(e) => setLoraTriggerWord(e.target.value)}
-                      placeholder="character_style"
-                      disabled={isSaving}
-                      className="w-full px-4 py-2.5 bg-slate-900 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent disabled:opacity-50 text-sm"
-                    />
-                    <p className="mt-1.5 text-xs text-slate-500">
-                      The activation word from the LoRA model page
-                    </p>
-                  </div>
-
-                  {/* LoRA Scale */}
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <label className="text-[10px] text-slate-500 uppercase font-bold">
-                        LoRA Strength
+                {loraExpanded && (
+                  <div className="px-4 py-4 space-y-4 bg-slate-900/30">
+                    {/* LoRA URL */}
+                    <div>
+                      <label
+                        htmlFor="loraUrl"
+                        className="block text-[10px] text-slate-500 uppercase font-bold mb-2"
+                      >
+                        LoRA URL
                       </label>
-                      <span className="text-xs text-slate-400">
-                        {Math.round(loraScale * 100)}%
-                      </span>
+                      <input
+                        id="loraUrl"
+                        type="text"
+                        value={loraUrl}
+                        onChange={(e) => setLoraUrl(e.target.value)}
+                        placeholder="https://civitai.com/api/download/models/..."
+                        disabled={isSaving}
+                        className="w-full px-4 py-2.5 bg-slate-900 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent disabled:opacity-50 text-sm"
+                      />
                     </div>
-                    <input
-                      type="range"
-                      min="0"
-                      max="100"
-                      value={loraScale * 100}
-                      onChange={(e) => setLoraScale(Number(e.target.value) / 100)}
-                      disabled={isSaving}
-                      className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-indigo-500 disabled:opacity-50"
-                    />
-                  </div>
 
-                  {/* Helper text */}
-                  <div className="bg-slate-800/50 rounded-lg px-3 py-2 text-xs text-slate-500">
-                    <p>
-                      Get LoRA download URLs from CivitAI: click the Download button and copy the link.
-                      Check the model page for the correct trigger word.
-                    </p>
+                    {/* Trigger Word */}
+                    <div>
+                      <label
+                        htmlFor="loraTriggerWord"
+                        className="block text-[10px] text-slate-500 uppercase font-bold mb-2"
+                      >
+                        Trigger Word
+                      </label>
+                      <input
+                        id="loraTriggerWord"
+                        type="text"
+                        value={loraTriggerWord}
+                        onChange={(e) => setLoraTriggerWord(e.target.value)}
+                        placeholder="character_style"
+                        disabled={isSaving}
+                        className="w-full px-4 py-2.5 bg-slate-900 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent disabled:opacity-50 text-sm"
+                      />
+                      <p className="mt-1.5 text-xs text-slate-500">
+                        The activation word from the LoRA model page
+                      </p>
+                    </div>
+
+                    {/* LoRA Scale */}
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <label className="text-[10px] text-slate-500 uppercase font-bold">
+                          LoRA Strength
+                        </label>
+                        <span className="text-xs text-slate-400">
+                          {Math.round(loraScale * 100)}%
+                        </span>
+                      </div>
+                      <input
+                        type="range"
+                        min="0"
+                        max="100"
+                        value={loraScale * 100}
+                        onChange={(e) => setLoraScale(Number(e.target.value) / 100)}
+                        disabled={isSaving}
+                        className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-indigo-500 disabled:opacity-50"
+                      />
+                    </div>
+
+                    {/* Helper text */}
+                    <div className="bg-slate-800/50 rounded-lg px-3 py-2 text-xs text-slate-500">
+                      <p>
+                        Get LoRA download URLs from CivitAI: click the Download button and copy the link.
+                        Check the model page for the correct trigger word.
+                      </p>
+                    </div>
                   </div>
-                </div>
-              )}
-            </div>
+                )}
+              </div>
+            )}
 
             {/* Info Box */}
             <div className="bg-slate-900/50 rounded-lg px-4 py-3 text-sm text-slate-400">

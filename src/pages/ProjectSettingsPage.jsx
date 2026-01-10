@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { FiArrowLeft, FiLayout, FiType, FiMessageCircle, FiZap, FiImage, FiHardDrive, FiCpu } from 'react-icons/fi'
+import { FiArrowLeft, FiLayout, FiType, FiMessageCircle, FiZap, FiImage, FiHardDrive } from 'react-icons/fi'
 import EditorLayout from '../layouts/EditorLayout'
 import useProjectStore from '../stores/useProjectStore'
 import { DEFAULT_PROJECT_SETTINGS } from '../lib/db'
@@ -10,7 +10,6 @@ import SpeechBubbleSettingsTab from '../components/settings/SpeechBubbleSettings
 import TextEffectSettingsTab from '../components/settings/TextEffectSettingsTab'
 import ImageSettingsTab from '../components/settings/ImageSettingsTab'
 import StorageSettingsTab from '../components/settings/StorageSettingsTab'
-import AIModelSettingsTab from '../components/settings/AIModelSettingsTab'
 
 const TABS = [
   { id: 'page', label: 'Page', icon: FiLayout },
@@ -18,7 +17,6 @@ const TABS = [
   { id: 'text', label: 'Text', icon: FiType },
   { id: 'speechBubble', label: 'Speech Bubbles', icon: FiMessageCircle },
   { id: 'textEffect', label: 'Text Effects', icon: FiZap },
-  { id: 'aiModel', label: 'AI Model', icon: FiCpu },
   { id: 'storage', label: 'Storage', icon: FiHardDrive }
 ]
 
@@ -44,6 +42,9 @@ export default function ProjectSettingsPage() {
   // Local settings state for editing
   const [localSettings, setLocalSettings] = useState(null)
 
+  // Save state for feedback
+  const [saveState, setSaveState] = useState('idle') // 'idle' | 'saving' | 'saved'
+
   // Load project if not already loaded
   useEffect(() => {
     if (!currentProject && projectId) {
@@ -62,8 +63,7 @@ export default function ProjectSettingsPage() {
         image: { ...DEFAULT_PROJECT_SETTINGS.image, ...currentProject.settings.image },
         text: { ...DEFAULT_PROJECT_SETTINGS.text, ...currentProject.settings.text },
         speechBubble: { ...DEFAULT_PROJECT_SETTINGS.speechBubble, ...currentProject.settings.speechBubble },
-        textEffect: { ...DEFAULT_PROJECT_SETTINGS.textEffect, ...currentProject.settings.textEffect },
-        customModel: { ...DEFAULT_PROJECT_SETTINGS.customModel, ...currentProject.settings.customModel }
+        textEffect: { ...DEFAULT_PROJECT_SETTINGS.textEffect, ...currentProject.settings.textEffect }
       })
     }
   }, [currentProject?.settings])
@@ -78,9 +78,12 @@ export default function ProjectSettingsPage() {
   }
 
   const handleSave = async () => {
-    if (localSettings) {
+    if (localSettings && saveState === 'idle') {
+      setSaveState('saving')
       await saveProjectSettings(localSettings)
-      navigate(`/app/project/${projectId}`)
+      setSaveState('saved')
+      // Reset to idle after showing "Saved!" for 1.5 seconds
+      setTimeout(() => setSaveState('idle'), 1500)
     }
   }
 
@@ -133,9 +136,16 @@ export default function ProjectSettingsPage() {
             </button>
             <button
               onClick={handleSave}
-              className="px-4 py-2 text-sm bg-slate-700 hover:bg-slate-600 text-white rounded-lg font-medium transition-colors"
+              disabled={saveState !== 'idle'}
+              className={`px-4 py-2 text-sm rounded-lg font-medium transition-colors min-w-20 ${
+                saveState === 'saved'
+                  ? 'bg-green-600 text-white'
+                  : saveState === 'saving'
+                  ? 'bg-slate-700 text-slate-400 cursor-wait'
+                  : 'bg-slate-700 hover:bg-slate-600 text-white'
+              }`}
             >
-              Save
+              {saveState === 'saved' ? 'Saved!' : saveState === 'saving' ? 'Saving...' : 'Save'}
             </button>
             
           </div>
@@ -195,12 +205,6 @@ export default function ProjectSettingsPage() {
                 onUpdate={(updates) => updateNestedSettings('textEffect', updates)}
               />
             )}
-            {activeTab === 'aiModel' && (
-              <AIModelSettingsTab
-                settings={localSettings.customModel}
-                onUpdate={(updates) => updateNestedSettings('customModel', updates)}
-              />
-            )}
             {activeTab === 'storage' && (
               <StorageSettingsTab projectId={Number(projectId)} />
             )}
@@ -210,7 +214,7 @@ export default function ProjectSettingsPage() {
         {/* Footer Info */}
         <div className="px-6 py-3 border-t border-slate-800 bg-slate-900/50">
           <p className="text-xs text-slate-500 text-center">
-            <strong>Save</strong> updates defaults for new elements. <strong>Apply to All Pages</strong> also updates page dimensions on existing pages.
+            <strong>Save</strong> updates defaults for new elements.
           </p>
         </div>
       </div>

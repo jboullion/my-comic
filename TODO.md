@@ -1,11 +1,19 @@
 ## Current TODOs
 
-- Can we use Civitai models?
-- 
-- Move mature content to project settings
+- Hide AI Generation for now?
+- - Projects / Characters/ Project Settings
+
+
+- Set up AI Dialog and Image Prompt helpers
+
+- Improve the Asset toolbar experience
+
+- Update the home and marketing page!
+
 
 ## Bugs
 
+- Characters not loading on the projects page AI modal.
 - Cloud SVG is overflowing container.
 - Some actions don't seem to get caught in the undo. Is there a redo?
 - I still get the forced zoom every now and then

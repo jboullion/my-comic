@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { FiArrowLeft, FiPlus, FiFolder, FiUsers, FiEdit2, FiDownload, FiLoader } from 'react-icons/fi'
+import { FiArrowLeft, FiPlus, FiFolder, FiUsers, FiEdit2, FiDownload, FiLoader, FiSettings, FiCpu } from 'react-icons/fi'
 import { RiBookShelfFill } from 'react-icons/ri'
 import AppSidebarLayout from '../layouts/AppSidebarLayout'
 import useSeriesStore from '../stores/useSeriesStore'
@@ -168,13 +168,26 @@ export default function SeriesPage() {
               Export
             </button>
             {series?.name !== 'Uncategorized' && (
-              <button
-                onClick={() => openSeriesModal(series)}
-                className="flex items-center gap-2 px-3 py-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
-              >
-                <FiEdit2 className="w-4 h-4" />
-                Edit
-              </button>
+              <>
+                <Link
+                  to={`/app/series/${seriesId}/settings`}
+                  className="flex items-center gap-2 px-3 py-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
+                  title="Series settings"
+                >
+                  <FiSettings className="w-4 h-4" />
+                  Settings
+                  {series?.customModel?.enabled && (
+                    <FiCpu className="w-3 h-3 text-indigo-400" title="Custom AI model configured" />
+                  )}
+                </Link>
+                <button
+                  onClick={() => openSeriesModal(series)}
+                  className="flex items-center gap-2 px-3 py-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
+                >
+                  <FiEdit2 className="w-4 h-4" />
+                  Edit
+                </button>
+              </>
             )}
           </div>
         </div>

@@ -226,9 +226,9 @@ export async function generateImage({
 
   // Add safety/mature content settings
   if (allowMature) {
-    // For Pro models, use safety_tolerance (0-6 scale, 6 = most permissive)
+    // For Pro models, use safety_tolerance (1-5 scale, 5 = most permissive)
     if (modelKey === 'flux-2-pro' && !useCustomModel) {
-      input.safety_tolerance = '6'
+      input.safety_tolerance = '5'
     } else {
       // For other models and custom models, disable the safety checker
       input.enable_safety_checker = false

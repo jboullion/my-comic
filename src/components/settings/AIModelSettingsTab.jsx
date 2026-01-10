@@ -18,7 +18,8 @@ export default function AIModelSettingsTab({ settings, onUpdate }) {
     enabled: false,
     name: '',
     type: 'sdxl',
-    url: ''
+    url: '',
+    allowMature: false
   }
 
   const handleChange = (field, value) => {
@@ -138,6 +139,107 @@ export default function AIModelSettingsTab({ settings, onUpdate }) {
           </div>
         </div>
       )}
+
+      {/* Content Settings - Always visible */}
+      <div className="pt-4 border-t border-slate-700">
+        <h3 className="text-sm font-semibold text-white mb-4">Content Settings</h3>
+
+        {/* Allow Mature Content Toggle */}
+        <div className="flex items-center justify-between p-4 bg-slate-800/50 border border-slate-700 rounded-lg">
+          <div className="flex-1">
+            <label className="text-sm text-white font-medium">
+              Allow Mature Content
+            </label>
+            <p className="text-[10px] text-slate-500 mt-0.5">
+              Disables safety filters for all AI generations in this project
+            </p>
+          </div>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={customModel.allowMature}
+            onClick={() => handleChange('allowMature', !customModel.allowMature)}
+            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+              customModel.allowMature ? 'bg-indigo-500' : 'bg-slate-600'
+            }`}
+          >
+            <span
+              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                customModel.allowMature ? 'translate-x-6' : 'translate-x-1'
+              }`}
+            />
+          </button>
+        </div>
+
+        {/* FLUX Models Warning */}
+        <div className="mt-3 bg-amber-900/30 border border-amber-700/50 rounded-lg px-4 py-3">
+          <p className="text-xs text-amber-200">
+            <span className="font-semibold">Note:</span> Default FLUX models have built-in content filters that cannot be fully disabled.
+            To generate mature/adult content, you must configure a custom model above (e.g., an SDXL or Pony Diffusion model from CivitAI).
+          </p>
+        </div>
+      </div>
+
+      {/* Setup Guide */}
+      <div className="pt-4 border-t border-slate-700">
+        <h3 className="text-sm font-semibold text-white mb-4">Custom Model Setup Guide</h3>
+
+        <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-4 space-y-4">
+          <div className="space-y-3">
+            <div className="flex gap-3">
+              <span className="shrink-0 w-6 h-6 bg-indigo-500 rounded-full flex items-center justify-center text-xs font-bold text-white">1</span>
+              <div>
+                <p className="text-sm text-white font-medium">Find a model on CivitAI</p>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  Go to <span className="text-indigo-400">civitai.com</span> and browse for a base model (checkpoint).
+                  Popular choices include Pony Diffusion, RealVisXL, or other SDXL-based models.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <span className="shrink-0 w-6 h-6 bg-indigo-500 rounded-full flex items-center justify-center text-xs font-bold text-white">2</span>
+              <div>
+                <p className="text-sm text-white font-medium">Get the download URL</p>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  On the model page, click the <span className="text-indigo-400">Download</span> button.
+                  Then <span className="text-indigo-400">right-click</span> on the download button and select
+                  <span className="text-indigo-400"> "Copy link address"</span>.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <span className="shrink-0 w-6 h-6 bg-indigo-500 rounded-full flex items-center justify-center text-xs font-bold text-white">3</span>
+              <div>
+                <p className="text-sm text-white font-medium">Configure the model above</p>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  Enable "Use Custom Base Model", enter a display name, select the correct architecture
+                  (usually SDXL for most modern models), and paste the copied URL.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <span className="shrink-0 w-6 h-6 bg-indigo-500 rounded-full flex items-center justify-center text-xs font-bold text-white">4</span>
+              <div>
+                <p className="text-sm text-white font-medium">Use in AI Image Generator</p>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  Your custom model will now appear at the top of the model dropdown in the AI Image Generator.
+                  Character LoRAs will be applied on top of your custom base model.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="pt-3 border-t border-slate-700">
+            <p className="text-[10px] text-slate-500">
+              <span className="font-semibold">Tip:</span> Make sure any character LoRAs you use are compatible with your chosen base model architecture.
+              For example, SDXL LoRAs work with SDXL/Pony models, not with SD 1.5 models.
+            </p>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }

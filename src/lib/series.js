@@ -283,5 +283,51 @@ export const seriesDb = {
     series.coverImage = await db.seriesImages.where('seriesId').equals(series.id).first()
 
     return series
+  },
+
+  // ==================
+  // Custom Model Operations
+  // ==================
+
+  /**
+   * Update the custom AI model settings for a series
+   * @param {number} seriesId - Series ID
+   * @param {Object} customModel - Custom model settings
+   * @param {boolean} customModel.enabled - Whether custom model is enabled
+   * @param {string} customModel.name - Display name
+   * @param {string} customModel.type - Model architecture ('flux', 'sdxl', 'sd15')
+   * @param {string} customModel.url - CivitAI download URL
+   * @param {boolean} customModel.allowMature - Whether to allow mature content
+   * @returns {Promise<Object>} Updated series
+   */
+  async updateCustomModel(seriesId, customModel) {
+    await db.series.update(seriesId, {
+      customModel,
+      updatedAt: new Date()
+    })
+    return await db.series.get(seriesId)
+  },
+
+  /**
+   * Get custom model settings for a series
+   * @param {number} seriesId - Series ID
+   * @returns {Promise<Object|null>} Custom model settings or null
+   */
+  async getCustomModel(seriesId) {
+    const series = await db.series.get(seriesId)
+    return series?.customModel || null
+  },
+
+  /**
+   * Clear custom model settings for a series
+   * @param {number} seriesId - Series ID
+   * @returns {Promise<Object>} Updated series
+   */
+  async clearCustomModel(seriesId) {
+    await db.series.update(seriesId, {
+      customModel: null,
+      updatedAt: new Date()
+    })
+    return await db.series.get(seriesId)
   }
 }

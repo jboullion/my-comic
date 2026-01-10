@@ -41,11 +41,12 @@ export async function exportSeriesToFile(seriesId) {
   }
   zip.file('manifest.json', JSON.stringify(manifest, null, 2))
 
-  // 3. Create series data
+  // 3. Create series data (including customModel if configured)
   const seriesData = {
     name: series.name,
     description: series.description || '',
-    hasCoverImage: !!series.coverImage
+    hasCoverImage: !!series.coverImage,
+    customModel: series.customModel || null
   }
   zip.file('series.json', JSON.stringify(seriesData, null, 2))
 
@@ -197,6 +198,11 @@ async function parseMySeriesFile(file) {
 
   // 4. Create new series
   const newSeries = await seriesDb.create(newSeriesName, seriesData.description)
+
+  // 4b. Import customModel if exists
+  if (seriesData.customModel) {
+    await seriesDb.updateCustomModel(newSeries.id, seriesData.customModel)
+  }
 
   // 5. Import cover image if exists
   const coverFile = zip.file('cover.webp')

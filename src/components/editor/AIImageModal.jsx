@@ -5,6 +5,7 @@ import { generateImage, fetchImageAsBlob, AI_MODELS, AI_STYLES, isFalConfigured 
 import CharacterPicker from './CharacterPicker'
 import useCharactersStore from '../../stores/useCharactersStore'
 import useProjectStore from '../../stores/useProjectStore'
+import useSeriesStore from '../../stores/useSeriesStore'
 
 /**
  * Calculate AI-friendly dimensions that match a given aspect ratio
@@ -92,10 +93,13 @@ const formatTimeAgo = (timestamp) => {
 export default function AIImageModal({ isOpen, onClose, onSave }) {
   const { projectId } = useParams()
 
-  // Get current project settings for "Match Page" option and custom model
+  // Get current project settings for "Match Page" option
   const { currentProject } = useProjectStore()
   const pageSettings = currentProject?.settings || { width: 800, height: 1200 }
-  const customModel = currentProject?.settings?.customModel
+
+  // Get custom model from series (not project)
+  const { getSeriesCustomModel } = useSeriesStore()
+  const customModel = currentProject?.seriesId ? getSeriesCustomModel(currentProject.seriesId) : null
 
   // Calculate matching dimensions for "Match Page" option
   const matchPageDimensions = useMemo(() => {
@@ -112,7 +116,9 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
   const [imageSize, setImageSize] = useState('match_page')
   const [selectedCharacterIds, setSelectedCharacterIds] = useState([])
   const [referenceStrength, setReferenceStrength] = useState(0.65)
-  const [allowMature, setAllowMature] = useState(false)
+
+  // Get allowMature from project settings
+  const allowMature = customModel?.allowMature || false
 
   // Get characters from store for prompt building
   const { characters } = useCharactersStore()
@@ -522,7 +528,7 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
                     disabled={isGenerating}
                     className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 disabled:opacity-50"
                   >
-                    {/* Project's custom model (if enabled) */}
+                    {/* Series custom model (if enabled) */}
                     {customModel?.enabled && customModel?.url && (
                       <option value="custom">
                         📌 {customModel.name || 'Custom Model'}
@@ -537,7 +543,7 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
                   </select>
                   <p className="text-[10px] text-slate-500">
                     {model === 'custom'
-                      ? `Project's custom ${customModel?.type?.toUpperCase() || ''} model`
+                      ? `Series custom ${customModel?.type?.toUpperCase() || ''} model`
                       : `${AI_MODELS[model]?.description} (${AI_MODELS[model]?.cost})`
                     }
                   </p>
@@ -561,33 +567,14 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
                 </div>
               </div>
 
-              {/* Mature Content Toggle */}
-              <div className="flex items-center justify-between p-3 bg-slate-800/50 border border-slate-700 rounded-lg">
-                <div className="flex-1">
-                  <label className="text-sm text-white font-medium">
-                    Allow Mature Content
-                  </label>
-                  <p className="text-[10px] text-slate-500 mt-0.5">
-                    Disables safety filters for adult content generation
-                  </p>
+              {/* Mature Content Indicator (controlled in Series Settings) */}
+              {allowMature && (
+                <div className="flex items-center gap-2 px-3 py-2 bg-amber-500/10 border border-amber-500/30 rounded-lg">
+                  <span className="text-xs text-amber-300">
+                    Mature content enabled (Series Settings → AI Model)
+                  </span>
                 </div>
-                <button
-                  type="button"
-                  role="switch"
-                  aria-checked={allowMature}
-                  onClick={() => setAllowMature(!allowMature)}
-                  disabled={isGenerating}
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors disabled:opacity-50 ${
-                    allowMature ? 'bg-indigo-500' : 'bg-slate-600'
-                  }`}
-                >
-                  <span
-                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                      allowMature ? 'translate-x-6' : 'translate-x-1'
-                    }`}
-                  />
-                </button>
-              </div>
+              )}
 
               {/* Error Display */}
               {error && (

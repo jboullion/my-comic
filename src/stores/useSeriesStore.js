@@ -172,6 +172,36 @@ export const useSeriesStore = create((set, get) => ({
   },
 
   // ==================
+  // Custom Model Actions
+  // ==================
+
+  /**
+   * Update custom AI model settings for a series
+   */
+  updateSeriesCustomModel: async (seriesId, customModel) => {
+    try {
+      await seriesDb.updateCustomModel(seriesId, customModel)
+      // Reload series with updated data
+      const withData = await seriesDb.getByIdWithCountsAndImage(seriesId)
+      set((state) => ({
+        series: state.series.map((s) => (s.id === seriesId ? withData : s))
+      }))
+    } catch (error) {
+      console.error('Failed to update custom model:', error)
+      throw error
+    }
+  },
+
+  /**
+   * Get custom model for a series (from cache)
+   */
+  getSeriesCustomModel: (seriesId) => {
+    const { series } = get()
+    const s = series.find((s) => s.id === seriesId)
+    return s?.customModel || null
+  },
+
+  // ==================
   // UI Actions
   // ==================
 

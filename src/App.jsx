@@ -6,6 +6,7 @@ import AuthCallbackPage from './pages/AuthCallbackPage'
 import DashboardPage from './pages/DashboardPage'
 import SeriesListPage from './pages/SeriesListPage'
 import SeriesPage from './pages/SeriesPage'
+import SeriesSettingsPage from './pages/SeriesSettingsPage'
 import ProjectsPage from './pages/ProjectsPage'
 import ProjectPage from './pages/ProjectPage'
 import ProjectSettingsPage from './pages/ProjectSettingsPage'
@@ -70,6 +71,7 @@ function App() {
         <Route path="/app" element={<DashboardPage />} />
         <Route path="/app/series" element={<SeriesListPage />} />
         <Route path="/app/series/:seriesId" element={<SeriesPage />} />
+        <Route path="/app/series/:seriesId/settings" element={<SeriesSettingsPage />} />
         <Route path="/app/projects" element={<ProjectsPage />} />
         <Route path="/app/characters" element={<CharactersPage />} />
         <Route path="/app/profile" element={<ProfilePage />} />

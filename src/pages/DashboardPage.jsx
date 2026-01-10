@@ -102,7 +102,7 @@ export default function DashboardPage() {
     return projects.reduce((sum, p) => sum + (p.pages?.length || 0), 0)
   }, [projects])
 
-  const userName = user?.user_metadata?.full_name || user?.email?.split('@')[0]
+  // const userName = user?.user_metadata?.full_name || user?.email?.split('@')[0]
   const isLoading = projectsLoading || charactersLoading || seriesLoading
 
   return (
@@ -111,7 +111,7 @@ export default function DashboardPage() {
         {/* Welcome Header */}
         <div className="mb-8">
           <h1 className="text-2xl font-bold text-white">
-            Welcome back, {userName}
+            Welcome back!
           </h1>
           <p className="text-slate-400 mt-1">
             Here's what's happening with your comics
