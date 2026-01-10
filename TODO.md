@@ -1,10 +1,19 @@
 ## Current TODOs
 
-- Update the generate image options to include the size of the comic page?
+- Hide AI Generation for now?
+- - Projects / Characters/ Project Settings
+
+
+- Set up AI Dialog and Image Prompt helpers
+
+- Improve the Asset toolbar experience
+
+- Update the home and marketing page!
 
 
 ## Bugs
 
+- Characters not loading on the projects page AI modal.
 - Cloud SVG is overflowing container.
 - Some actions don't seem to get caught in the undo. Is there a redo?
 - I still get the forced zoom every now and then
@@ -145,3 +154,11 @@ Could we set up the comic to "read"? Can each character have a voice? Plus a Nar
 - - Export static or "motion" comics.
 - - Use the latest AI models for image generation and story / dialog assistance. (Pro)
 
+
+## Monitization
+
+- Ads for free mode if we end up getting users?
+- Pro mode 
+- remove ads
+- Online Data storage?
+- AI Tools enabled?

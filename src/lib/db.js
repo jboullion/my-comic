@@ -27,11 +27,114 @@ db.version(4).stores({
   characterImages: '++id, characterId, type, createdAt'
 })
 
+// Version 5: Add Series feature - groups projects and characters
+db.version(5).stores({
+  projects: '++id, title, seriesId, createdAt, updatedAt, fileHandle',
+  images: '++id, projectId, hash, [projectId+hash], name, size, type, createdAt',
+  characters: '++id, name, seriesId, createdAt, updatedAt',
+  characterImages: '++id, characterId, type, createdAt',
+  series: '++id, name, createdAt, updatedAt'
+}).upgrade(async (tx) => {
+  // Create "Uncategorized" series for existing data
+  const uncategorizedId = await tx.table('series').add({
+    name: 'Uncategorized',
+    description: 'Default series for projects and characters',
+    createdAt: new Date(),
+    updatedAt: new Date()
+  })
+
+  // Migrate all existing projects to the Uncategorized series
+  await tx.table('projects').toCollection().modify({ seriesId: uncategorizedId })
+
+  // Migrate all existing characters to the Uncategorized series
+  await tx.table('characters').toCollection().modify({ seriesId: uncategorizedId })
+})
+
+// Version 6: Add series cover images
+db.version(6).stores({
+  projects: '++id, title, seriesId, createdAt, updatedAt, fileHandle',
+  images: '++id, projectId, hash, [projectId+hash], name, size, type, createdAt',
+  characters: '++id, name, seriesId, createdAt, updatedAt',
+  characterImages: '++id, characterId, type, createdAt',
+  series: '++id, name, createdAt, updatedAt',
+  seriesImages: '++id, seriesId, createdAt'
+})
+
+// Version 7: Add LoRA fields to characters (no index changes needed)
+db.version(7).stores({
+  projects: '++id, title, seriesId, createdAt, updatedAt, fileHandle',
+  images: '++id, projectId, hash, [projectId+hash], name, size, type, createdAt',
+  characters: '++id, name, seriesId, createdAt, updatedAt',
+  characterImages: '++id, characterId, type, createdAt',
+  series: '++id, name, createdAt, updatedAt',
+  seriesImages: '++id, seriesId, createdAt'
+})
+
+// Version 8: Move customModel from project settings to series level
+// This aligns custom AI models with characters (both at series level)
+db.version(8).stores({
+  projects: '++id, title, seriesId, createdAt, updatedAt, fileHandle',
+  images: '++id, projectId, hash, [projectId+hash], name, size, type, createdAt',
+  characters: '++id, name, seriesId, createdAt, updatedAt',
+  characterImages: '++id, characterId, type, createdAt',
+  series: '++id, name, createdAt, updatedAt',
+  seriesImages: '++id, seriesId, createdAt'
+}).upgrade(async (tx) => {
+  // Migrate customModel from projects to their series
+  const projects = await tx.table('projects').toArray()
+
+  // Track which series already have customModel set
+  const seriesWithModel = new Set()
+
+  for (const project of projects) {
+    // Check if project has customModel enabled
+    if (project.settings?.customModel?.enabled && project.seriesId) {
+      // Only migrate if the series doesn't already have a custom model
+      if (!seriesWithModel.has(project.seriesId)) {
+        await tx.table('series').update(project.seriesId, {
+          customModel: project.settings.customModel,
+          updatedAt: new Date()
+        })
+        seriesWithModel.add(project.seriesId)
+      }
+    }
+  }
+})
+
 /**
+ * Series schema:
+ * {
+ *   id: number (auto-increment)
+ *   name: string
+ *   description: string
+ *   coverImageId: number | null (FK to seriesImages)
+ *   customModel: {                  // Custom AI model settings (v8+)
+ *     enabled: boolean,
+ *     name: string,                 // Display name (e.g., "Pony Diffusion V6")
+ *     type: 'flux' | 'sdxl' | 'sd15',
+ *     url: string,                  // CivitAI download URL
+ *     allowMature: boolean          // Safety filter override
+ *   } | null
+ *   createdAt: Date
+ *   updatedAt: Date
+ * }
+ *
+ * SeriesImage schema:
+ * {
+ *   id: number (auto-increment)
+ *   seriesId: number (FK to series)
+ *   blob: Blob (WebP image data)
+ *   width: number
+ *   height: number
+ *   name: string
+ *   createdAt: Date
+ * }
+ *
  * Project schema:
  * {
  *   id: number (auto-increment)
  *   title: string
+ *   seriesId: number (FK to series)
  *   createdAt: Date
  *   updatedAt: Date
  *   fileHandle: FileSystemFileHandle | null (for File System Access API)
@@ -56,7 +159,11 @@ db.version(4).stores({
  *   id: number (auto-increment)
  *   name: string
  *   description: string (AI prompt description)
+ *   seriesId: number (FK to series)
  *   profileImageId: number | null (FK to characterImages)
+ *   loraUrl: string | null (CivitAI or direct .safetensors URL)
+ *   loraTriggerWord: string | null (trigger word to activate LoRA)
+ *   loraScale: number (LoRA strength 0.0-1.0, default 0.8)
  *   createdAt: Date
  *   updatedAt: Date
  * }
@@ -123,6 +230,15 @@ export const DEFAULT_PROJECT_SETTINGS = {
     strokeWidth: 0,
     cornerRadius: 0,
     cornerShape: 'round'
+  },
+
+  // Custom AI model settings
+  customModel: {
+    enabled: false,
+    name: '',                // Display name (e.g., "Pony Diffusion V6")
+    type: 'sdxl',            // 'flux' | 'sdxl' | 'sd15' | 'pony'
+    url: '',                 // CivitAI download URL
+    allowMature: false       // Allow mature/NSFW content (disables safety filters)
   }
 }
 
@@ -143,12 +259,19 @@ export function createBlankPage(pageNumber = 1, projectSettings = DEFAULT_PROJEC
 export const projectsDb = {
   /**
    * Create a new project
+   * @param {string} title - Project title
+   * @param {object} settings - Project settings
+   * @param {number} seriesId - Series ID (required)
    */
-  async create(title, settings = {}) {
+  async create(title, settings = {}, seriesId) {
+    if (!seriesId) {
+      throw new Error('seriesId is required when creating a project')
+    }
     const now = new Date()
     const mergedSettings = { ...DEFAULT_PROJECT_SETTINGS, ...settings }
     const project = {
       title: title || 'Untitled Project',
+      seriesId,
       createdAt: now,
       updatedAt: now,
       fileHandle: null,
@@ -158,7 +281,7 @@ export const projectsDb = {
       },
       pages: [createBlankPage(1, mergedSettings)],
     }
-    
+
     const id = await db.projects.add(project)
     return { ...project, id }
   },
@@ -168,6 +291,13 @@ export const projectsDb = {
    */
   async getAll() {
     return await db.projects.orderBy('updatedAt').reverse().toArray()
+  },
+
+  /**
+   * Get all projects in a specific series
+   */
+  async getBySeriesId(seriesId) {
+    return await db.projects.where('seriesId').equals(seriesId).reverse().sortBy('updatedAt')
   },
 
   /**

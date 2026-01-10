@@ -1,11 +1,13 @@
 import { NavLink } from 'react-router-dom'
 import { FiHome, FiFolder, FiUsers, FiUser, FiLogOut, FiDownload } from 'react-icons/fi'
+import { RiBookShelfFill } from 'react-icons/ri'
 import { useAuth } from '../contexts/AuthContext'
 import usePWAInstall from '../hooks/usePWAInstall'
 import { NavLogo } from './nav'
 
 const navItems = [
   { to: '/app', icon: FiHome, label: 'Dashboard', end: true },
+  { to: '/app/series', icon: RiBookShelfFill, label: 'Series' },
   { to: '/app/projects', icon: FiFolder, label: 'Projects' },
   { to: '/app/characters', icon: FiUsers, label: 'Characters' },
 ]

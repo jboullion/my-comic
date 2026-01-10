@@ -1,6 +1,7 @@
 import JSZip from 'jszip'
 import { db } from './db'
 import { downloadBlob } from './export'
+import { seriesDb } from './series'
 
 /**
  * Project File Utilities for .mycomic format
@@ -30,10 +31,19 @@ export async function saveProjectToFile(project) {
   }
   zip.file('manifest.json', JSON.stringify(manifest, null, 2))
 
-  // 2. Get all images for this project
+  // 2. Get series info for this project
+  let seriesName = 'Uncategorized'
+  if (project.seriesId) {
+    const series = await seriesDb.getById(project.seriesId)
+    if (series) {
+      seriesName = series.name
+    }
+  }
+
+  // 3. Get all images for this project
   const images = await db.images.where({ projectId: project.id }).toArray()
 
-  // 3. Create image ID mapping (DB id -> hash for file reference)
+  // 4. Create image ID mapping (DB id -> hash for file reference)
   const imageMap = {}
   const imagesFolder = zip.folder('images')
 
@@ -51,9 +61,10 @@ export async function saveProjectToFile(project) {
     }
   }
 
-  // 4. Create project data with image references updated
+  // 5. Create project data with image references updated
   const projectData = {
     title: project.title,
+    seriesName, // Include series name for import
     settings: project.settings,
     assets: {
       imageIds: project.assets?.imageIds || [],
@@ -154,10 +165,15 @@ async function parseMyComicFile(file) {
   }
   const projectData = JSON.parse(await projectFile.async('text'))
 
-  // 3. Create new project in DB
+  // 3. Find or create the series for this project
+  const seriesName = projectData.seriesName || 'Uncategorized'
+  const series = await seriesDb.findOrCreate(seriesName)
+
+  // 4. Create new project in DB
   const now = new Date()
   const newProject = {
     title: projectData.title,
+    seriesId: series.id,
     createdAt: now,
     updatedAt: now,
     fileHandle: null,

@@ -57,10 +57,16 @@ export const useProjectStore = create(
 
       /**
        * Create a new project
+       * @param {string} title - Project title
+       * @param {object} settings - Project settings
+       * @param {number} seriesId - Series ID (required)
        */
-      createProject: async (title, settings = {}) => {
+      createProject: async (title, settings = {}, seriesId) => {
+        if (!seriesId) {
+          throw new Error('seriesId is required when creating a project')
+        }
         try {
-          const project = await projectsDb.create(title, settings)
+          const project = await projectsDb.create(title, settings, seriesId)
           set((state) => ({
             projects: [project, ...state.projects],
             isNewProjectModalOpen: false,
@@ -69,6 +75,21 @@ export const useProjectStore = create(
         } catch (error) {
           console.error('Failed to create project:', error)
           throw error
+        }
+      },
+
+      /**
+       * Load projects for a specific series
+       * @param {number} seriesId - Series ID
+       */
+      loadProjectsBySeries: async (seriesId) => {
+        set({ projectsLoading: true, projectsError: null })
+        try {
+          const projects = await projectsDb.getBySeriesId(seriesId)
+          set({ projects, projectsLoading: false })
+        } catch (error) {
+          console.error('Failed to load projects by series:', error)
+          set({ projectsError: error.message, projectsLoading: false })
         }
       },
 

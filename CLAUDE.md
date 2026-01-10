@@ -73,6 +73,7 @@ nudgeSelectedElements(direction)  // 'left', 'right', 'up', 'down'
 - Inputs: `bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-sm`
 - Focus: `focus:outline-none focus:ring-2 focus:ring-indigo-500/50`
 - **Avoid** `backdrop-blur` and transparency on backgrounds (GPU artifacts)
+- **Avoid** certain Feather icons (e.g., `FiBookOpen`) at larger sizes - can cause diagonal line artifacts. Use simpler icons like `FiLayers` or CSS-based alternatives
 
 ### Key Patterns
 - Use existing UI components from `src/components/editor/ui/`

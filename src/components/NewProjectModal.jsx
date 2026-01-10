@@ -1,24 +1,60 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { FiX, FiInfo, FiLoader } from 'react-icons/fi'
 import useProjectStore from '../stores/useProjectStore'
+import useSeriesStore from '../stores/useSeriesStore'
+import SeriesSelector from './series/SeriesSelector'
 
 /**
  * NewProjectModal
- * 
+ *
  * Modal for creating a new comic book project.
  * Options:
  * - Project title
+ * - Series selection
  * - Save location (optional, uses File System Access API)
  */
-export default function NewProjectModal() {
+export default function NewProjectModal({ defaultSeriesId = null }) {
   const navigate = useNavigate()
   const { isNewProjectModalOpen, closeNewProjectModal, createProject } = useProjectStore()
-  
+  const { series, loadSeries, refreshSeriesCounts } = useSeriesStore()
+
   const [title, setTitle] = useState('')
+  const [seriesId, setSeriesId] = useState(null)
   const [saveToFile, setSaveToFile] = useState(false)
   const [isCreating, setIsCreating] = useState(false)
   const [error, setError] = useState(null)
+
+  // Load series and set default when modal opens
+  useEffect(() => {
+    if (isNewProjectModalOpen) {
+      // Load series if not loaded
+      if (series.length === 0) {
+        loadSeries()
+      }
+
+      // Set default series
+      if (defaultSeriesId) {
+        setSeriesId(defaultSeriesId)
+      } else if (series.length > 0) {
+        // Default to Uncategorized if no default provided
+        const uncategorized = series.find(s => s.name === 'Uncategorized')
+        setSeriesId(uncategorized?.id || series[0]?.id)
+      }
+    }
+  }, [isNewProjectModalOpen, defaultSeriesId, series, loadSeries])
+
+  // Update seriesId when series list loads
+  useEffect(() => {
+    if (isNewProjectModalOpen && !seriesId && series.length > 0) {
+      if (defaultSeriesId) {
+        setSeriesId(defaultSeriesId)
+      } else {
+        const uncategorized = series.find(s => s.name === 'Uncategorized')
+        setSeriesId(uncategorized?.id || series[0]?.id)
+      }
+    }
+  }, [series, seriesId, defaultSeriesId, isNewProjectModalOpen])
 
   // Check if File System Access API is supported
   const hasFileSystemAccess = 'showSaveFilePicker' in window
@@ -26,11 +62,17 @@ export default function NewProjectModal() {
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError(null)
+
+    if (!seriesId) {
+      setError('Please select a series')
+      return
+    }
+
     setIsCreating(true)
 
     try {
-      const project = await createProject(title.trim() || 'Untitled Project')
-      
+      const project = await createProject(title.trim() || 'Untitled Project', {}, seriesId)
+
       // If user wants to save to file immediately
       if (saveToFile && hasFileSystemAccess) {
         try {
@@ -41,7 +83,7 @@ export default function NewProjectModal() {
               accept: { 'application/json': ['.cbproject'] },
             }],
           })
-          
+
           // Store the file handle for later saves
           const { projectsDb } = await import('../lib/db')
           await projectsDb.update(project.id, { fileHandle: handle })
@@ -52,13 +94,17 @@ export default function NewProjectModal() {
           }
         }
       }
-      
+
+      // Refresh series counts
+      refreshSeriesCounts()
+
       // Reset form
       setTitle('')
+      setSeriesId(null)
       setSaveToFile(false)
-      
+
       // Navigate to the new project
-      navigate(`/project/${project.id}`)
+      navigate(`/app/project/${project.id}`)
     } catch (err) {
       setError('Failed to create project. Please try again.')
       console.error(err)
@@ -70,6 +116,7 @@ export default function NewProjectModal() {
   const handleClose = () => {
     if (!isCreating) {
       setTitle('')
+      setSeriesId(null)
       setSaveToFile(false)
       setError(null)
       closeNewProjectModal()
@@ -119,6 +166,13 @@ export default function NewProjectModal() {
                 className="w-full px-4 py-2.5 bg-slate-900 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent disabled:opacity-50"
               />
             </div>
+
+            {/* Series Selection */}
+            <SeriesSelector
+              value={seriesId}
+              onChange={setSeriesId}
+              disabled={isCreating}
+            />
 
             {/* Save Location Option */}
             {hasFileSystemAccess && (

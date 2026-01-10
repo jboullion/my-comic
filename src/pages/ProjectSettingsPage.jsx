@@ -42,6 +42,9 @@ export default function ProjectSettingsPage() {
   // Local settings state for editing
   const [localSettings, setLocalSettings] = useState(null)
 
+  // Save state for feedback
+  const [saveState, setSaveState] = useState('idle') // 'idle' | 'saving' | 'saved'
+
   // Load project if not already loaded
   useEffect(() => {
     if (!currentProject && projectId) {
@@ -75,9 +78,12 @@ export default function ProjectSettingsPage() {
   }
 
   const handleSave = async () => {
-    if (localSettings) {
+    if (localSettings && saveState === 'idle') {
+      setSaveState('saving')
       await saveProjectSettings(localSettings)
-      navigate(`/app/project/${projectId}`)
+      setSaveState('saved')
+      // Reset to idle after showing "Saved!" for 1.5 seconds
+      setTimeout(() => setSaveState('idle'), 1500)
     }
   }
 
@@ -130,9 +136,16 @@ export default function ProjectSettingsPage() {
             </button>
             <button
               onClick={handleSave}
-              className="px-4 py-2 text-sm bg-slate-700 hover:bg-slate-600 text-white rounded-lg font-medium transition-colors"
+              disabled={saveState !== 'idle'}
+              className={`px-4 py-2 text-sm rounded-lg font-medium transition-colors min-w-20 ${
+                saveState === 'saved'
+                  ? 'bg-green-600 text-white'
+                  : saveState === 'saving'
+                  ? 'bg-slate-700 text-slate-400 cursor-wait'
+                  : 'bg-slate-700 hover:bg-slate-600 text-white'
+              }`}
             >
-              Save
+              {saveState === 'saved' ? 'Saved!' : saveState === 'saving' ? 'Saving...' : 'Save'}
             </button>
             
           </div>
@@ -201,7 +214,7 @@ export default function ProjectSettingsPage() {
         {/* Footer Info */}
         <div className="px-6 py-3 border-t border-slate-800 bg-slate-900/50">
           <p className="text-xs text-slate-500 text-center">
-            <strong>Save</strong> updates defaults for new elements. <strong>Apply to All Pages</strong> also updates page dimensions on existing pages.
+            <strong>Save</strong> updates defaults for new elements.
           </p>
         </div>
       </div>
