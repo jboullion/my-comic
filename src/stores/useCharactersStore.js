@@ -43,13 +43,14 @@ export const useCharactersStore = create((set) => ({
    * @param {string} name - Character name
    * @param {string} description - Character description
    * @param {number} seriesId - Series ID (required)
+   * @param {Object} loraData - Optional LoRA configuration
    */
-  createCharacter: async (name, description = '', seriesId) => {
+  createCharacter: async (name, description = '', seriesId, loraData = {}) => {
     if (!seriesId) {
       throw new Error('seriesId is required when creating a character')
     }
     try {
-      const character = await charactersDb.create(name, description, seriesId)
+      const character = await charactersDb.create(name, description, seriesId, loraData)
       set((state) => ({
         characters: [...state.characters, character].sort((a, b) =>
           a.name.localeCompare(b.name)

@@ -87,6 +87,12 @@ export const AI_MODELS = {
 // Model for reference-based generation (supports IP-Adapter style reference)
 const FLUX_GENERAL_MODEL = 'fal-ai/flux-general'
 
+// Model for LoRA-based generation (FLUX models)
+const FLUX_LORA_MODEL = 'fal-ai/flux-lora'
+
+// Model for SDXL/SD1.5 with custom checkpoint + LoRA support
+const SDXL_LORA_MODEL = 'fal-ai/lora'
+
 /**
  * Upload an image blob to Fal.ai storage
  * @param {Blob} blob - Image blob to upload
@@ -107,15 +113,24 @@ export async function uploadImageToFal(blob, filename = 'reference.png') {
 }
 
 /**
- * Generate an image using Fal.ai FLUX models
+ * Generate an image using Fal.ai models
  * @param {Object} options
  * @param {string} options.prompt - Text prompt for image generation
  * @param {string} options.style - Style preset key ('comic', 'manga', 'realistic', 'retro', 'none')
- * @param {string} options.model - Model key from AI_MODELS (e.g., 'flux-2-pro', 'flux-2', 'schnell')
+ * @param {string} options.model - Model key from AI_MODELS (e.g., 'flux-2-pro', 'flux-2', 'schnell') or 'custom' for project custom model
  * @param {string|{width: number, height: number}} options.imageSize - Image dimensions preset string or custom {width, height}
  * @param {number} options.seed - Optional seed for reproducibility
  * @param {Blob} options.referenceImage - Optional reference image blob for character consistency
  * @param {number} options.referenceStrength - Reference image influence (0-1, default 0.65)
+ * @param {boolean} options.allowMature - Allow mature/NSFW content (disables safety filters)
+ * @param {Object} options.lora - Optional LoRA configuration
+ * @param {string} options.lora.url - LoRA download URL (CivitAI or direct)
+ * @param {string} options.lora.triggerWord - Trigger word to activate the LoRA
+ * @param {number} options.lora.scale - LoRA strength (0-1, default 0.8)
+ * @param {Object} options.customModel - Optional custom base model configuration (from project settings)
+ * @param {string} options.customModel.name - Display name of the custom model
+ * @param {string} options.customModel.type - Model architecture ('flux', 'sdxl', 'sd15')
+ * @param {string} options.customModel.url - CivitAI download URL for the checkpoint
  * @param {function} options.onProgress - Progress callback for queue updates
  * @returns {Promise<{imageUrl: string, seed: number, width: number, height: number, fullPrompt: string}>}
  */
@@ -127,26 +142,56 @@ export async function generateImage({
   seed = null,
   referenceImage = null,
   referenceStrength = 0.65,
+  allowMature = false,
+  lora = null,
+  customModel = null,
   onProgress = null
 }) {
   if (!falApiKey) {
     throw new Error('Fal.ai API key not configured. Please add VITE_FAL_AI_KEY to your .env.local file.')
   }
 
+  // Check if using custom model from project settings
+  const useCustomModel = modelKey === 'custom' && customModel?.url
+
+  // Validate model selection
   const modelConfig = AI_MODELS[modelKey]
-  if (!modelConfig) {
-    throw new Error(`Invalid model: ${modelKey}. Use one of: ${Object.keys(AI_MODELS).join(', ')}`)
+  if (!useCustomModel && !modelConfig) {
+    throw new Error(`Invalid model: ${modelKey}. Use one of: ${Object.keys(AI_MODELS).join(', ')}, or 'custom'`)
   }
 
   // Apply style suffix to prompt
   const styleConfig = AI_STYLES[style] || AI_STYLES.none
-  const fullPrompt = prompt + styleConfig.suffix
 
-  // Determine which model to use
-  // If reference image provided and using FLUX 1, use flux-general which supports reference images
-  // FLUX 2 models don't support reference images yet, so we fall back to flux-general
-  const useReference = referenceImage !== null
-  const modelId = useReference ? FLUX_GENERAL_MODEL : modelConfig.id
+  // Build prompt with trigger word if LoRA is provided
+  let finalPrompt = prompt
+  if (lora?.triggerWord) {
+    finalPrompt = `${lora.triggerWord}, ${prompt}`
+  }
+  const fullPrompt = finalPrompt + styleConfig.suffix
+
+  // Determine which model/endpoint to use
+  // Priority: Custom Model > LoRA > Reference > Standard model
+  const useLora = lora?.url !== null && lora?.url !== undefined
+  const useReference = referenceImage !== null && !useLora && !useCustomModel // Reference not supported with LoRA or custom model
+
+  let modelId
+  if (useCustomModel) {
+    // Custom model from CivitAI
+    if (customModel.type === 'flux') {
+      // FLUX custom models use flux-lora endpoint
+      modelId = FLUX_LORA_MODEL
+    } else {
+      // SDXL/SD1.5/Pony use the fal-ai/lora endpoint with model_name
+      modelId = SDXL_LORA_MODEL
+    }
+  } else if (useLora) {
+    modelId = FLUX_LORA_MODEL
+  } else if (useReference) {
+    modelId = FLUX_GENERAL_MODEL
+  } else {
+    modelId = modelConfig.id
+  }
 
   const input = {
     prompt: fullPrompt,
@@ -155,11 +200,39 @@ export async function generateImage({
     output_format: 'png'
   }
 
-  // Add inference steps if the model supports it (Pro models don't use steps)
-  if (modelConfig.steps !== null && !useReference) {
+  // Add custom model URL and SDXL-specific parameters
+  if (useCustomModel && customModel.type !== 'flux') {
+    input.model_name = customModel.url
+    // SDXL/SD1.5 models need guidance_scale and scheduler
+    input.guidance_scale = 7.5
+    input.scheduler = 'DPM++ 2M Karras'
+    input.negative_prompt = 'blurry, low quality, distorted, deformed, ugly, bad anatomy'
+  }
+
+  // Add inference steps based on model type
+  if (useCustomModel && customModel.type !== 'flux') {
+    // SDXL/SD1.5 models need more steps
+    input.num_inference_steps = 30
+  } else if (useCustomModel) {
+    // FLUX custom models use standard steps
+    input.num_inference_steps = 28
+  } else if (useLora) {
+    input.num_inference_steps = 28 // Standard steps for LoRA mode
+  } else if (modelConfig?.steps !== null && !useReference) {
     input.num_inference_steps = modelConfig.steps
   } else if (useReference) {
     input.num_inference_steps = 28 // Use standard steps for reference mode
+  }
+
+  // Add safety/mature content settings
+  if (allowMature) {
+    // For Pro models, use safety_tolerance (0-6 scale, 6 = most permissive)
+    if (modelKey === 'flux-2-pro' && !useCustomModel) {
+      input.safety_tolerance = '6'
+    } else {
+      // For other models and custom models, disable the safety checker
+      input.enable_safety_checker = false
+    }
   }
 
   // Add seed if provided (for regeneration with same seed)
@@ -183,6 +256,15 @@ export async function generateImage({
       console.error('Failed to upload reference image:', uploadError)
       throw new Error('Failed to upload reference image. Generating without reference.')
     }
+  }
+
+  // If LoRA provided, add it to input
+  // LoRAs work with both standard FLUX models and custom models
+  if (useLora) {
+    input.loras = [{
+      path: lora.url,
+      scale: lora.scale ?? 0.8
+    }]
   }
 
   try {
@@ -209,9 +291,12 @@ export async function generateImage({
       height: image.height,
       seed: result.data.seed,
       prompt: prompt,           // Original prompt without style
-      fullPrompt: fullPrompt,   // Prompt with style suffix applied
-      model: modelKey,          // Model key used
-      usedReference: useReference
+      fullPrompt: fullPrompt,   // Prompt with style suffix applied (and trigger word if LoRA)
+      model: modelKey,          // Model key used (or 'custom')
+      customModelName: useCustomModel ? customModel.name : null,
+      usedReference: useReference,
+      usedLora: useLora,
+      usedCustomModel: useCustomModel
     }
   } catch (error) {
     // Re-throw with more context

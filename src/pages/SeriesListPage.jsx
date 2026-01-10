@@ -1,5 +1,5 @@
-import { useEffect } from 'react'
-import { FiPlus } from 'react-icons/fi'
+import { useEffect, useState } from 'react'
+import { FiPlus, FiUpload, FiLoader } from 'react-icons/fi'
 import { RiBookShelfFill } from 'react-icons/ri'
 import AppSidebarLayout from '../layouts/AppSidebarLayout'
 import useSeriesStore from '../stores/useSeriesStore'
@@ -8,8 +8,11 @@ import SeriesModal from '../components/series/SeriesModal'
 import EmptySeriesState from '../components/series/EmptySeriesState'
 import LoadingSpinner from '../components/ui/LoadingSpinner'
 import ErrorMessage from '../components/ui/ErrorMessage'
+import { importSeriesFromFile } from '../lib/seriesFile'
 
 export default function SeriesListPage() {
+  const [isImporting, setIsImporting] = useState(false)
+
   const {
     series,
     seriesLoading,
@@ -23,6 +26,23 @@ export default function SeriesListPage() {
   useEffect(() => {
     loadSeries()
   }, [loadSeries])
+
+  const handleImport = async () => {
+    if (isImporting) return
+    setIsImporting(true)
+    try {
+      const result = await importSeriesFromFile()
+      if (result.success) {
+        // Reload series list to show the imported series
+        await loadSeries()
+      }
+    } catch (err) {
+      console.error('Failed to import series:', err)
+      alert('Failed to import series. Please check the file and try again.')
+    } finally {
+      setIsImporting(false)
+    }
+  }
 
   return (
     <AppSidebarLayout>
@@ -41,13 +61,28 @@ export default function SeriesListPage() {
             </div>
           </div>
 
-          <button
-            onClick={() => openSeriesModal()}
-            className="flex items-center gap-2 px-4 py-2.5 bg-indigo-500 hover:bg-indigo-600 rounded-lg font-medium transition-colors"
-          >
-            <FiPlus className="w-5 h-5" />
-            New Series
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleImport}
+              disabled={isImporting}
+              className="flex items-center gap-2 px-4 py-2.5 text-slate-300 hover:text-white hover:bg-slate-800 rounded-lg font-medium transition-colors disabled:opacity-50"
+              title="Import series from .myseries file"
+            >
+              {isImporting ? (
+                <FiLoader className="w-5 h-5 animate-spin" />
+              ) : (
+                <FiUpload className="w-5 h-5" />
+              )}
+              Import
+            </button>
+            <button
+              onClick={() => openSeriesModal()}
+              className="flex items-center gap-2 px-4 py-2.5 bg-indigo-500 hover:bg-indigo-600 rounded-lg font-medium transition-colors"
+            >
+              <FiPlus className="w-5 h-5" />
+              New Series
+            </button>
+          </div>
         </div>
 
         {/* Loading State */}

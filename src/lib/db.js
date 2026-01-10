@@ -60,6 +60,16 @@ db.version(6).stores({
   seriesImages: '++id, seriesId, createdAt'
 })
 
+// Version 7: Add LoRA fields to characters (no index changes needed)
+db.version(7).stores({
+  projects: '++id, title, seriesId, createdAt, updatedAt, fileHandle',
+  images: '++id, projectId, hash, [projectId+hash], name, size, type, createdAt',
+  characters: '++id, name, seriesId, createdAt, updatedAt',
+  characterImages: '++id, characterId, type, createdAt',
+  series: '++id, name, createdAt, updatedAt',
+  seriesImages: '++id, seriesId, createdAt'
+})
+
 /**
  * Series schema:
  * {
@@ -113,6 +123,9 @@ db.version(6).stores({
  *   description: string (AI prompt description)
  *   seriesId: number (FK to series)
  *   profileImageId: number | null (FK to characterImages)
+ *   loraUrl: string | null (CivitAI or direct .safetensors URL)
+ *   loraTriggerWord: string | null (trigger word to activate LoRA)
+ *   loraScale: number (LoRA strength 0.0-1.0, default 0.8)
  *   createdAt: Date
  *   updatedAt: Date
  * }
@@ -179,6 +192,14 @@ export const DEFAULT_PROJECT_SETTINGS = {
     strokeWidth: 0,
     cornerRadius: 0,
     cornerShape: 'round'
+  },
+
+  // Custom AI model settings
+  customModel: {
+    enabled: false,
+    name: '',                // Display name (e.g., "Pony Diffusion V6")
+    type: 'sdxl',            // 'flux' | 'sdxl' | 'sd15' | 'pony'
+    url: ''                  // CivitAI download URL
   }
 }
 

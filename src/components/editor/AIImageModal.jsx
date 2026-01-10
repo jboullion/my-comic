@@ -92,9 +92,10 @@ const formatTimeAgo = (timestamp) => {
 export default function AIImageModal({ isOpen, onClose, onSave }) {
   const { projectId } = useParams()
 
-  // Get current project settings for "Match Page" option
+  // Get current project settings for "Match Page" option and custom model
   const { currentProject } = useProjectStore()
   const pageSettings = currentProject?.settings || { width: 800, height: 1200 }
+  const customModel = currentProject?.settings?.customModel
 
   // Calculate matching dimensions for "Match Page" option
   const matchPageDimensions = useMemo(() => {
@@ -111,6 +112,7 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
   const [imageSize, setImageSize] = useState('match_page')
   const [selectedCharacterIds, setSelectedCharacterIds] = useState([])
   const [referenceStrength, setReferenceStrength] = useState(0.65)
+  const [allowMature, setAllowMature] = useState(false)
 
   // Get characters from store for prompt building
   const { characters } = useCharactersStore()
@@ -129,8 +131,31 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
     return null
   }, [selectedCharacterIds, characters])
 
+  // Get LoRA from first selected character that has one configured
+  const getCharacterLora = useCallback(() => {
+    if (selectedCharacterIds.length === 0) return null
+
+    // Find first selected character with a LoRA configured
+    for (const id of selectedCharacterIds) {
+      const char = characters.find(c => c.id === id)
+      if (char?.loraUrl) {
+        return {
+          url: char.loraUrl,
+          triggerWord: char.loraTriggerWord || '',
+          scale: char.loraScale ?? 0.8,
+          characterName: char.name
+        }
+      }
+    }
+    return null
+  }, [selectedCharacterIds, characters])
+
   // Check if we have a reference image available
   const hasReferenceImage = getReferenceImage() !== null
+
+  // Check if we have a LoRA available (for UI indicator)
+  const characterLora = getCharacterLora()
+  const hasLora = characterLora !== null
 
   // Generation state
   const [isGenerating, setIsGenerating] = useState(false)
@@ -189,8 +214,11 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
       // Build prompt with character descriptions
       const fullPrompt = buildPromptWithCharacters(prompt.trim())
 
-      // Get reference image if available
+      // Get reference image if available (only used if no LoRA - LoRA takes priority)
       const referenceImage = getReferenceImage()
+
+      // Get LoRA from selected character
+      const lora = getCharacterLora()
 
       // Use custom dimensions for "match_page", otherwise use preset string
       const imageSizeParam = imageSize === 'match_page'
@@ -204,6 +232,9 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
         imageSize: imageSizeParam,
         referenceImage,
         referenceStrength,
+        allowMature,
+        lora,
+        customModel: model === 'custom' ? customModel : null,
         onProgress: setProgress
       })
 
@@ -227,7 +258,7 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
       setIsGenerating(false)
       setProgress(null)
     }
-  }, [prompt, style, model, imageSize, projectId, buildPromptWithCharacters, getReferenceImage, referenceStrength, matchPageDimensions])
+  }, [prompt, style, model, imageSize, projectId, buildPromptWithCharacters, getReferenceImage, getCharacterLora, referenceStrength, allowMature, matchPageDimensions, customModel])
 
   const handleSave = useCallback(async () => {
     if (!generatedImage?.imageUrl) return
@@ -416,8 +447,24 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
                 disabled={isGenerating}
               />
 
-              {/* Reference Strength Slider - only shown when character with profile image is selected */}
-              {hasReferenceImage && (
+              {/* LoRA Indicator - shown when character with LoRA is selected */}
+              {hasLora && (
+                <div className="bg-indigo-500/10 border border-indigo-500/30 rounded-lg px-4 py-3">
+                  <div className="flex items-center gap-2">
+                    <span className="text-indigo-400 text-sm font-medium">LoRA Active</span>
+                    <span className="text-slate-400 text-xs">
+                      {characterLora.characterName}
+                      {characterLora.triggerWord && ` - "${characterLora.triggerWord}"`}
+                    </span>
+                  </div>
+                  <p className="text-[10px] text-slate-500 mt-1">
+                    Trigger word will be auto-prepended to your prompt. Strength: {Math.round(characterLora.scale * 100)}%
+                  </p>
+                </div>
+              )}
+
+              {/* Reference Strength Slider - only shown when character with profile image is selected and no LoRA */}
+              {hasReferenceImage && !hasLora && (
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <label className="text-[10px] text-slate-500 uppercase font-bold">
@@ -475,6 +522,13 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
                     disabled={isGenerating}
                     className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 disabled:opacity-50"
                   >
+                    {/* Project's custom model (if enabled) */}
+                    {customModel?.enabled && customModel?.url && (
+                      <option value="custom">
+                        📌 {customModel.name || 'Custom Model'}
+                      </option>
+                    )}
+                    {/* Standard FLUX models */}
                     {Object.entries(AI_MODELS).map(([key, modelConfig]) => (
                       <option key={key} value={key}>
                         {modelConfig.name}
@@ -482,7 +536,10 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
                     ))}
                   </select>
                   <p className="text-[10px] text-slate-500">
-                    {AI_MODELS[model].description} ({AI_MODELS[model].cost})
+                    {model === 'custom'
+                      ? `Project's custom ${customModel?.type?.toUpperCase() || ''} model`
+                      : `${AI_MODELS[model]?.description} (${AI_MODELS[model]?.cost})`
+                    }
                   </p>
                 </div>
 
@@ -502,6 +559,34 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
                     ))}
                   </select>
                 </div>
+              </div>
+
+              {/* Mature Content Toggle */}
+              <div className="flex items-center justify-between p-3 bg-slate-800/50 border border-slate-700 rounded-lg">
+                <div className="flex-1">
+                  <label className="text-sm text-white font-medium">
+                    Allow Mature Content
+                  </label>
+                  <p className="text-[10px] text-slate-500 mt-0.5">
+                    Disables safety filters for adult content generation
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={allowMature}
+                  onClick={() => setAllowMature(!allowMature)}
+                  disabled={isGenerating}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors disabled:opacity-50 ${
+                    allowMature ? 'bg-indigo-500' : 'bg-slate-600'
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                      allowMature ? 'translate-x-6' : 'translate-x-1'
+                    }`}
+                  />
+                </button>
               </div>
 
               {/* Error Display */}
@@ -543,8 +628,10 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
                     />
                   </div>
                   <p className="text-xs text-slate-500">
-                    {generatedImage.width}x{generatedImage.height} - {AI_MODELS[generatedImage.model]?.name || generatedImage.model} - Seed: {generatedImage.seed}
+                    {generatedImage.width}x{generatedImage.height} - {generatedImage.usedCustomModel ? generatedImage.customModelName : (AI_MODELS[generatedImage.model]?.name || generatedImage.model)} - Seed: {generatedImage.seed}
                     {generatedImage.usedReference && ' - Used character reference'}
+                    {generatedImage.usedLora && ' - Used LoRA'}
+                    {generatedImage.usedCustomModel && ' - Custom model'}
                   </p>
                 </div>
               )}

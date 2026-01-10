@@ -1,5 +1,8 @@
 ## Current TODOs
 
+- Can we use Civitai models?
+- 
+- Move mature content to project settings
 
 ## Bugs
 
@@ -143,3 +146,11 @@ Could we set up the comic to "read"? Can each character have a voice? Plus a Nar
 - - Export static or "motion" comics.
 - - Use the latest AI models for image generation and story / dialog assistance. (Pro)
 
+
+## Monitization
+
+- Ads for free mode if we end up getting users?
+- Pro mode 
+- remove ads
+- Online Data storage?
+- AI Tools enabled?

@@ -11,13 +11,13 @@ import ErrorMessage from '../components/ui/ErrorMessage'
 
 export default function ProjectsPage() {
   const { user } = useAuth()
-  const { 
-    projects, 
-    projectsLoading, 
+  const {
+    projects,
+    projectsLoading,
     projectsError,
-    loadProjects, 
+    loadProjects,
     openNewProjectModal,
-    openFromFile,
+    loadFromMyComic,
     deleteProject,
   } = useProjectStore()
 
@@ -26,14 +26,14 @@ export default function ProjectsPage() {
     loadProjects()
   }, [loadProjects])
 
-  const handleOpenFromFile = async () => {
+  const handleImport = async () => {
     try {
-      const project = await openFromFile()
-      if (project) {
+      const result = await loadFromMyComic()
+      if (result?.success) {
         // Project loaded, list will refresh automatically
       }
     } catch (error) {
-      console.error('Failed to open project:', error)
+      console.error('Failed to import project:', error)
     }
   }
 
@@ -45,7 +45,7 @@ export default function ProjectsPage() {
         {/* Header */}
         <ProjectsHeader
           userName={userName}
-          onOpenFile={handleOpenFromFile}
+          onImport={handleImport}
           onCreateNew={openNewProjectModal}
         />
 
@@ -76,9 +76,9 @@ export default function ProjectsPage() {
 
         {/* Empty State */}
         {!projectsLoading && !projectsError && projects.length === 0 && (
-          <EmptyState 
-            onCreateNew={openNewProjectModal} 
-            onOpenFile={handleOpenFromFile} 
+          <EmptyState
+            onCreateNew={openNewProjectModal}
+            onImport={handleImport}
           />
         )}
       </div>

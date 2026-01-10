@@ -76,6 +76,28 @@ export const seriesDb = {
   },
 
   /**
+   * Find a series by name (case-insensitive)
+   * @param {string} name - Series name
+   * @returns {Promise<Object|undefined>}
+   */
+  async findByName(name) {
+    const allSeries = await db.series.toArray()
+    return allSeries.find(s => s.name.toLowerCase() === name.toLowerCase())
+  },
+
+  /**
+   * Find a series by name, or create it if it doesn't exist
+   * @param {string} name - Series name
+   * @param {string} description - Optional description for new series
+   * @returns {Promise<Object>} The found or created series
+   */
+  async findOrCreate(name, description = '') {
+    const existing = await this.findByName(name)
+    if (existing) return existing
+    return await this.create(name, description)
+  },
+
+  /**
    * Update a series
    * @param {number} id - Series ID
    * @param {Object} updates - Fields to update

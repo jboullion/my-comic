@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { FiArrowLeft, FiPlus, FiFolder, FiUsers, FiEdit2 } from 'react-icons/fi'
+import { FiArrowLeft, FiPlus, FiFolder, FiUsers, FiEdit2, FiDownload, FiLoader } from 'react-icons/fi'
 import { RiBookShelfFill } from 'react-icons/ri'
 import AppSidebarLayout from '../layouts/AppSidebarLayout'
 import useSeriesStore from '../stores/useSeriesStore'
@@ -14,12 +14,14 @@ import SeriesModal from '../components/series/SeriesModal'
 import LoadingSpinner from '../components/ui/LoadingSpinner'
 import ErrorMessage from '../components/ui/ErrorMessage'
 import { seriesDb } from '../lib/series'
+import { exportSeriesToFile } from '../lib/seriesFile'
 
 export default function SeriesPage() {
   const { seriesId } = useParams()
   const [series, setSeries] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [isExporting, setIsExporting] = useState(false)
 
   const { openSeriesModal } = useSeriesStore()
   const {
@@ -68,6 +70,22 @@ export default function SeriesPage() {
   }, [seriesId, loadProjectsBySeries, loadCharactersBySeries])
 
   const isContentLoading = projectsLoading || charactersLoading
+
+  const handleExport = async () => {
+    if (isExporting) return
+    setIsExporting(true)
+    try {
+      const result = await exportSeriesToFile(Number(seriesId))
+      if (result.success) {
+        // Export successful
+      }
+    } catch (err) {
+      console.error('Failed to export series:', err)
+      alert('Failed to export series. Please try again.')
+    } finally {
+      setIsExporting(false)
+    }
+  }
 
   if (loading) {
     return (
@@ -135,15 +153,30 @@ export default function SeriesPage() {
             </div>
           </div>
 
-          {series?.name !== 'Uncategorized' && (
+          <div className="flex items-center gap-2">
             <button
-              onClick={() => openSeriesModal(series)}
-              className="flex items-center gap-2 px-3 py-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
+              onClick={handleExport}
+              disabled={isExporting}
+              className="flex items-center gap-2 px-3 py-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors disabled:opacity-50"
+              title="Export series with characters"
             >
-              <FiEdit2 className="w-4 h-4" />
-              Edit
+              {isExporting ? (
+                <FiLoader className="w-4 h-4 animate-spin" />
+              ) : (
+                <FiDownload className="w-4 h-4" />
+              )}
+              Export
             </button>
-          )}
+            {series?.name !== 'Uncategorized' && (
+              <button
+                onClick={() => openSeriesModal(series)}
+                className="flex items-center gap-2 px-3 py-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
+              >
+                <FiEdit2 className="w-4 h-4" />
+                Edit
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Projects Section */}

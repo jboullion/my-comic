@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { FiArrowLeft, FiLayout, FiType, FiMessageCircle, FiZap, FiImage, FiHardDrive } from 'react-icons/fi'
+import { FiArrowLeft, FiLayout, FiType, FiMessageCircle, FiZap, FiImage, FiHardDrive, FiCpu } from 'react-icons/fi'
 import EditorLayout from '../layouts/EditorLayout'
 import useProjectStore from '../stores/useProjectStore'
 import { DEFAULT_PROJECT_SETTINGS } from '../lib/db'
@@ -10,6 +10,7 @@ import SpeechBubbleSettingsTab from '../components/settings/SpeechBubbleSettings
 import TextEffectSettingsTab from '../components/settings/TextEffectSettingsTab'
 import ImageSettingsTab from '../components/settings/ImageSettingsTab'
 import StorageSettingsTab from '../components/settings/StorageSettingsTab'
+import AIModelSettingsTab from '../components/settings/AIModelSettingsTab'
 
 const TABS = [
   { id: 'page', label: 'Page', icon: FiLayout },
@@ -17,6 +18,7 @@ const TABS = [
   { id: 'text', label: 'Text', icon: FiType },
   { id: 'speechBubble', label: 'Speech Bubbles', icon: FiMessageCircle },
   { id: 'textEffect', label: 'Text Effects', icon: FiZap },
+  { id: 'aiModel', label: 'AI Model', icon: FiCpu },
   { id: 'storage', label: 'Storage', icon: FiHardDrive }
 ]
 
@@ -60,7 +62,8 @@ export default function ProjectSettingsPage() {
         image: { ...DEFAULT_PROJECT_SETTINGS.image, ...currentProject.settings.image },
         text: { ...DEFAULT_PROJECT_SETTINGS.text, ...currentProject.settings.text },
         speechBubble: { ...DEFAULT_PROJECT_SETTINGS.speechBubble, ...currentProject.settings.speechBubble },
-        textEffect: { ...DEFAULT_PROJECT_SETTINGS.textEffect, ...currentProject.settings.textEffect }
+        textEffect: { ...DEFAULT_PROJECT_SETTINGS.textEffect, ...currentProject.settings.textEffect },
+        customModel: { ...DEFAULT_PROJECT_SETTINGS.customModel, ...currentProject.settings.customModel }
       })
     }
   }, [currentProject?.settings])
@@ -190,6 +193,12 @@ export default function ProjectSettingsPage() {
               <TextEffectSettingsTab
                 settings={localSettings.textEffect}
                 onUpdate={(updates) => updateNestedSettings('textEffect', updates)}
+              />
+            )}
+            {activeTab === 'aiModel' && (
+              <AIModelSettingsTab
+                settings={localSettings.customModel}
+                onUpdate={(updates) => updateNestedSettings('customModel', updates)}
               />
             )}
             {activeTab === 'storage' && (
