@@ -36,13 +36,6 @@ export default function ProjectCard({ project, onDelete }) {
         <FiTrash2 className="w-4 h-4" />
       </button>
 
-      {/* File Handle Indicator */}
-      {project.fileHandle && (
-        <div className="absolute top-2 left-2 z-10 p-1.5 bg-green-500/20 rounded-lg" title="Saved to file">
-          <FiCheckCircle className="w-4 h-4 text-green-400" />
-        </div>
-      )}
-
       {/* Thumbnail */}
       <div className="aspect-[4/3] bg-slate-800 flex items-center justify-center overflow-hidden">
         {project.pages?.[0]?.thumbnail ? (

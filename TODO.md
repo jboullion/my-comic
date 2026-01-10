@@ -1,19 +1,27 @@
 ## Current TODOs
 
+- Try out other model generators? Perhaps set up a Replicate account to test?
+- - Maybe we could set up a dropdown to use Fal, Replicate, OR Civitai? That might be a pita to manage
+
 - Hide AI Generation for now?
 - - Projects / Characters/ Project Settings
+- - Give a warning that custom models take longer to load and have limited flexability. If you really want full control over your image generation you will likely want to work outside of Comic Book Maker and import your images.
+- - We will update and improve our AI models and generation as the models themselves improve!
+
+- Can we add NanoBanana? Any other models worth adding to default?
 
 
 - Set up AI Dialog and Image Prompt helpers
+- - Set up "Motion" / Video generation
 
 - Improve the Asset toolbar experience
 
 - Update the home and marketing page!
 
 
+
 ## Bugs
 
-- Characters not loading on the projects page AI modal.
 - Cloud SVG is overflowing container.
 - Some actions don't seem to get caught in the undo. Is there a redo?
 - I still get the forced zoom every now and then
@@ -154,11 +162,3 @@ Could we set up the comic to "read"? Can each character have a voice? Plus a Nar
 - - Export static or "motion" comics.
 - - Use the latest AI models for image generation and story / dialog assistance. (Pro)
 
-
-## Monitization
-
-- Ads for free mode if we end up getting users?
-- Pro mode 
-- remove ads
-- Online Data storage?
-- AI Tools enabled?

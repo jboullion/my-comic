@@ -65,22 +65,14 @@ export const AI_MODELS = {
     cost: '~$0.012/MP',
     generation: 2
   },
-  // FLUX 1 Models (for compatibility and drafts)
-  'schnell': {
-    id: 'fal-ai/flux/schnell',
-    name: 'FLUX 1 Schnell',
-    description: 'Ultra-fast drafts',
+  // Fast, affordable model
+  'nano-banana': {
+    id: 'fal-ai/nano-banana-pro',
+    name: 'Nano Banana Pro',
+    description: 'Ultra-fast, budget-friendly',
     steps: 4,
-    cost: '~$0.003/MP',
-    generation: 1
-  },
-  'flux-1-dev': {
-    id: 'fal-ai/flux/dev',
-    name: 'FLUX 1 Dev',
-    description: 'FLUX 1 quality baseline',
-    steps: 28,
-    cost: '~$0.055/MP',
-    generation: 1
+    cost: '~$0.001/MP',
+    generation: 2
   }
 }
 
