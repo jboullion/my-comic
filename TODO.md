@@ -5,7 +5,9 @@
 - - We will update and improve our AI models and generation as the models themselves improve!
 
 - Set up AI Dialog and Image Prompt helpers
+- - Improve character descriptions which will be used when the AI is thinking about the current story
 - - Set up "Motion" / Video generation
+- - AI Voice?!? Can we have AI Voices read the text / script and then also save the audio? Perhaps we save 1 audio file per page and as the user turns the page it plays that audio after a small delay?
 
 - Improve the Asset toolbar experience
 
@@ -28,6 +30,12 @@
 
 ### General Concepts
 - Set up the concept of a series?
+
+### Scripts
+- Should we provide some kind of "Scripts" page?
+- - Perhaps a tool for writing comic scripts and dialog?
+- - AI Could then reference and edit this as well
+
 
 ### References
 
