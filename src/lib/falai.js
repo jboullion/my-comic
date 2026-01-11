@@ -323,3 +323,73 @@ export async function fetchImageAsBlob(imageUrl) {
 export function isFalConfigured() {
   return !!falApiKey
 }
+
+/**
+ * Enhance an image prompt using Fal.ai LLM
+ * Takes a basic user prompt and expands it into a detailed, descriptive prompt
+ * optimized for AI image generation.
+ * 
+ * @param {string} userPrompt - Basic prompt from user
+ * @param {Object} options - Enhancement options
+ * @param {string} options.style - Style preset key for context
+ * @param {Array<{name: string, description: string}>} options.characters - Selected characters for context
+ * @returns {Promise<string>} - Enhanced prompt
+ */
+export async function enhanceImagePrompt(userPrompt, options = {}) {
+  const {
+    style = 'comic',
+    characters = []
+  } = options
+
+  if (!falApiKey) {
+    throw new Error('Fal.ai API key not configured')
+  }
+
+  // Get style name for context
+  const styleName = AI_STYLES[style]?.name || 'Comic Book'
+
+  // Build character context if provided
+  const characterContext = characters.length > 0
+    ? `\nCharacters that may appear: ${characters.map(c => `${c.name} (${c.description || 'no description'})`).join(', ')}`
+    : ''
+
+  // System prompt focused on comic book image generation
+  const systemPrompt = `You are an expert at writing detailed image generation prompts for AI models like FLUX.
+Your goal is to take a basic user prompt and expand it into a detailed, descriptive prompt that will produce high-quality ${styleName} artwork.
+
+Focus on:
+- Visual details (poses, expressions, clothing, lighting, environment)
+- Composition and framing (camera angle, perspective, focus)
+- Artistic style elements (line work, colors, shading, mood)
+- Maintaining the user's original intent and subject matter
+
+Rules:
+- Keep it under 120 words
+- Do NOT include style suffixes (those are added automatically)
+- Do NOT include negative prompts
+- Write as a single descriptive paragraph
+- Be specific but don't overload with conflicting details${characterContext}
+
+Return ONLY the enhanced prompt, no explanations or formatting.`
+
+  try {
+    const result = await fal.subscribe('fal-ai/any-llm', {
+      input: {
+        model: 'meta-llama/llama-3.1-70b-instruct',
+        prompt: `User's basic prompt: "${userPrompt}"\n\nExpand this into a detailed image generation prompt:`,
+        system_prompt: systemPrompt,
+        max_tokens: 300,
+        temperature: 0.7
+      }
+    })
+
+    // Extract the output text - fal-ai/any-llm returns { output: string }
+    const enhanced = result.data?.output || result.output || ''
+    return enhanced.trim()
+  } catch (error) {
+    if (error.message?.includes('401')) {
+      throw new Error('Invalid Fal.ai API key')
+    }
+    throw new Error(`Prompt enhancement failed: ${error.message}`)
+  }
+}

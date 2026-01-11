@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect, useMemo } from 'react'
 import { useParams } from 'react-router-dom'
-import { FiX, FiZap, FiRefreshCw, FiCheck, FiAlertCircle, FiCpu, FiClock, FiTrash2 } from 'react-icons/fi'
-import { generateImage, fetchImageAsBlob, AI_MODELS, AI_STYLES, isFalConfigured } from '../../lib/falai'
+import { FiX, FiZap, FiRefreshCw, FiCheck, FiAlertCircle, FiCpu, FiClock, FiTrash2, FiLoader } from 'react-icons/fi'
+import { generateImage, fetchImageAsBlob, AI_MODELS, AI_STYLES, isFalConfigured, enhanceImagePrompt } from '../../lib/falai'
 import CharacterPicker from './CharacterPicker'
 import useCharactersStore from '../../stores/useCharactersStore'
 import useProjectStore from '../../stores/useProjectStore'
@@ -172,6 +172,11 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
   // Saving state
   const [isSaving, setIsSaving] = useState(false)
 
+  // Prompt enhancement state
+  const [isEnhancing, setIsEnhancing] = useState(false)
+  const [originalPrompt, setOriginalPrompt] = useState('')
+  const [wasEnhanced, setWasEnhanced] = useState(false)
+
   // History state
   const [history, setHistory] = useState([])
 
@@ -205,6 +210,43 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
 
     return `Characters in scene:\n${charDescriptions}\n\nScene: ${basePrompt}`
   }, [selectedCharacterIds, characters])
+
+  // Handle prompt enhancement with AI
+  const handleEnhancePrompt = useCallback(async () => {
+    if (!prompt.trim() || isEnhancing) return
+
+    setIsEnhancing(true)
+    setOriginalPrompt(prompt.trim())
+    setError(null)
+
+    try {
+      // Get selected character info for context
+      const selectedChars = characters
+        .filter(c => selectedCharacterIds.includes(c.id))
+        .map(c => ({ name: c.name, description: c.description || '' }))
+
+      const enhanced = await enhanceImagePrompt(prompt.trim(), {
+        style,
+        characters: selectedChars
+      })
+
+      setPrompt(enhanced)
+      setWasEnhanced(true)
+    } catch (err) {
+      setError(`Enhancement failed: ${err.message}`)
+    } finally {
+      setIsEnhancing(false)
+    }
+  }, [prompt, isEnhancing, style, characters, selectedCharacterIds])
+
+  // Handle reverting to original prompt
+  const handleRevertPrompt = useCallback(() => {
+    if (originalPrompt) {
+      setPrompt(originalPrompt)
+      setWasEnhanced(false)
+      setOriginalPrompt('')
+    }
+  }, [originalPrompt])
 
   const handleGenerate = useCallback(async () => {
     if (!prompt.trim()) {
@@ -311,6 +353,8 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
     setProgress(null)
     setActiveTab('generate')
     setSelectedCharacterIds([])
+    setWasEnhanced(false)
+    setOriginalPrompt('')
     onClose()
   }, [onClose])
 
@@ -435,15 +479,54 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
             <>
               {/* Prompt Input */}
               <div className="space-y-2">
-                <label className="text-[10px] text-slate-500 uppercase font-bold">Prompt</label>
-                <textarea
-                  value={prompt}
-                  onChange={(e) => setPrompt(e.target.value)}
-                  placeholder="Describe the image you want to generate..."
-                  rows={3}
-                  disabled={isGenerating}
-                  className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 resize-none disabled:opacity-50"
-                />
+                <div className="flex items-center justify-between">
+                  <label className="text-[10px] text-slate-500 uppercase font-bold">Prompt</label>
+                  {wasEnhanced && (
+                    <button
+                      onClick={handleRevertPrompt}
+                      className="flex items-center gap-1 text-[10px] text-indigo-400 hover:text-indigo-300 transition-colors"
+                    >
+                      <FiRefreshCw className="w-3 h-3" />
+                      Revert to original
+                    </button>
+                  )}
+                </div>
+                <div className="relative">
+                  <textarea
+                    value={prompt}
+                    onChange={(e) => {
+                      setPrompt(e.target.value)
+                      // Clear enhanced state if user manually edits
+                      if (wasEnhanced) {
+                        setWasEnhanced(false)
+                        setOriginalPrompt('')
+                      }
+                    }}
+                    placeholder="Describe the image you want to generate..."
+                    rows={4}
+                    disabled={isGenerating || isEnhancing}
+                    className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 pr-12 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 resize-none disabled:opacity-50"
+                  />
+                  {/* AI Enhance Button */}
+                  <button
+                    onClick={handleEnhancePrompt}
+                    disabled={!prompt.trim() || isEnhancing || isGenerating}
+                    title="Enhance prompt with AI"
+                    className="absolute top-2 right-2 p-2 bg-indigo-500 hover:bg-indigo-600 disabled:bg-slate-700 disabled:text-slate-500 text-white rounded-lg transition-colors"
+                  >
+                    {isEnhancing ? (
+                      <FiLoader className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <FiZap className="w-4 h-4" />
+                    )}
+                  </button>
+                </div>
+                {wasEnhanced && (
+                  <div className="flex items-center gap-2 text-xs text-green-400">
+                    <FiCheck className="w-3 h-3" />
+                    <span>Prompt enhanced!</span>
+                  </div>
+                )}
               </div>
 
               {/* Character Picker */}

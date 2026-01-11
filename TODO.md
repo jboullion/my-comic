@@ -9,6 +9,12 @@
 - - Set up "Motion" / Video generation
 - - AI Voice?!? Can we have AI Voices read the text / script and then also save the audio? Perhaps we save 1 audio file per page and as the user turns the page it plays that audio after a small delay?
 
+- Add more Fal Models?
+- - fal-ai/pony-v7
+- - With Pony can we use Civitai LoRAs?
+- - If so we could remove the "custom" model and instead just allow characters to have LoRAs? Flux or Pony LoRAs?
+- 
+
 - Improve the Asset toolbar experience
 
 - Update the home and marketing page!
@@ -20,6 +26,8 @@
 
 ## Bugs
 
+- Nano Banana isn't creating the correct size image
+- Have each AI Image generated save in a temporary storage so users can access it even if they don't use it. Perhaps save it and show it as a thumbnail in the history?
 - Cloud SVG is overflowing container.
 - Some actions don't seem to get caught in the undo. Is there a redo?
 - I still get the forced zoom every now and then
