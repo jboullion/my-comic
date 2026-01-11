@@ -67,14 +67,24 @@ export const AI_MODELS = {
     cost: '~$0.012/MP',
     generation: 2
   },
-  // Fast, affordable model
+  // // Pony V7 - great for stylized art
+  // 'pony-v7': {
+  //   id: 'fal-ai/pony-v7',
+  //   name: 'Pony V7',
+  //   description: 'Stylized art, anime-friendly',
+  //   steps: 40,
+  //   cost: '~$0.02/MP',
+  //   generation: 1
+  // },
+  // Fast, affordable model (uses aspect_ratio instead of image_size)
   'nano-banana': {
     id: 'fal-ai/nano-banana-pro',
     name: 'Nano Banana Pro',
     description: 'Ultra-fast, budget-friendly',
-    steps: 4,
+    steps: null, // Doesn't use steps parameter
     cost: '~$0.001/MP',
-    generation: 2
+    generation: 2,
+    usesAspectRatio: true // Uses aspect_ratio instead of image_size
   }
 }
 
@@ -189,9 +199,44 @@ export async function generateImage({
 
   const input = {
     prompt: fullPrompt,
-    image_size: imageSize,
     num_images: 1,
     output_format: 'png'
+  }
+
+  // Handle image size - Nano Banana uses aspect_ratio, others use image_size
+  if (modelConfig?.usesAspectRatio) {
+    // Convert image_size to aspect_ratio for Nano Banana
+    // Supported: 21:9, 16:9, 3:2, 4:3, 5:4, 1:1, 4:5, 3:4, 2:3, 9:16
+    let aspectRatio = '1:1' // Default
+    if (typeof imageSize === 'object') {
+      // Calculate closest aspect ratio from width/height
+      const ratio = imageSize.width / imageSize.height
+      if (ratio > 2) aspectRatio = '21:9'
+      else if (ratio > 1.6) aspectRatio = '16:9'
+      else if (ratio > 1.4) aspectRatio = '3:2'
+      else if (ratio > 1.2) aspectRatio = '4:3'
+      else if (ratio > 1.05) aspectRatio = '5:4'
+      else if (ratio > 0.95) aspectRatio = '1:1'
+      else if (ratio > 0.75) aspectRatio = '4:5'
+      else if (ratio > 0.65) aspectRatio = '3:4'
+      else if (ratio > 0.55) aspectRatio = '2:3'
+      else aspectRatio = '9:16'
+    } else if (typeof imageSize === 'string') {
+      // Map preset strings to aspect ratios
+      const presetMap = {
+        'square_hd': '1:1',
+        'square': '1:1',
+        'portrait_4_3': '3:4',
+        'portrait_16_9': '9:16',
+        'landscape_4_3': '4:3',
+        'landscape_16_9': '16:9'
+      }
+      aspectRatio = presetMap[imageSize] || '1:1'
+    }
+    input.aspect_ratio = aspectRatio
+  } else {
+    // Standard image_size for FLUX and Pony models
+    input.image_size = imageSize
   }
 
   // Add custom model URL and SDXL-specific parameters
@@ -203,8 +248,10 @@ export async function generateImage({
     input.negative_prompt = 'blurry, low quality, distorted, deformed, ugly, bad anatomy'
   }
 
-  // Add inference steps based on model type
-  if (useCustomModel && customModel.type !== 'flux') {
+  // Add inference steps based on model type (skip for models that don't use it)
+  if (modelConfig?.usesAspectRatio) {
+    // Nano Banana doesn't use inference steps
+  } else if (useCustomModel && customModel.type !== 'flux') {
     // SDXL/SD1.5 models need more steps
     input.num_inference_steps = 30
   } else if (useCustomModel) {

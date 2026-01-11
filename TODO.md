@@ -13,6 +13,7 @@
 - - fal-ai/pony-v7
 - - With Pony can we use Civitai LoRAs?
 - - If so we could remove the "custom" model and instead just allow characters to have LoRAs? Flux or Pony LoRAs?
+- - Improve the AI Prompt to have it less story telling and more about improving the image quality of model generation. using terms like "masterpiece, high quality, etc"
 - 
 
 - Improve the Asset toolbar experience
