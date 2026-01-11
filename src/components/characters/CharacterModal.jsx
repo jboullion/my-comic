@@ -18,7 +18,7 @@ export default function CharacterModal({ defaultSeriesId = null }) {
     updateCharacter,
     addCharacterImage
   } = useCharactersStore()
-  const { series, loadSeries, refreshSeriesCounts, getSeriesCustomModel } = useSeriesStore()
+  const { series, seriesLoading, loadSeries, refreshSeriesCounts, getSeriesCustomModel } = useSeriesStore()
 
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
@@ -41,14 +41,16 @@ export default function CharacterModal({ defaultSeriesId = null }) {
   const seriesCustomModel = effectiveSeriesId ? getSeriesCustomModel(effectiveSeriesId) : null
   const customModelEnabled = seriesCustomModel?.enabled
 
+  // Load series when modal opens (only if not already loaded/loading)
+  useEffect(() => {
+    if (isCharacterModalOpen && series.length === 0 && !seriesLoading) {
+      loadSeries()
+    }
+  }, [isCharacterModalOpen, series.length, seriesLoading, loadSeries])
+
   // Reset form when modal opens/closes or editing character changes
   useEffect(() => {
     if (isCharacterModalOpen) {
-      // Load series if not loaded
-      if (series.length === 0) {
-        loadSeries()
-      }
-
       if (editingCharacter) {
         setName(editingCharacter.name || '')
         setDescription(editingCharacter.description || '')
@@ -88,7 +90,7 @@ export default function CharacterModal({ defaultSeriesId = null }) {
       }
       setError(null)
     }
-  }, [isCharacterModalOpen, editingCharacter, defaultSeriesId, series, loadSeries])
+  }, [isCharacterModalOpen, editingCharacter, defaultSeriesId, series])
 
   // Update seriesId when series list loads (for new characters)
   useEffect(() => {

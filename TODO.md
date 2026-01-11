@@ -18,6 +18,8 @@
 
 - Update the home and marketing page!
 
+- Update the AI features to only work with a paid account.
+
 
 
 ## Bugs

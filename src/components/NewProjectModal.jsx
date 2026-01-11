@@ -17,7 +17,7 @@ import SeriesSelector from './series/SeriesSelector'
 export default function NewProjectModal({ defaultSeriesId = null }) {
   const navigate = useNavigate()
   const { isNewProjectModalOpen, closeNewProjectModal, createProject } = useProjectStore()
-  const { series, loadSeries, refreshSeriesCounts } = useSeriesStore()
+  const { series, seriesLoading, loadSeries, refreshSeriesCounts } = useSeriesStore()
 
   const [title, setTitle] = useState('')
   const [seriesId, setSeriesId] = useState(null)
@@ -25,36 +25,25 @@ export default function NewProjectModal({ defaultSeriesId = null }) {
   const [isCreating, setIsCreating] = useState(false)
   const [error, setError] = useState(null)
 
-  // Load series and set default when modal opens
+  // Load series when modal opens (only if not already loaded/loading)
+  useEffect(() => {
+    if (isNewProjectModalOpen && series.length === 0 && !seriesLoading) {
+      loadSeries()
+    }
+  }, [isNewProjectModalOpen, series.length, seriesLoading, loadSeries])
+
+  // Set default series when modal opens or series loads
   useEffect(() => {
     if (isNewProjectModalOpen) {
-      // Load series if not loaded
-      if (series.length === 0) {
-        loadSeries()
-      }
-
-      // Set default series
       if (defaultSeriesId) {
         setSeriesId(defaultSeriesId)
-      } else if (series.length > 0) {
+      } else if (series.length > 0 && !seriesId) {
         // Default to Uncategorized if no default provided
         const uncategorized = series.find(s => s.name === 'Uncategorized')
         setSeriesId(uncategorized?.id || series[0]?.id)
       }
     }
-  }, [isNewProjectModalOpen, defaultSeriesId, series, loadSeries])
-
-  // Update seriesId when series list loads
-  useEffect(() => {
-    if (isNewProjectModalOpen && !seriesId && series.length > 0) {
-      if (defaultSeriesId) {
-        setSeriesId(defaultSeriesId)
-      } else {
-        const uncategorized = series.find(s => s.name === 'Uncategorized')
-        setSeriesId(uncategorized?.id || series[0]?.id)
-      }
-    }
-  }, [series, seriesId, defaultSeriesId, isNewProjectModalOpen])
+  }, [isNewProjectModalOpen, defaultSeriesId, series, seriesId])
 
   // Check if File System Access API is supported
   const hasFileSystemAccess = 'showSaveFilePicker' in window

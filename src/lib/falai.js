@@ -11,6 +11,8 @@ if (!falApiKey) {
 }
 
 // Configure the client (only if key exists)
+// Note: Browser console will show a warning about credentials being exposed.
+// This is expected for this PWA - users provide their own API keys client-side.
 if (falApiKey) {
   fal.config({
     credentials: falApiKey
