@@ -1,4 +1,6 @@
 import { FiInfo } from 'react-icons/fi'
+import { isFalConfigured } from '../../lib/falai'
+import { isReplicateConfigured } from '../../lib/replicate'
 
 /**
  * Model architecture options for the custom model dropdown
@@ -16,11 +18,16 @@ const MODEL_TYPES = [
 export default function AIModelSettingsTab({ settings, onUpdate }) {
   const customModel = settings || {
     enabled: false,
+    provider: 'falai',
     name: '',
     type: 'sdxl',
     url: '',
-    allowMature: false
+    allowMature: false,
+    replicateModel: ''
   }
+
+  const falaiConfigured = isFalConfigured()
+  const replicateConfigured = isReplicateConfigured()
 
   const handleChange = (field, value) => {
     onUpdate({ ...customModel, [field]: value })
@@ -29,6 +36,55 @@ export default function AIModelSettingsTab({ settings, onUpdate }) {
   return (
     <div className="space-y-6">
       <div>
+        <h3 className="text-sm font-semibold text-white mb-1">AI Provider</h3>
+        <p className="text-xs text-slate-400">
+          Choose which AI service to use for image generation in this series.
+        </p>
+      </div>
+
+      {/* Provider Selection */}
+      <div className="space-y-1.5">
+        <label className="text-[10px] text-slate-500 uppercase font-bold">
+          Provider
+        </label>
+        <select
+          value={customModel.provider || 'falai'}
+          onChange={(e) => handleChange('provider', e.target.value)}
+          className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
+        >
+          <option value="falai">
+            Fal.ai {!falaiConfigured && '(API Key Not Set)'}
+          </option>
+          <option value="replicate">
+            Replicate {!replicateConfigured && '(API Key Not Set)'}
+          </option>
+        </select>
+        <p className="text-[10px] text-slate-500">
+          {customModel.provider === 'falai' && 'Using Fal.ai for FLUX and custom models'}
+          {customModel.provider === 'replicate' && 'Using Replicate for FLUX models and fine-tunes'}
+        </p>
+      </div>
+
+      {/* Show configuration warning if key missing */}
+      {customModel.provider === 'replicate' && !replicateConfigured && (
+        <div className="bg-amber-900/30 border border-amber-700/50 rounded-lg px-4 py-3">
+          <p className="text-xs text-amber-200">
+            <span className="font-semibold">API Key Required:</span> Add <code className="bg-amber-950/50 px-1 py-0.5 rounded">VITE_REPLICATE_API_KEY</code> to your <code className="bg-amber-950/50 px-1 py-0.5 rounded">.env.local</code> file.
+            Get your key at <a href="https://replicate.com" target="_blank" rel="noopener noreferrer" className="text-indigo-400 hover:underline">replicate.com</a>
+          </p>
+        </div>
+      )}
+
+      {customModel.provider === 'falai' && !falaiConfigured && (
+        <div className="bg-amber-900/30 border border-amber-700/50 rounded-lg px-4 py-3">
+          <p className="text-xs text-amber-200">
+            <span className="font-semibold">API Key Required:</span> Add <code className="bg-amber-950/50 px-1 py-0.5 rounded">VITE_FAL_AI_KEY</code> to your <code className="bg-amber-950/50 px-1 py-0.5 rounded">.env.local</code> file.
+            Get your key at <a href="https://fal.ai" target="_blank" rel="noopener noreferrer" className="text-indigo-400 hover:underline">fal.ai</a>
+          </p>
+        </div>
+      )}
+
+      <div className="pt-4 border-t border-slate-700">
         <h3 className="text-sm font-semibold text-white mb-1">Custom AI Model</h3>
         <p className="text-xs text-slate-400">
           Configure a custom base model from CivitAI for this project.
@@ -104,39 +160,85 @@ export default function AIModelSettingsTab({ settings, onUpdate }) {
             </p>
           </div>
 
-          {/* Model URL */}
-          <div className="space-y-1.5">
-            <label className="text-[10px] text-slate-500 uppercase font-bold">
-              CivitAI Model URL
-            </label>
-            <input
-              type="text"
-              value={customModel.url}
-              onChange={(e) => handleChange('url', e.target.value)}
-              placeholder="https://civitai.com/api/download/models/..."
-              className="w-full px-4 py-2.5 bg-slate-900 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm"
-            />
-          </div>
+          {/* Provider-Specific Fields */}
+          {customModel.provider === 'falai' && (
+            <>
+              {/* Model URL for Fal.ai */}
+              <div className="space-y-1.5">
+                <label className="text-[10px] text-slate-500 uppercase font-bold">
+                  CivitAI Model URL
+                </label>
+                <input
+                  type="text"
+                  value={customModel.url}
+                  onChange={(e) => handleChange('url', e.target.value)}
+                  placeholder="https://civitai.com/api/download/models/..."
+                  className="w-full px-4 py-2.5 bg-slate-900 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm"
+                />
+              </div>
 
-          {/* Info Box */}
-          <div className="bg-slate-900/50 rounded-lg px-4 py-3 text-sm text-slate-400">
-            <div className="flex items-start gap-2">
-              <FiInfo className="w-4 h-4 mt-0.5 flex-shrink-0 text-indigo-400" />
-              <div className="space-y-2">
-                <p>
-                  To get the model URL from CivitAI:
-                </p>
-                <ol className="list-decimal list-inside text-xs text-slate-500 space-y-1">
-                  <li>Go to the model page on CivitAI</li>
-                  <li>Click the Download button</li>
-                  <li>Right-click and copy the download link</li>
-                </ol>
-                <p className="text-xs text-slate-500 mt-2">
-                  Make sure your character LoRAs are compatible with this base model architecture.
+              {/* Info Box for Fal.ai */}
+              <div className="bg-slate-900/50 rounded-lg px-4 py-3 text-sm text-slate-400">
+                <div className="flex items-start gap-2">
+                  <FiInfo className="w-4 h-4 mt-0.5 flex-shrink-0 text-indigo-400" />
+                  <div className="space-y-2">
+                    <p>
+                      To get the model URL from CivitAI:
+                    </p>
+                    <ol className="list-decimal list-inside text-xs text-slate-500 space-y-1">
+                      <li>Go to the model page on CivitAI</li>
+                      <li>Click the Download button</li>
+                      <li>Right-click and copy the download link</li>
+                    </ol>
+                    <p className="text-xs text-slate-500 mt-2">
+                      Make sure your character LoRAs are compatible with this base model architecture.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
+
+          {customModel.provider === 'replicate' && (
+            <>
+              {/* Model ID for Replicate */}
+              <div className="space-y-1.5">
+                <label className="text-[10px] text-slate-500 uppercase font-bold">
+                  Replicate Model ID
+                </label>
+                <input
+                  type="text"
+                  value={customModel.replicateModel || ''}
+                  onChange={(e) => handleChange('replicateModel', e.target.value)}
+                  placeholder="username/model-name:version"
+                  className="w-full px-4 py-2.5 bg-slate-900 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm"
+                />
+                <p className="text-[10px] text-slate-500">
+                  Format: owner/model:version (e.g., username/my-flux-model:abc123)
                 </p>
               </div>
-            </div>
-          </div>
+
+              {/* Info Box for Replicate */}
+              <div className="bg-slate-900/50 rounded-lg px-4 py-3 text-sm text-slate-400">
+                <div className="flex items-start gap-2">
+                  <FiInfo className="w-4 h-4 mt-0.5 flex-shrink-0 text-indigo-400" />
+                  <div className="space-y-2">
+                    <p>
+                      To use a fine-tuned model from Replicate:
+                    </p>
+                    <ol className="list-decimal list-inside text-xs text-slate-500 space-y-1">
+                      <li>Train or find a fine-tuned model on Replicate</li>
+                      <li>Copy the model ID (owner/model:version)</li>
+                      <li>Paste it in the field above</li>
+                    </ol>
+                    <p className="text-xs text-slate-500 mt-2">
+                      Leave empty to use standard Replicate FLUX models.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
         </div>
       )}
 

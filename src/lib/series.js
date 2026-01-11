@@ -264,6 +264,16 @@ export const seriesDb = {
       series.projectCount = await db.projects.where('seriesId').equals(series.id).count()
       series.characterCount = await db.characters.where('seriesId').equals(series.id).count()
       series.coverImage = await db.seriesImages.where('seriesId').equals(series.id).first()
+
+      // Migration: Add default provider to customModel if missing
+      if (series.customModel && !series.customModel.provider) {
+        series.customModel = {
+          ...series.customModel,
+          provider: 'falai' // Default to Fal.ai for backward compatibility
+        }
+        // Update in database
+        await db.series.update(series.id, { customModel: series.customModel })
+      }
     }
 
     return seriesList
@@ -282,6 +292,16 @@ export const seriesDb = {
     series.characterCount = await db.characters.where('seriesId').equals(series.id).count()
     series.coverImage = await db.seriesImages.where('seriesId').equals(series.id).first()
 
+    // Migration: Add default provider to customModel if missing
+    if (series.customModel && !series.customModel.provider) {
+      series.customModel = {
+        ...series.customModel,
+        provider: 'falai' // Default to Fal.ai for backward compatibility
+      }
+      // Update in database
+      await db.series.update(id, { customModel: series.customModel })
+    }
+
     return series
   },
 
@@ -294,15 +314,23 @@ export const seriesDb = {
    * @param {number} seriesId - Series ID
    * @param {Object} customModel - Custom model settings
    * @param {boolean} customModel.enabled - Whether custom model is enabled
+   * @param {string} customModel.provider - AI provider ('falai', 'replicate')
    * @param {string} customModel.name - Display name
    * @param {string} customModel.type - Model architecture ('flux', 'sdxl', 'sd15')
    * @param {string} customModel.url - CivitAI download URL
    * @param {boolean} customModel.allowMature - Whether to allow mature content
+   * @param {string} customModel.replicateModel - Replicate model ID (e.g., 'username/model:version')
    * @returns {Promise<Object>} Updated series
    */
   async updateCustomModel(seriesId, customModel) {
+    // Ensure provider field exists (default to 'falai' if not set)
+    const modelWithProvider = {
+      ...customModel,
+      provider: customModel.provider || 'falai'
+    }
+
     await db.series.update(seriesId, {
-      customModel,
+      customModel: modelWithProvider,
       updatedAt: new Date()
     })
     return await db.series.get(seriesId)

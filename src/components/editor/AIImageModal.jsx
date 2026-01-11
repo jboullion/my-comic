@@ -1,7 +1,8 @@
 import { useState, useCallback, useEffect, useMemo } from 'react'
 import { useParams } from 'react-router-dom'
 import { FiX, FiZap, FiRefreshCw, FiCheck, FiAlertCircle, FiCpu, FiClock, FiTrash2 } from 'react-icons/fi'
-import { generateImage, fetchImageAsBlob, AI_MODELS, AI_STYLES, isFalConfigured } from '../../lib/falai'
+import * as falai from '../../lib/falai'
+import * as replicate from '../../lib/replicate'
 import CharacterPicker from './CharacterPicker'
 import useCharactersStore from '../../stores/useCharactersStore'
 import useProjectStore from '../../stores/useProjectStore'
@@ -100,6 +101,10 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
   // Get custom model from series (not project)
   const { getSeriesCustomModel } = useSeriesStore()
   const customModel = currentProject?.seriesId ? getSeriesCustomModel(currentProject.seriesId) : null
+
+  // Determine which provider to use
+  const provider = customModel?.provider || 'falai'
+  const activeProvider = provider === 'replicate' ? replicate : falai
 
   // Calculate matching dimensions for "Match Page" option
   const matchPageDimensions = useMemo(() => {
@@ -231,7 +236,7 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
         ? matchPageDimensions
         : imageSize
 
-      const result = await generateImage({
+      const result = await activeProvider.generateImage({
         prompt: fullPrompt,
         style,
         model,
@@ -264,7 +269,7 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
       setIsGenerating(false)
       setProgress(null)
     }
-  }, [prompt, style, model, imageSize, projectId, buildPromptWithCharacters, getReferenceImage, getCharacterLora, referenceStrength, allowMature, matchPageDimensions, customModel])
+  }, [prompt, style, model, imageSize, projectId, buildPromptWithCharacters, getReferenceImage, getCharacterLora, referenceStrength, allowMature, matchPageDimensions, customModel, activeProvider])
 
   const handleSave = useCallback(async () => {
     if (!generatedImage?.imageUrl) return
@@ -274,7 +279,7 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
 
     try {
       // Fetch image as blob
-      const blob = await fetchImageAsBlob(generatedImage.imageUrl)
+      const blob = await activeProvider.fetchImageAsBlob(generatedImage.imageUrl)
 
       // Create a File object (addImage expects a File)
       const fileName = `ai-generated-${Date.now()}.png`
@@ -302,7 +307,7 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
     } finally {
       setIsSaving(false)
     }
-  }, [generatedImage, prompt, onSave, onClose])
+  }, [generatedImage, prompt, onSave, onClose, activeProvider])
 
   const handleClose = useCallback(() => {
     setPrompt('')
@@ -342,7 +347,10 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
 
   if (!isOpen) return null
 
-  const isConfigured = isFalConfigured()
+  // Check if active provider is configured
+  const isConfigured = provider === 'replicate'
+    ? replicate.isReplicateConfigured()
+    : falai.isFalConfigured()
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
@@ -356,9 +364,12 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
       <div className="relative bg-slate-900 rounded-xl border border-slate-700 shadow-2xl w-full max-w-2xl mx-4 max-h-[90vh] flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-700">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             <FiCpu className="w-5 h-5 text-indigo-400" />
             <h2 className="text-lg font-semibold text-white">AI Image Generator</h2>
+            <span className="text-xs px-2 py-1 bg-slate-800 border border-slate-700 rounded text-slate-400">
+              {provider === 'replicate' ? 'Replicate' : 'Fal.ai'}
+            </span>
           </div>
           <button
             onClick={handleClose}
@@ -504,7 +515,7 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
                   disabled={isGenerating}
                   className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 disabled:opacity-50"
                 >
-                  {Object.entries(AI_STYLES).map(([key, styleConfig]) => (
+                  {Object.entries(activeProvider.AI_STYLES).map(([key, styleConfig]) => (
                     <option key={key} value={key}>
                       {styleConfig.name}
                     </option>
@@ -512,7 +523,7 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
                 </select>
                 {style !== 'none' && (
                   <p className="text-[10px] text-slate-500 italic">
-                    Adds: "{AI_STYLES[style].suffix.slice(2)}"
+                    Adds: "{activeProvider.AI_STYLES[style].suffix.slice(2)}"
                   </p>
                 )}
               </div>
@@ -535,7 +546,7 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
                       </option>
                     )}
                     {/* Standard FLUX models */}
-                    {Object.entries(AI_MODELS).map(([key, modelConfig]) => (
+                    {Object.entries(activeProvider.AI_MODELS).map(([key, modelConfig]) => (
                       <option key={key} value={key}>
                         {modelConfig.name}
                       </option>
@@ -544,7 +555,7 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
                   <p className="text-[10px] text-slate-500">
                     {model === 'custom'
                       ? `Series custom ${customModel?.type?.toUpperCase() || ''} model`
-                      : `${AI_MODELS[model]?.description} (${AI_MODELS[model]?.cost})`
+                      : `${activeProvider.AI_MODELS[model]?.description} (${activeProvider.AI_MODELS[model]?.cost})`
                     }
                   </p>
                 </div>
@@ -591,13 +602,31 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
                 <div className="bg-slate-800 rounded-lg p-4">
                   <div className="flex items-center gap-3">
                     <div className="w-5 h-5 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
-                    <div>
+                    <div className="flex-1">
                       <p className="text-sm text-white">
-                        {progress?.status === 'UPLOADING' && 'Uploading reference image...'}
-                        {progress?.status === 'IN_QUEUE' && `In queue${progress.position ? ` (position: ${progress.position})` : '...'}`}
-                        {progress?.status === 'IN_PROGRESS' && 'Generating image...'}
-                        {(!progress || progress?.status === 'PENDING') && 'Starting...'}
+                        {provider === 'replicate' ? (
+                          // Replicate progress (simpler - no queue position or logs)
+                          <>
+                            {progress?.status === 'starting' && 'Starting generation...'}
+                            {progress?.status === 'processing' && 'Generating image...'}
+                            {!progress && 'Preparing...'}
+                          </>
+                        ) : (
+                          // Fal.ai progress (with queue position and logs)
+                          <>
+                            {progress?.status === 'UPLOADING' && 'Uploading reference image...'}
+                            {progress?.status === 'IN_QUEUE' && `In queue${progress.position ? ` (position: ${progress.position})` : '...'}`}
+                            {progress?.status === 'IN_PROGRESS' && 'Generating image...'}
+                            {(!progress || progress?.status === 'PENDING') && 'Starting...'}
+                          </>
+                        )}
                       </p>
+                      {/* Only show queue position for Fal.ai */}
+                      {provider === 'falai' && progress?.position > 0 && (
+                        <p className="text-xs text-slate-500 mt-1">
+                          Queue position: {progress.position}
+                        </p>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -615,7 +644,7 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
                     />
                   </div>
                   <p className="text-xs text-slate-500">
-                    {generatedImage.width}x{generatedImage.height} - {generatedImage.usedCustomModel ? generatedImage.customModelName : (AI_MODELS[generatedImage.model]?.name || generatedImage.model)} - Seed: {generatedImage.seed}
+                    {generatedImage.width}x{generatedImage.height} - {generatedImage.usedCustomModel ? generatedImage.customModelName : (activeProvider.AI_MODELS[generatedImage.model]?.name || generatedImage.model)} - Seed: {generatedImage.seed}
                     {generatedImage.usedReference && ' - Used character reference'}
                     {generatedImage.usedLora && ' - Used LoRA'}
                     {generatedImage.usedCustomModel && ' - Custom model'}
@@ -657,10 +686,10 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
                           </p>
                           <div className="flex items-center gap-2 mt-2 flex-wrap">
                             <span className="px-2 py-0.5 text-[10px] bg-indigo-500/20 text-indigo-300 rounded">
-                              {AI_STYLES[entry.style]?.name || entry.style}
+                              {activeProvider.AI_STYLES[entry.style]?.name || entry.style}
                             </span>
                             <span className="px-2 py-0.5 text-[10px] bg-slate-700 text-slate-300 rounded">
-                              {AI_MODELS[entry.model]?.name || entry.mode || 'Unknown'}
+                              {activeProvider.AI_MODELS[entry.model]?.name || entry.mode || 'Unknown'}
                             </span>
                             <span className="text-[10px] text-slate-500">
                               {formatTimeAgo(entry.timestamp)}

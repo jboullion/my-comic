@@ -20,10 +20,14 @@
 
 - Update the AI features to only work with a paid account.
 
+- Set up "styles" to have a "series" wide default. Also set up custom "styles" and probably just reusable custom prompts generally which can be used in a series.
+  
 
 
 ## Bugs
 
+- EVERYTHING IS IN JS!! Should be in Typescript!
+- 
 - Cloud SVG is overflowing container.
 - Some actions don't seem to get caught in the undo. Is there a redo?
 - I still get the forced zoom every now and then
