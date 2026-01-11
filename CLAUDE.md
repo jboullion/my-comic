@@ -9,12 +9,14 @@ A Progressive Web App (PWA) for creating digital comic books. Client-centric arc
 ## Tech Stack
 
 - **React 19** with functional components and hooks
+- **TypeScript 5.9** - configured for incremental adoption (new files only)
 - **Vite 7** for dev/build (`npm run dev` at http://localhost:5173)
 - **Tailwind CSS 4** via `@tailwindcss/vite` plugin
 - **Zustand** + **Zundo** for state management with undo/redo
 - **html-to-image** for canvas capture/export
 - **Dexie.js** for IndexedDB storage
 - **Google Fonts** for text elements
+- **Fal.ai** for AI image generation (FLUX models)
 
 ## Commands
 
@@ -59,7 +61,90 @@ nudgeSelectedElements(direction)  // 'left', 'right', 'up', 'down'
 - `src/components/editor/properties/sections/` - Modular sections per element type
 - `src/components/editor/ui/` - Reusable controls (NumberInput, FontSelect, etc.)
 
+### AI Image Generation
+AI-powered image generation using Fal.ai with FLUX models.
+
+**Setup:**
+```bash
+# Add to .env.local (copy from .env.example)
+VITE_FAL_AI_KEY=your-key-from-fal.ai
+```
+Get your key from: https://fal.ai/dashboard/keys
+
+**Features:**
+- Text-to-image generation with FLUX 2 Pro, FLUX 2 Dev, or Nano Banana Pro
+- Character-consistent generation via reference images and LoRA models
+- Style presets (Comic Book, Manga, Realistic, Retro Vintage)
+- Custom base models from CivitAI (FLUX, SDXL, SD 1.5)
+- Generation history (last 20 prompts per project)
+- Queue status tracking with progress updates
+
+**Key Files:**
+- `src/lib/falai.js` - Core Fal.ai integration (~325 lines)
+- `src/components/editor/AIImageModal.jsx` - Main UI modal (~750 lines)
+- `src/components/settings/AIModelSettingsTab.jsx` - Custom model configuration
+- `src/components/editor/CharacterPicker.jsx` - Multi-select character UI
+
+**Usage Patterns:**
+```javascript
+// Generate image with character reference
+import { generateImage } from '@/lib/falai'
+
+const result = await generateImage({
+  prompt: "A superhero flying",
+  style: 'comic',              // 'comic' | 'manga' | 'realistic' | 'retro' | 'none'
+  model: 'flux-2-pro',         // 'flux-2-pro' | 'flux-2' | 'nano-banana' | 'custom'
+  imageSize: 'match_page',     // Auto-calculate from page dimensions
+  referenceImageBlob: blob,    // Character reference image
+  referenceStrength: 0.75,     // 0-1, how closely to match reference
+  loraUrl: 'civitai.com/...',  // Character LoRA URL
+  loraTriggerWord: 'hero1',    // LoRA activation word
+  loraScale: 0.8               // LoRA strength
+})
+
+// Returns: { imageUrl, width, height, seed, prompt, fullPrompt, model, ... }
+```
+
+**Character Integration:**
+Characters can have AI-specific properties:
+- `profileImage.blob` - Reference image for consistency
+- `loraUrl` - CivitAI LoRA download URL
+- `loraTriggerWord` - Activation word (auto-prepended to prompt)
+- `loraScale` - LoRA strength (0-1, default 0.8)
+
+**Series-Level Custom Models:**
+Configure in `AIModelSettingsTab`:
+```javascript
+{
+  enabled: true,
+  name: "My Custom Style",
+  type: 'flux',              // 'flux' | 'sdxl' | 'sd15'
+  url: 'https://civitai.com/models/...',
+  allowMature: false
+}
+```
+
 ## Coding Conventions
+
+### TypeScript
+- **New files:** Use `.ts` for modules, `.tsx` for React components
+- **Existing files:** Remain as `.js`/`.jsx` - no conversion required
+- **Strict mode:** Enabled for all TypeScript files
+- **Imports:** Mix JS and TS freely - Vite handles both
+- **Type definitions:** Already installed for React, React DOM
+
+Example component:
+```typescript
+// src/components/NewComponent.tsx
+interface Props {
+  title: string;
+  count: number;
+}
+
+export default function NewComponent({ title, count }: Props) {
+  return <div>{title}: {count}</div>;
+}
+```
 
 ### Components
 - Single component per file, default export
@@ -94,6 +179,11 @@ nudgeSelectedElements(direction)  // 'left', 'right', 'up', 'down'
 | `src/components/editor/properties/` | Property panels |
 | `src/components/settings/` | Settings tabs (Page, Images, Text, Speech Bubbles, Text Effects) |
 | `src/pages/ProjectSettingsPage.jsx` | Project defaults configuration |
+| `src/lib/falai.js` | Fal.ai integration and AI generation |
+| `src/components/editor/AIImageModal.jsx` | AI image generation UI |
+| `src/components/settings/AIModelSettingsTab.jsx` | Custom AI model configuration |
+| `src/stores/useSeriesStore.js` | Series and custom model state |
+| `src/stores/useCharactersStore.js` | Character and LoRA management |
 
 ## Current Features
 
@@ -115,6 +205,7 @@ nudgeSelectedElements(direction)  // 'left', 'right', 'up', 'down'
 - Per-page settings (dimensions, background)
 - Export all pages as ZIP (WebP, PNG, JPEG)
 - Element grouping
+- AI image generation with Fal.ai (FLUX models, character references, LoRA, custom models)
 
 ## Custom Commands
 
