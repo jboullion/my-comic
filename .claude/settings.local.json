@@ -9,7 +9,9 @@
       "Bash(npm run lint)",
       "Bash(npm run lint:*)",
       "Bash(xargs cat:*)",
-      "Bash(ls -la \"e:\\\\2026_Experiments\\\\my-comic\\\\src\\\\lib\"\" 2>/dev/null || echo \"Directory check \")"
+      "Bash(ls -la \"e:\\\\2026_Experiments\\\\my-comic\\\\src\\\\lib\"\" 2>/dev/null || echo \"Directory check \")",
+      "Bash(npx tsc:*)",
+      "Bash(del:*)"
     ]
   }
 }
