@@ -1,15 +1,8 @@
 ## Current TODOs
 
-- Try out other model generators? Perhaps set up a Replicate account to test?
-- - Maybe we could set up a dropdown to use Fal, Replicate, OR Civitai? That might be a pita to manage
-
-- Hide AI Generation for now?
-- - Projects / Characters/ Project Settings
+- AI Generation notes
 - - Give a warning that custom models take longer to load and have limited flexability. If you really want full control over your image generation you will likely want to work outside of Comic Book Maker and import your images.
 - - We will update and improve our AI models and generation as the models themselves improve!
-
-- Can we add NanoBanana? Any other models worth adding to default?
-
 
 - Set up AI Dialog and Image Prompt helpers
 - - Set up "Motion" / Video generation
@@ -20,6 +13,7 @@
 
 - Update the AI features to only work with a paid account.
 
+- General refactor to clean up large files?
 
 
 ## Bugs

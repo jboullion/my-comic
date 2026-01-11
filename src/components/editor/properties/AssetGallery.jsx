@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from 'react'
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import { FiUploadCloud, FiSearch, FiX, FiChevronDown, FiCheck } from 'react-icons/fi'
 import AssetThumbnail from '../ui/AssetThumbnail'
 import { useAsset } from '../../../hooks/useAsset'
@@ -252,9 +252,9 @@ function AssetGrid({
     setAssetsData({})
   }, [imageIds])
 
-  const handleAssetLoaded = (id, data) => {
+  const handleAssetLoaded = useCallback((id, data) => {
     setAssetsData(prev => ({ ...prev, [id]: data }))
-  }
+  }, [])
 
   // Filter and sort assets
   const filteredAndSortedIds = useMemo(() => {
