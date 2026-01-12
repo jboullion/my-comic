@@ -11,7 +11,16 @@
       "Bash(xargs cat:*)",
       "Bash(ls -la \"e:\\\\2026_Experiments\\\\my-comic\\\\src\\\\lib\"\" 2>/dev/null || echo \"Directory check \")",
       "Bash(npx tsc:*)",
-      "Bash(del:*)"
+      "Bash(del:*)",
+      "Bash(netstat:*)",
+      "Bash(findstr:*)",
+      "Bash(taskkill:*)",
+      "Bash(npm run dev:*)",
+      "Bash(timeout /t 3 /nobreak)",
+      "mcp__playwright__browser_click",
+      "mcp__playwright__browser_take_screenshot",
+      "mcp__playwright__browser_console_messages",
+      "mcp__playwright__browser_network_requests"
     ]
   }
 }

@@ -1,6 +1,8 @@
 ## Current TODOs
 
-- Set up ability for agent to use application in VS Code. Bypass authentication?
+- ✅ Set up ability for agent to use application in VS Code. Bypass authentication
+  - Auth bypass implemented via `VITE_SKIP_AUTH=true` in `.env.local`
+  - Next step: Install Playwright MCP server with: `claude mcp add --transport stdio playwright -- cmd /c npx -y @playwright/mcp@latest`
 
 - AI Generation notes
 - - Give a warning that custom models take longer to load and have limited flexability. If you really want full control over your image generation you will likely want to work outside of Comic Book Maker and import your images.
