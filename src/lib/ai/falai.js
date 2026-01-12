@@ -114,7 +114,11 @@ export async function generateImage({
   allowMature = false,
   lora = null,
   customModel = null,
-  onProgress = null
+  onProgress = null,
+  // Advanced parameters
+  guidanceScale = null,
+  inferenceSteps = null,
+  negativePrompt = null
 }) {
   if (!falApiKey) {
     throw new Error('Fal.ai API key not configured. Please add VITE_FAL_AI_KEY to your .env.local file.')
@@ -184,12 +188,27 @@ export async function generateImage({
 
   if (useCustomModel && customModel.type !== 'flux') {
     input.model_name = customModel.url
-    input.guidance_scale = 7.5
     input.scheduler = 'DPM++ 2M Karras'
+  }
+
+  // Apply guidance scale if provided, otherwise use defaults
+  if (guidanceScale !== null) {
+    input.guidance_scale = guidanceScale
+  } else if (useCustomModel && customModel.type !== 'flux') {
+    input.guidance_scale = 7.5
+  }
+
+  // Apply negative prompt if provided, otherwise use defaults
+  if (negativePrompt && negativePrompt.trim()) {
+    input.negative_prompt = negativePrompt
+  } else if (useCustomModel && customModel.type !== 'flux') {
     input.negative_prompt = 'blurry, low quality, distorted, deformed, ugly, bad anatomy'
   }
 
-  if (modelConfig?.usesAspectRatio) {
+  // Apply inference steps if provided, otherwise use defaults
+  if (inferenceSteps !== null) {
+    input.num_inference_steps = inferenceSteps
+  } else if (modelConfig?.usesAspectRatio) {
     // Nano Banana doesn't use inference steps
   } else if (useCustomModel && customModel.type !== 'flux') {
     input.num_inference_steps = 30

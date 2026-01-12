@@ -18,6 +18,7 @@
 - Remove the "toast" in the bottom right that says your app is ready to work offline.
 - - Potentially just remove all of the PWA / install feature. Probably keep the service workers for performance?
 
+- Set up "Locations", and other things to work similar to characters for easy AI reference
 
 ## Bugs
 

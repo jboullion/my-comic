@@ -11,8 +11,8 @@ import ErrorMessage from '../components/ui/ErrorMessage'
 import { seriesDb } from '../lib/series'
 
 const TABS = [
-  { id: 'general', label: 'General', icon: FiSettings },
-  { id: 'aiModel', label: 'AI Model', icon: FiCpu }
+  { id: 'general', label: 'General', icon: FiSettings }
+  // AI Model tab hidden - mature content now defaults to enabled
 ]
 
 /**
@@ -75,7 +75,7 @@ export default function SeriesSettingsPage() {
             name: '',
             type: 'sdxl',
             url: '',
-            allowMature: false
+            allowMature: true  // Default to enabled for best image quality
           })
           // Set existing cover image if available
           if (seriesData.coverImageUrl) {

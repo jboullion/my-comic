@@ -63,7 +63,8 @@ export default function CharacterPicker({
   selectedIds = [],
   onChange,
   disabled = false,
-  className = ''
+  className = '',
+  showDescription = true
 }) {
   const { characters, charactersLoading, loadCharacters } = useCharactersStore()
   const { currentProject } = useProjectStore()
@@ -175,7 +176,7 @@ export default function CharacterPicker({
       </div>
 
       {/* Selected Character Preview */}
-      {selectedCharacters.length > 0 && combinedDescription && (
+      {showDescription && selectedCharacters.length > 0 && combinedDescription && (
         <div className="mt-2">
           <div className="flex items-center justify-between mb-1">
             <span className="text-[10px] text-slate-500 uppercase font-bold">

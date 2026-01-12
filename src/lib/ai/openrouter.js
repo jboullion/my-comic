@@ -47,14 +47,6 @@ export const STORY_AI_MODELS = {
       inputPrice: 2.50,
       outputPrice: 10.00
     },
-    'gemini-2.0-flash': {
-      id: 'google/gemini-2.0-flash-001',
-      name: 'Gemini 2.0 Flash',
-      description: 'Previous gen, still fast',
-      vision: true,
-      inputPrice: 0.10,
-      outputPrice: 0.40
-    }
   },
 
   // === ANTHROPIC CLAUDE ===
@@ -75,14 +67,6 @@ export const STORY_AI_MODELS = {
       inputPrice: 1.00,
       outputPrice: 5.00
     },
-    'claude-3.5-sonnet': {
-      id: 'anthropic/claude-3.5-sonnet',
-      name: 'Claude 3.5 Sonnet',
-      description: 'Classic Sonnet, reliable',
-      vision: true,
-      inputPrice: 3.00,
-      outputPrice: 15.00
-    },
     'claude-3-haiku': {
       id: 'anthropic/claude-3-haiku',
       name: 'Claude 3 Haiku',
@@ -95,14 +79,6 @@ export const STORY_AI_MODELS = {
 
   // === OPENAI ===
   openai: {
-    'gpt-5': {
-      id: 'openai/gpt-5-chat',
-      name: 'GPT-5',
-      description: 'OpenAI flagship',
-      vision: true,
-      inputPrice: 5.00,
-      outputPrice: 15.00
-    },
     'gpt-5-mini': {
       id: 'openai/gpt-5-mini',
       name: 'GPT-5 Mini',
@@ -126,14 +102,6 @@ export const STORY_AI_MODELS = {
       vision: true,
       inputPrice: 2.50,
       outputPrice: 10.00
-    },
-    'gpt-4o-mini': {
-      id: 'openai/gpt-4o-mini',
-      name: 'GPT-4o Mini',
-      description: 'Fast multimodal',
-      vision: true,
-      inputPrice: 0.15,
-      outputPrice: 0.60
     }
   },
 
@@ -168,18 +136,6 @@ export const STORY_AI_MODELS = {
       outputPrice: 2.00
     }
   },
-
-  // === OTHER ===
-  other: {
-    'molmo2-8b': {
-      id: 'allenai/molmo-2-8b:free',
-      name: 'Molmo2 8B (Free)',
-      description: 'Open vision model, no cost',
-      vision: true,
-      inputPrice: 0,
-      outputPrice: 0
-    }
-  }
 }
 
 /**

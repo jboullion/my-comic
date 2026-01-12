@@ -395,8 +395,6 @@ export default function StoryAIPanel({ onCaptureCanvas }) {
                       }`}
                     >
                       <div className="flex items-center gap-2">
-                        {model.vision && <FiImage className="w-3.5 h-3.5 text-indigo-400 shrink-0" />}
-                        {!model.vision && <span className="w-3.5 shrink-0" />}
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-1.5">
                             <span className="text-sm text-white truncate">{model.name}</span>
@@ -418,12 +416,6 @@ export default function StoryAIPanel({ onCaptureCanvas }) {
             </div>
           )}
         </div>
-        {modelConfig?.vision && (
-          <p className="mt-1.5 text-[10px] text-indigo-400 flex items-center gap-1">
-            <FiImage className="w-3 h-3" />
-            Vision enabled — AI sees your canvas
-          </p>
-        )}
       </div>
       
       {/* Messages Area */}
