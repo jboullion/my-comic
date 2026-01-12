@@ -7,9 +7,9 @@ import { useCharacterImageFromBlob } from '../../hooks/useCharacterImage'
 
 /**
  * CharacterPickerItem Component
- * Individual character checkbox item with thumbnail
+ * Individual character radio item with thumbnail
  */
-function CharacterPickerItem({ character, selected, onToggle, disabled }) {
+function CharacterPickerItem({ character, selected, onSelect, disabled }) {
   const profileImageUrl = useCharacterImageFromBlob(character.profileImage?.blob)
 
   return (
@@ -21,15 +21,15 @@ function CharacterPickerItem({ character, selected, onToggle, disabled }) {
       `}
     >
       <input
-        type="checkbox"
+        type="radio"
         checked={selected}
-        onChange={() => onToggle(character.id)}
+        onChange={() => onSelect(character.id)}
         disabled={disabled}
         className="sr-only"
       />
 
       {/* Thumbnail */}
-      <div className="w-8 h-8 rounded-lg bg-slate-700 flex items-center justify-center overflow-hidden flex-shrink-0">
+      <div className="w-8 h-8 rounded-lg bg-slate-700 flex items-center justify-center overflow-hidden shrink-0">
         {profileImageUrl ? (
           <img
             src={profileImageUrl}
@@ -44,21 +44,15 @@ function CharacterPickerItem({ character, selected, onToggle, disabled }) {
       {/* Name */}
       <span className="text-sm text-white truncate flex-1">{character.name}</span>
 
-      {/* Selection indicator */}
+      {/* Selection indicator - radio circle */}
       <div
         className={`
-          w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0
-          ${selected ? 'bg-indigo-500 border-indigo-500' : 'border-slate-600'}
+          w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0
+          ${selected ? 'border-indigo-500' : 'border-slate-600'}
         `}
       >
         {selected && (
-          <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-            <path
-              fillRule="evenodd"
-              d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-              clipRule="evenodd"
-            />
-          </svg>
+          <div className="w-2 h-2 rounded-full bg-indigo-500" />
         )}
       </div>
     </label>
@@ -67,7 +61,7 @@ function CharacterPickerItem({ character, selected, onToggle, disabled }) {
 
 /**
  * CharacterPicker Component
- * Multi-select character picker for AI image generation
+ * Single-select character picker for AI image generation
  * Filters characters by current project's series
  */
 export default function CharacterPicker({
@@ -85,6 +79,7 @@ export default function CharacterPicker({
 
   // Load characters on mount if not already loaded
   useEffect(() => {
+    // Load characters if we don't have any and aren't currently loading
     if (characters.length === 0 && !charactersLoading) {
       loadCharacters()
     }
@@ -96,13 +91,13 @@ export default function CharacterPicker({
     return characters.filter(c => c.seriesId === seriesId)
   }, [characters, seriesId])
 
-  const handleToggle = (characterId) => {
+  // Single-select: clicking selects, clicking again deselects
+  const handleSelect = (characterId) => {
     if (disabled) return
 
-    const newSelected = selectedIds.includes(characterId)
-      ? selectedIds.filter((id) => id !== characterId)
-      : [...selectedIds, characterId]
-
+    // If already selected, deselect (empty array)
+    // Otherwise, select only this character
+    const newSelected = selectedIds.includes(characterId) ? [] : [characterId]
     onChange(newSelected)
   }
 
@@ -166,7 +161,7 @@ export default function CharacterPicker({
   return (
     <div className={className}>
       <label className="text-[10px] text-slate-500 uppercase font-bold block mb-2">
-        Characters {selectedIds.length > 0 && `(${selectedIds.length} selected)`}
+        Character {selectedIds.length > 0 && '(1 selected)'}
       </label>
 
       {/* Character List */}
@@ -177,19 +172,19 @@ export default function CharacterPicker({
               key={character.id}
               character={character}
               selected={selectedIds.includes(character.id)}
-              onToggle={handleToggle}
+              onSelect={handleSelect}
               disabled={disabled}
             />
           ))}
         </div>
       </div>
 
-      {/* Selected Characters Preview */}
+      {/* Selected Character Preview */}
       {selectedCharacters.length > 0 && combinedDescription && (
         <div className="mt-2">
           <div className="flex items-center justify-between mb-1">
             <span className="text-[10px] text-slate-500 uppercase font-bold">
-              Descriptions Preview
+              Description Preview
             </span>
             <button
               onClick={handleCopyDescriptions}

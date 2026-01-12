@@ -175,8 +175,8 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
   const imageSizeOptions = [
     { value: 'match_page', label: `${matchPageDimensions.width}x${matchPageDimensions.height}`, description: 'Match Page' },
     { value: 'square_hd', label: '1024x1024', description: 'Square HD' },
-    { value: 'portrait_4_3', label: '768x1024', description: 'Portrait 4:3' },
-    { value: 'portrait_16_9', label: '576x1024', description: 'Portrait 16:9' },
+    { value: 'portrait_4_3', label: '768x1024', description: 'Portrait 3:4' },
+    { value: 'portrait_16_9', label: '576x1024', description: 'Portrait 9:16' },
     { value: 'landscape_4_3', label: '1024x768', description: 'Landscape 4:3' },
     { value: 'landscape_16_9', label: '1024x576', description: 'Landscape 16:9' },
   ]
@@ -244,8 +244,11 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
     setProgress(null)
 
     try {
-      // Build prompt with character descriptions
-      const fullPrompt = buildPromptWithCharacters(prompt.trim())
+      // Build prompt - only prepend character description if prompt wasn't already enhanced
+      // (enhancement already incorporates character context)
+      const fullPrompt = wasEnhanced
+        ? prompt.trim()
+        : buildPromptWithCharacters(prompt.trim())
 
       // Get LoRA from selected character (only for custom models - FLUX doesn't support LoRAs)
       const lora = model === 'custom' ? getCharacterLora() : null
@@ -286,7 +289,7 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
       setIsGenerating(false)
       setProgress(null)
     }
-  }, [prompt, style, model, imageSize, projectId, buildPromptWithCharacters, getCharacterLora, allowMature, matchPageDimensions, customModel])
+  }, [prompt, style, model, imageSize, projectId, buildPromptWithCharacters, getCharacterLora, allowMature, matchPageDimensions, customModel, wasEnhanced])
 
   const handleSave = useCallback(async () => {
     if (!generatedImage?.imageUrl) return
@@ -537,10 +540,10 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
                 <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg px-4 py-3">
                   <div className="flex items-center gap-2">
                     <FiAlertCircle className="w-4 h-4 text-amber-400 shrink-0" />
-                    <span className="text-amber-300 text-sm">LoRA not compatible with FLUX models</span>
+                    <span className="text-amber-300 text-sm">LoRAs are only available for custom models</span>
                   </div>
                   <p className="text-[10px] text-slate-500 mt-1">
-                    {characterLora.characterName} has a LoRA configured, but FLUX models don&apos;t support LoRAs. Switch to a Custom Model to use LoRAs.
+                    {characterLora.characterName} has a LoRA configured. Switch to a Custom Model to use it.
                   </p>
                 </div>
               )}
