@@ -329,5 +329,36 @@ export const seriesDb = {
       updatedAt: new Date()
     })
     return await db.series.get(seriesId)
+  },
+
+  // ==================
+  // Story AI Prompt Operations
+  // ==================
+
+  /**
+   * Update the custom Story AI prompt for a series
+   * @param {number} seriesId - Series ID
+   * @param {string} customStoryPrompt - Custom prompt template (can include ${...} variables)
+   * @returns {Promise<Object>} Updated series
+   */
+  async updateStoryPrompt(seriesId, customStoryPrompt) {
+    await db.series.update(seriesId, {
+      customStoryPrompt,
+      updatedAt: new Date()
+    })
+    return await db.series.get(seriesId)
+  },
+
+  /**
+   * Clear custom Story AI prompt for a series
+   * @param {number} seriesId - Series ID
+   * @returns {Promise<Object>} Updated series
+   */
+  async clearStoryPrompt(seriesId) {
+    await db.series.update(seriesId, {
+      customStoryPrompt: null,
+      updatedAt: new Date()
+    })
+    return await db.series.get(seriesId)
   }
 }

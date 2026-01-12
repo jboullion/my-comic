@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from 'react'
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import { FiUploadCloud, FiSearch, FiX, FiChevronDown, FiCheck } from 'react-icons/fi'
 import AssetThumbnail from '../ui/AssetThumbnail'
 import { useAsset } from '../../../hooks/useAsset'
@@ -104,7 +104,7 @@ export default function AssetGallery({
 
   return (
     <div
-      className="space-y-3 relative"
+      className="space-y-3 relative p-4"
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
@@ -252,9 +252,9 @@ function AssetGrid({
     setAssetsData({})
   }, [imageIds])
 
-  const handleAssetLoaded = (id, data) => {
+  const handleAssetLoaded = useCallback((id, data) => {
     setAssetsData(prev => ({ ...prev, [id]: data }))
-  }
+  }, [])
 
   // Filter and sort assets
   const filteredAndSortedIds = useMemo(() => {

@@ -10,7 +10,7 @@ import { charactersDb } from '../lib/characters'
 export const useCharactersStore = create((set) => ({
   // Characters list
   characters: [],
-  charactersLoading: true,
+  charactersLoading: false, // Start as false - no loading in progress yet
   charactersError: null,
 
   // Selected character (for viewing/editing)

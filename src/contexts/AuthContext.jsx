@@ -3,12 +3,34 @@ import { supabase } from '../lib/supabase'
 
 const AuthContext = createContext({})
 
+// Development mode bypass - mock user for local testing
+const DEV_MODE_BYPASS = import.meta.env.VITE_SKIP_AUTH === 'true'
+const MOCK_USER = {
+  id: 'dev-user-mock-id',
+  email: 'dev@localhost',
+  user_metadata: {
+    full_name: 'Dev User',
+  },
+  app_metadata: {},
+  aud: 'authenticated',
+  created_at: new Date().toISOString(),
+}
+
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
   const [session, setSession] = useState(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    // Development mode bypass - skip auth entirely
+    if (DEV_MODE_BYPASS) {
+      console.log('🔓 Auth bypass enabled - using mock user for development')
+      setUser(MOCK_USER)
+      setSession({ user: MOCK_USER, access_token: 'dev-token' })
+      setLoading(false)
+      return
+    }
+
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session)

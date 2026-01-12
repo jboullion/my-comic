@@ -1,18 +1,11 @@
 ## Current TODOs
 
-- Try out other model generators? Perhaps set up a Replicate account to test?
-- - Maybe we could set up a dropdown to use Fal, Replicate, OR Civitai? That might be a pita to manage
-
-- Hide AI Generation for now?
-- - Projects / Characters/ Project Settings
-- - Give a warning that custom models take longer to load and have limited flexability. If you really want full control over your image generation you will likely want to work outside of Comic Book Maker and import your images.
-- - We will update and improve our AI models and generation as the models themselves improve!
-
-- Can we add NanoBanana? Any other models worth adding to default?
-
-
 - Set up AI Dialog and Image Prompt helpers
+- - Improve character descriptions which will be used when the AI is thinking about the current story
 - - Set up "Motion" / Video generation
+- - AI Voice?!? Can we have AI Voices read the text / script and then also save the audio? Perhaps we save 1 audio file per page and as the user turns the page it plays that audio after a small delay?
+- Add a "Story Agent Prompt" editor. We will set a default but users can edit their story agent so they have control over how it works and responds to them.
+
 
 - Improve the Asset toolbar experience
 
@@ -20,10 +13,13 @@
 
 - Update the AI features to only work with a paid account.
 
+- General refactor to clean up large files?
 
 
 ## Bugs
 
+- Nano Banana isn't creating the correct size image
+- Have each AI Image generated save in a temporary storage so users can access it even if they don't use it. Perhaps save it and show it as a thumbnail in the history?
 - Cloud SVG is overflowing container.
 - Some actions don't seem to get caught in the undo. Is there a redo?
 - I still get the forced zoom every now and then
@@ -33,7 +29,13 @@
 ## Ideas and Brainstorming
 
 ### General Concepts
-- Set up the concept of a series?
+
+
+### Scripts
+- Should we provide some kind of "Scripts" page?
+- - Perhaps a tool for writing comic scripts and dialog?
+- - AI Could then reference and edit this as well
+
 
 ### References
 
@@ -110,38 +112,9 @@ I think a lot of people in other countries would like this application. Can I ke
 
 ### AI TODOs
 
-
 - AI Image Iteration. Could we take a base image and give a prompt for altering it using it as a reference?
 - AI Inpainting
-- Potentially remove image reference for "character" unless we can somehow use them just for character reference. Right now the total image has too much influence on the output that adding more than the description might not be helpful.
-- - Tweak tweak tweak the character integration. THIS IS KEY
-
-#### Images
-
-CivitAI?!? Start with a "Bronze" membership during development and early alpha. Move to Silver + if and when needed.
-
-Free Version: Allow users to hook up their own api? Perhaps only during beta / alpha. If a user is creating "adult" work you must use your own API key to generate images.
-
-Once we create paid plans we could have a hobby / pro account for like $25/yr or $3/mo and $100/yr or $10/mo
-
-We need to make sure to save these images locally for users so they are not auto deleted by CivitAI.
-
-
-#### Prompt Helps
-
-While Civitai is great for images with Fal.ai and Replicate we could also use LLM models for prompts and stories
-
-Prompt agent which focuses on helping the user create consistant and useful prompts to generate images from
-
-
-#### Story / Dialog
-
-Story agent to be able to read / "see" a page or otherwise know about script / story and can help a user generate scripts and dialog or suggest other industry related things.
-
-
-#### Character Prompts
-
-For image consistance and Dialog consistancy.
+- Tweak tweak tweak the character integration. THIS IS KEY
 
 
 #### Voice?!?

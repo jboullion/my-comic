@@ -42,7 +42,7 @@ export default function PageSettingsPanel() {
   if (!currentProject) return null
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 p-4">
       {/* Header */}
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold text-white">

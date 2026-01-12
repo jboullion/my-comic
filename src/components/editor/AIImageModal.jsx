@@ -1,7 +1,8 @@
 import { useState, useCallback, useEffect, useMemo } from 'react'
 import { useParams } from 'react-router-dom'
-import { FiX, FiZap, FiRefreshCw, FiCheck, FiAlertCircle, FiCpu, FiClock, FiTrash2 } from 'react-icons/fi'
-import { generateImage, fetchImageAsBlob, AI_MODELS, AI_STYLES, isFalConfigured } from '../../lib/falai'
+import { FiX, FiZap, FiRefreshCw, FiCheck, FiAlertCircle, FiCpu, FiClock, FiTrash2, FiLoader } from 'react-icons/fi'
+import { generateImage, AI_MODELS, AI_STYLES, isFalConfigured, enhanceImagePrompt } from '../../lib/ai/falai'
+import { fetchImageAsBlob } from '../../lib/ai/utils'
 import CharacterPicker from './CharacterPicker'
 import useCharactersStore from '../../stores/useCharactersStore'
 import useProjectStore from '../../stores/useProjectStore'
@@ -115,27 +116,12 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
   const [model, setModel] = useState('flux-2')
   const [imageSize, setImageSize] = useState('match_page')
   const [selectedCharacterIds, setSelectedCharacterIds] = useState([])
-  const [referenceStrength, setReferenceStrength] = useState(0.65)
 
   // Get allowMature from project settings
   const allowMature = customModel?.allowMature || false
 
   // Get characters from store for prompt building
   const { characters } = useCharactersStore()
-
-  // Get reference image from first selected character with a profile image
-  const getReferenceImage = useCallback(() => {
-    if (selectedCharacterIds.length === 0) return null
-
-    // Find first selected character with a profile image
-    for (const id of selectedCharacterIds) {
-      const char = characters.find(c => c.id === id)
-      if (char?.profileImage?.blob) {
-        return char.profileImage.blob
-      }
-    }
-    return null
-  }, [selectedCharacterIds, characters])
 
   // Get LoRA from first selected character that has one configured
   const getCharacterLora = useCallback(() => {
@@ -156,12 +142,12 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
     return null
   }, [selectedCharacterIds, characters])
 
-  // Check if we have a reference image available
-  const hasReferenceImage = getReferenceImage() !== null
-
   // Check if we have a LoRA available (for UI indicator)
   const characterLora = getCharacterLora()
   const hasLora = characterLora !== null
+
+  // Check if current model supports LoRA (only custom models support LoRA, not FLUX)
+  const modelSupportsLora = model === 'custom'
 
   // Generation state
   const [isGenerating, setIsGenerating] = useState(false)
@@ -171,6 +157,11 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
 
   // Saving state
   const [isSaving, setIsSaving] = useState(false)
+
+  // Prompt enhancement state
+  const [isEnhancing, setIsEnhancing] = useState(false)
+  const [originalPrompt, setOriginalPrompt] = useState('')
+  const [wasEnhanced, setWasEnhanced] = useState(false)
 
   // History state
   const [history, setHistory] = useState([])
@@ -185,8 +176,8 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
   const imageSizeOptions = [
     { value: 'match_page', label: `${matchPageDimensions.width}x${matchPageDimensions.height}`, description: 'Match Page' },
     { value: 'square_hd', label: '1024x1024', description: 'Square HD' },
-    { value: 'portrait_4_3', label: '768x1024', description: 'Portrait 4:3' },
-    { value: 'portrait_16_9', label: '576x1024', description: 'Portrait 16:9' },
+    { value: 'portrait_4_3', label: '768x1024', description: 'Portrait 3:4' },
+    { value: 'portrait_16_9', label: '576x1024', description: 'Portrait 9:16' },
     { value: 'landscape_4_3', label: '1024x768', description: 'Landscape 4:3' },
     { value: 'landscape_16_9', label: '1024x576', description: 'Landscape 16:9' },
   ]
@@ -206,6 +197,43 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
     return `Characters in scene:\n${charDescriptions}\n\nScene: ${basePrompt}`
   }, [selectedCharacterIds, characters])
 
+  // Handle prompt enhancement with AI
+  const handleEnhancePrompt = useCallback(async () => {
+    if (!prompt.trim() || isEnhancing) return
+
+    setIsEnhancing(true)
+    setOriginalPrompt(prompt.trim())
+    setError(null)
+
+    try {
+      // Get selected character info for context
+      const selectedChars = characters
+        .filter(c => selectedCharacterIds.includes(c.id))
+        .map(c => ({ name: c.name, description: c.description || '' }))
+
+      const enhanced = await enhanceImagePrompt(prompt.trim(), {
+        model,
+        characters: selectedChars
+      })
+
+      setPrompt(enhanced)
+      setWasEnhanced(true)
+    } catch (err) {
+      setError(`Enhancement failed: ${err.message}`)
+    } finally {
+      setIsEnhancing(false)
+    }
+  }, [prompt, isEnhancing, model, characters, selectedCharacterIds])
+
+  // Handle reverting to original prompt
+  const handleRevertPrompt = useCallback(() => {
+    if (originalPrompt) {
+      setPrompt(originalPrompt)
+      setWasEnhanced(false)
+      setOriginalPrompt('')
+    }
+  }, [originalPrompt])
+
   const handleGenerate = useCallback(async () => {
     if (!prompt.trim()) {
       setError('Please enter a prompt')
@@ -217,14 +245,14 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
     setProgress(null)
 
     try {
-      // Build prompt with character descriptions
-      const fullPrompt = buildPromptWithCharacters(prompt.trim())
+      // Build prompt - only prepend character description if prompt wasn't already enhanced
+      // (enhancement already incorporates character context)
+      const fullPrompt = wasEnhanced
+        ? prompt.trim()
+        : buildPromptWithCharacters(prompt.trim())
 
-      // Get reference image if available (only used if no LoRA - LoRA takes priority)
-      const referenceImage = getReferenceImage()
-
-      // Get LoRA from selected character
-      const lora = getCharacterLora()
+      // Get LoRA from selected character (only for custom models - FLUX doesn't support LoRAs)
+      const lora = model === 'custom' ? getCharacterLora() : null
 
       // Use custom dimensions for "match_page", otherwise use preset string
       const imageSizeParam = imageSize === 'match_page'
@@ -236,8 +264,6 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
         style,
         model,
         imageSize: imageSizeParam,
-        referenceImage,
-        referenceStrength,
         allowMature,
         lora,
         customModel: model === 'custom' ? customModel : null,
@@ -264,7 +290,7 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
       setIsGenerating(false)
       setProgress(null)
     }
-  }, [prompt, style, model, imageSize, projectId, buildPromptWithCharacters, getReferenceImage, getCharacterLora, referenceStrength, allowMature, matchPageDimensions, customModel])
+  }, [prompt, style, model, imageSize, projectId, buildPromptWithCharacters, getCharacterLora, allowMature, matchPageDimensions, customModel, wasEnhanced])
 
   const handleSave = useCallback(async () => {
     if (!generatedImage?.imageUrl) return
@@ -311,6 +337,8 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
     setProgress(null)
     setActiveTab('generate')
     setSelectedCharacterIds([])
+    setWasEnhanced(false)
+    setOriginalPrompt('')
     onClose()
   }, [onClose])
 
@@ -435,15 +463,54 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
             <>
               {/* Prompt Input */}
               <div className="space-y-2">
-                <label className="text-[10px] text-slate-500 uppercase font-bold">Prompt</label>
-                <textarea
-                  value={prompt}
-                  onChange={(e) => setPrompt(e.target.value)}
-                  placeholder="Describe the image you want to generate..."
-                  rows={3}
-                  disabled={isGenerating}
-                  className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 resize-none disabled:opacity-50"
-                />
+                <div className="flex items-center justify-between">
+                  <label className="text-[10px] text-slate-500 uppercase font-bold">Prompt</label>
+                  {wasEnhanced && (
+                    <button
+                      onClick={handleRevertPrompt}
+                      className="flex items-center gap-1 text-[10px] text-indigo-400 hover:text-indigo-300 transition-colors"
+                    >
+                      <FiRefreshCw className="w-3 h-3" />
+                      Revert to original
+                    </button>
+                  )}
+                </div>
+                <div className="relative">
+                  <textarea
+                    value={prompt}
+                    onChange={(e) => {
+                      setPrompt(e.target.value)
+                      // Clear enhanced state if user manually edits
+                      if (wasEnhanced) {
+                        setWasEnhanced(false)
+                        setOriginalPrompt('')
+                      }
+                    }}
+                    placeholder="Describe the image you want to generate..."
+                    rows={4}
+                    disabled={isGenerating || isEnhancing}
+                    className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 pr-12 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 resize-none disabled:opacity-50"
+                  />
+                  {/* AI Enhance Button */}
+                  <button
+                    onClick={handleEnhancePrompt}
+                    disabled={!prompt.trim() || isEnhancing || isGenerating}
+                    title="Enhance prompt with AI"
+                    className="absolute top-2 right-2 p-2 bg-indigo-500 hover:bg-indigo-600 disabled:bg-slate-700 disabled:text-slate-500 text-white rounded-lg transition-colors"
+                  >
+                    {isEnhancing ? (
+                      <FiLoader className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <FiZap className="w-4 h-4" />
+                    )}
+                  </button>
+                </div>
+                {wasEnhanced && (
+                  <div className="flex items-center gap-2 text-xs text-green-400">
+                    <FiCheck className="w-3 h-3" />
+                    <span>Prompt enhanced!</span>
+                  </div>
+                )}
               </div>
 
               {/* Character Picker */}
@@ -453,8 +520,8 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
                 disabled={isGenerating}
               />
 
-              {/* LoRA Indicator - shown when character with LoRA is selected */}
-              {hasLora && (
+              {/* LoRA Indicator - only shown when custom model selected AND character has LoRA configured */}
+              {hasLora && modelSupportsLora && (
                 <div className="bg-indigo-500/10 border border-indigo-500/30 rounded-lg px-4 py-3">
                   <div className="flex items-center gap-2">
                     <span className="text-indigo-400 text-sm font-medium">LoRA Active</span>
@@ -469,28 +536,15 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
                 </div>
               )}
 
-              {/* Reference Strength Slider - only shown when character with profile image is selected and no LoRA */}
-              {hasReferenceImage && !hasLora && (
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <label className="text-[10px] text-slate-500 uppercase font-bold">
-                      Reference Strength
-                    </label>
-                    <span className="text-xs text-slate-400">
-                      {Math.round(referenceStrength * 100)}%
-                    </span>
+              {/* LoRA Warning - shown when character has LoRA but FLUX model selected */}
+              {hasLora && !modelSupportsLora && (
+                <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg px-4 py-3">
+                  <div className="flex items-center gap-2">
+                    <FiAlertCircle className="w-4 h-4 text-amber-400 shrink-0" />
+                    <span className="text-amber-300 text-sm">LoRAs are only available for custom models</span>
                   </div>
-                  <input
-                    type="range"
-                    min="0"
-                    max="100"
-                    value={referenceStrength * 100}
-                    onChange={(e) => setReferenceStrength(Number(e.target.value) / 100)}
-                    disabled={isGenerating}
-                    className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-indigo-500 disabled:opacity-50"
-                  />
-                  <p className="text-[10px] text-slate-500">
-                    Higher values match the character&apos;s profile image more closely
+                  <p className="text-[10px] text-slate-500 mt-1">
+                    {characterLora.characterName} has a LoRA configured. Switch to a Custom Model to use it.
                   </p>
                 </div>
               )}
@@ -616,7 +670,6 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
                   </div>
                   <p className="text-xs text-slate-500">
                     {generatedImage.width}x{generatedImage.height} - {generatedImage.usedCustomModel ? generatedImage.customModelName : (AI_MODELS[generatedImage.model]?.name || generatedImage.model)} - Seed: {generatedImage.seed}
-                    {generatedImage.usedReference && ' - Used character reference'}
                     {generatedImage.usedLora && ' - Used LoRA'}
                     {generatedImage.usedCustomModel && ' - Custom model'}
                   </p>

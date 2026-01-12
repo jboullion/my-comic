@@ -20,6 +20,10 @@ export const useSeriesStore = create((set, get) => ({
   isSeriesModalOpen: false,
   editingSeries: null, // null for new, series object for edit
 
+  // Story Prompt Modal state
+  isStoryPromptModalOpen: false,
+  editingSeriesForPrompt: null, // series object being edited
+
   // ==================
   // Series Actions
   // ==================
@@ -223,6 +227,78 @@ export const useSeriesStore = create((set, get) => ({
       isSeriesModalOpen: false,
       editingSeries: null
     })
+  },
+
+  /**
+   * Open the Story Prompt modal for editing
+   */
+  openStoryPromptModal: (series) => {
+    set({
+      isStoryPromptModalOpen: true,
+      editingSeriesForPrompt: series
+    })
+  },
+
+  /**
+   * Close the Story Prompt modal
+   */
+  closeStoryPromptModal: () => {
+    set({
+      isStoryPromptModalOpen: false,
+      editingSeriesForPrompt: null
+    })
+  },
+
+  /**
+   * Update the custom Story AI prompt for a series
+   */
+  updateSeriesStoryPrompt: async (seriesId, customStoryPrompt) => {
+    try {
+      await seriesDb.updateStoryPrompt(seriesId, customStoryPrompt)
+      // Reload series with updated data
+      const withData = await seriesDb.getByIdWithCountsAndImage(seriesId)
+      set((state) => ({
+        series: state.series.map((s) => (s.id === seriesId ? withData : s)),
+        isStoryPromptModalOpen: false,
+        editingSeriesForPrompt: null
+      }))
+    } catch (error) {
+      console.error('Failed to update story prompt:', error)
+      throw error
+    }
+  },
+
+  /**
+   * Clear the custom Story AI prompt for a series
+   */
+  clearSeriesStoryPrompt: async (seriesId) => {
+    try {
+      await seriesDb.clearStoryPrompt(seriesId)
+      const withData = await seriesDb.getByIdWithCountsAndImage(seriesId)
+      set((state) => ({
+        series: state.series.map((s) => (s.id === seriesId ? withData : s))
+      }))
+    } catch (error) {
+      console.error('Failed to clear story prompt:', error)
+      throw error
+    }
+  },
+
+  /**
+   * Get custom story prompt for a series (from cache)
+   */
+  getSeriesStoryPrompt: (seriesId) => {
+    const { series } = get()
+    const s = series.find((s) => s.id === seriesId)
+    return s?.customStoryPrompt || null
+  },
+
+  /**
+   * Get a series by ID (from cache)
+   */
+  getSeriesById: (seriesId) => {
+    const { series } = get()
+    return series.find((s) => s.id === seriesId) || null
   },
 
   /**

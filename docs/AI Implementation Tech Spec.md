@@ -31,11 +31,36 @@ We will use a tiered model approach to balance cost and quality.
 
 ### **3.3 Character Consistency Workflow**
 
-To ensure characters look the same across panels, we will use the **IP-Adapter / Subject Reference** method:
+Character consistency is achieved through a two-phase approach:
 
-1. **Reference Image:** User uploads/selects a "Character Sheet" (single image).  
-2. **Implementation:** Pass the image URL into the image\_reference parameter of the Fal.ai model.  
-3. **Prompting:** Use a unique "Trigger Name" (e.g., "Neon-Detective") in the text prompt to help the model associate the reference with the character.
+#### **Phase 1: Text + LoRA Generation (Current)**
+
+1. **Character Descriptions:** When characters are selected, their descriptions are appended to the prompt automatically ("Characters in scene: Hero: Tall muscular man with blue cape...").
+2. **LoRA Integration (Custom Models Only):** Users can configure character-specific LoRAs from CivitAI for SDXL/Pony models. LoRAs are NOT compatible with FLUX models.
+   - Trigger word auto-prepended to prompt
+   - Scale controls LoRA strength (0-1)
+3. **Profile Images:** Character profile images are for USER REFERENCE ONLY during this phase - they are NOT sent to the AI. This helps users remember what the character looks like while prompting.
+
+**LoRA Compatibility:**
+- ✅ Custom SDXL/Pony models: Full LoRA support
+- ❌ FLUX models: No LoRA support (architecture incompatible)
+
+The UI hides LoRA controls when FLUX models are selected.
+
+#### **Phase 2: Face Correction with FLUX Kontext (Future)**
+
+After initial generation, users can correct faces/identity using FLUX Kontext:
+
+1. **Select Generated Image:** User identifies a panel needing face correction.
+2. **Apply Character Reference:** System uses the character's profile image as reference.
+3. **Inpainting with Kontext:** Call `fal-ai/flux-pro/kontext/max` to inpaint the face region while preserving the rest of the image.
+4. **Natural Language Control:** Prompt like "Make this character's face match the reference photo"
+
+**Benefits of this approach:**
+- Clean initial generation without reference artifacts
+- Precise control over when identity matching is applied
+- Kontext preserves image quality and style
+- Works with any initial generation model
 
 ## **4\. Text & Story Assistant**
 

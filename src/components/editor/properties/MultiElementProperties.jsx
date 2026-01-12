@@ -40,7 +40,7 @@ export default function MultiElementProperties({ elements }) {
   const opacity = getSharedValue('opacity', 100)
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 p-4">
       {/* Selection Info */}
       <div className="bg-slate-800/50 rounded-lg p-3">
         <div className="text-sm font-medium text-white">

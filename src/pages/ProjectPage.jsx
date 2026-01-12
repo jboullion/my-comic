@@ -9,6 +9,7 @@ import PagesSidebar from '../components/editor/PagesSidebar'
 import PropertiesSidebar from '../components/editor/PropertiesSidebar'
 import ExportModal from '../components/editor/ExportModal'
 import AIImageModal from '../components/editor/AIImageModal'
+import StoryPromptModal from '../components/series/StoryPromptModal'
 import { exportPagesToZip } from '../lib/export'
 
 export default function ProjectPage() {
@@ -50,6 +51,18 @@ export default function ProjectPage() {
   const [showExportModal, setShowExportModal] = useState(false)
   const [showAIModal, setShowAIModal] = useState(false)
   const [isExporting, setIsExporting] = useState(false)
+
+  // Callback to capture canvas for Story AI
+  const captureCanvasForAI = useCallback(async () => {
+    if (!canvasRef.current) return null
+    try {
+      const dataUrl = await canvasRef.current.generateThumbnail()
+      return dataUrl
+    } catch (error) {
+      console.error('Failed to capture canvas for AI:', error)
+      return null
+    }
+  }, [])
 
   // Load project on mount
   useEffect(() => {
@@ -389,6 +402,7 @@ export default function ProjectPage() {
             onSelectAsset={setSelectedAssetId}
             onAddAsset={addAssetToPage}
             activePageIndex={activePageIndex}
+            onCaptureCanvas={captureCanvasForAI}
           />
         </div>
 
@@ -406,6 +420,9 @@ export default function ProjectPage() {
           onClose={() => setShowAIModal(false)}
           onSave={handleAISave}
         />
+
+        {/* Story Prompt Modal */}
+        <StoryPromptModal />
       </div>
     </EditorLayout>
   )

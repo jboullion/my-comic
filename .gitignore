@@ -30,3 +30,6 @@ dist-ssr
 /projects
 secrets
 dev-dist
+
+nul
+.playwright-mcp
