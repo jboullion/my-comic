@@ -6,9 +6,18 @@
 
 - General refactor to clean up large files?
 
+- Need to set up some kind of token system for users. Right now the hobbyist tier should probably give X credits a month. Need to figure out how much that should be and also how to track it per user.
+
+- Set up netlify deployment
+
+- Remove the "toast" in the bottom right that says your app is ready to work offline.
+- - Potentially just remove all of the PWA / install feature. Probably keep the service workers for performance?
+
 
 ## Bugs
 
+- Different users on the same machine will see different projects!
+- - Separate local projects into different users
 - Nano Banana isn't creating the correct size image
 - Have each AI Image generated save in a temporary storage so users can access it even if they don't use it. Perhaps save it and show it as a thumbnail in the history?
 - Cloud SVG is overflowing container.

@@ -6,7 +6,6 @@ Comic Book Maker stores all your projects locally in your browser using **Indexe
 
 - **Private** - Your projects never leave your device
 - **Persistent** - Projects remain available across browser sessions
-- **No Account Required** - No sign-up or login needed
 
 ## Automatic Saving
 
