@@ -414,24 +414,107 @@ Return ONLY the enhanced prompt, no explanations or formatting.`
 }
 
 /**
+ * Available LLM models for Story AI chat
+ * All models are vision-capable (multimodal)
+ * Updated January 2026
+ */
+export const STORY_AI_MODELS = {
+  // === GOOGLE GEMINI ===
+  'gemini-2.5-flash': {
+    id: 'google/gemini-2.5-flash',
+    name: 'Gemini 2.5 Flash',
+    description: 'Fast Google model, vision capable',
+    vision: true,
+    premium: false
+  },
+  'gemini-2.5-pro': {
+    id: 'google/gemini-2.5-pro',
+    name: 'Gemini 2.5 Pro',
+    description: 'Google flagship, vision capable',
+    vision: true,
+    premium: true
+  },
+  // === ANTHROPIC CLAUDE ===
+  'claude-sonnet-4.5': {
+    id: 'anthropic/claude-sonnet-4.5',
+    name: 'Claude Sonnet 4.5',
+    description: 'Latest Anthropic flagship',
+    vision: true,
+    premium: true
+  },
+  'claude-haiku-4.5': {
+    id: 'anthropic/claude-haiku-4.5',
+    name: 'Claude Haiku 4.5',
+    description: 'Fast Claude 4.5',
+    vision: true,
+    premium: true
+  },
+  
+  // === OPENAI ===
+  'gpt-5': {
+    id: 'openai/gpt-5-chat',
+    name: 'GPT-5',
+    description: 'OpenAI flagship',
+    vision: true,
+    premium: true
+  },
+  'gpt-5-mini': {
+    id: 'openai/gpt-5-mini',
+    name: 'GPT-5 Mini',
+    description: 'Smaller GPT-5',
+    vision: true,
+    premium: true
+  },
+  'gpt-5-nano': {
+    id: 'openai/gpt-5-nano',
+    name: 'GPT-5 Nano',
+    description: 'Tiny GPT-5',
+    vision: true,
+    premium: false
+  },
+
+  // === META LLAMA ===
+  'llama-3.2-90b-vision': {
+    id: 'meta-llama/llama-3.2-90b-vision-instruct',
+    name: 'Llama 3.2 90B Vision',
+    description: 'Large vision model',
+    vision: true,
+    premium: true
+  }
+}
+
+/**
  * Chat with Story AI assistant for comic writing help
+ * Supports vision models with canvas screenshot
  * 
  * @param {string} userMessage - The user's message/question
  * @param {Object} options - Chat options
+ * @param {string} options.model - Model key from STORY_AI_MODELS (default: 'claude-3.5-sonnet')
+ * @param {string} options.imageUrl - URL of canvas screenshot (for vision models)
  * @param {Array<{role: string, content: string}>} options.chatHistory - Previous messages for context
  * @param {Object} options.projectContext - Current project context
  * @param {string} options.projectContext.title - Project title
  * @param {number} options.projectContext.pageNumber - Current page number
  * @param {number} options.projectContext.totalPages - Total pages in project
  * @param {Array<{name: string, description: string}>} options.projectContext.characters - Characters in series
- * @param {Object} options.projectContext.currentPageContent - Text content from current page
  * @returns {Promise<string>} - AI response
  */
 export async function chatWithStoryAI(userMessage, options = {}) {
-  const { chatHistory = [], projectContext = {} } = options
+  const { 
+    model: modelKey = 'claude-3.5-sonnet',
+    imageUrl = null,
+    chatHistory = [], 
+    projectContext = {} 
+  } = options
 
   if (!falApiKey) {
     throw new Error('Fal.ai API key not configured')
+  }
+
+  // Get model config
+  const modelConfig = STORY_AI_MODELS[modelKey]
+  if (!modelConfig) {
+    throw new Error(`Invalid model: ${modelKey}`)
   }
 
   // Build character context
@@ -439,21 +522,7 @@ export async function chatWithStoryAI(userMessage, options = {}) {
     ? projectContext.characters.map(c => `- ${c.name}: ${c.description || 'No description'}`).join('\n')
     : 'No characters defined yet.'
 
-  // Build current page content context
-  const pageContent = projectContext.currentPageContent || {}
-  const dialogText = pageContent.speechBubbles?.length > 0
-    ? `Speech bubbles on current page:\n${pageContent.speechBubbles.map((t, i) => `${i + 1}. "${t}"`).join('\n')}`
-    : 'No dialogue on current page yet.'
-  
-  const narrationText = pageContent.textElements?.length > 0
-    ? `Narration/captions:\n${pageContent.textElements.map((t, i) => `${i + 1}. "${t}"`).join('\n')}`
-    : ''
-
-  const effectsText = pageContent.textEffects?.length > 0
-    ? `Sound effects: ${pageContent.textEffects.join(', ')}`
-    : ''
-
-  // System prompt for story assistance
+  // System prompt for story assistance (simplified for vision mode)
   const systemPrompt = `You are an expert comic book writer and story assistant. You help users create compelling comic book stories with vivid dialogue, interesting plots, and memorable characters.
 
 ## Current Project Context
@@ -463,18 +532,13 @@ export async function chatWithStoryAI(userMessage, options = {}) {
 ## Characters
 ${characterList}
 
-## Current Page Content
-${dialogText}
-${narrationText}
-${effectsText}
-
 ## Your Capabilities
-1. **Dialogue Writing:** Suggest natural, character-appropriate dialogue for speech bubbles
-2. **Plot Development:** Help with story arcs, plot twists, and narrative flow
-3. **Character Development:** Suggest character motivations, backstories, and growth
-4. **Image Prompts:** Convert story ideas into detailed AI image generation prompts
-5. **Pacing:** Advise on panel layout and story pacing
-6. **Tone & Style:** Help maintain consistent voice and artistic direction
+1. **Visual Analysis:** Describe what you see in the comic page image
+2. **Dialogue Writing:** Suggest natural, character-appropriate dialogue for speech bubbles
+3. **Plot Development:** Help with story arcs, plot twists, and narrative flow
+4. **Character Development:** Suggest character motivations, backstories, and growth
+5. **Image Prompts:** Convert story ideas into detailed AI image generation prompts
+6. **Pacing:** Advise on panel layout and story pacing
 
 ## Guidelines
 - Be creative and helpful
@@ -482,22 +546,35 @@ ${effectsText}
 - When suggesting dialogue, format it clearly
 - When generating image prompts, be detailed and visual
 - Consider the established characters and their personalities
-- Reference the current page content when relevant`
+- When an image is provided, analyze what you see and reference visual elements`
 
   try {
-    const result = await fal.subscribe('fal-ai/any-llm', {
-      input: {
-        model: 'meta-llama/llama-3.1-70b-instruct',
-        prompt: userMessage,
-        system_prompt: systemPrompt,
-        chat_history: chatHistory.map(m => ({
-          role: m.role,
-          content: m.content
-        })),
-        max_tokens: 800,
-        temperature: 0.7
-      }
-    })
+    // Build the prompt - for vision models, the image is included as a media URL
+    let prompt = userMessage
+    
+    // Build input for fal-ai/any-llm
+    const input = {
+      model: modelConfig.id,
+      prompt: prompt,
+      system_prompt: systemPrompt,
+      max_tokens: 800,
+      temperature: 0.7
+    }
+
+    // Add image for vision-capable models
+    if (imageUrl && modelConfig.vision) {
+      input.media_url = imageUrl
+    }
+
+    // Add chat history if available
+    if (chatHistory.length > 0) {
+      input.chat_history = chatHistory.map(m => ({
+        role: m.role,
+        content: m.content
+      }))
+    }
+
+    const result = await fal.subscribe('fal-ai/any-llm', { input })
 
     const output = result.data?.output || result.output || ''
     return output.trim()

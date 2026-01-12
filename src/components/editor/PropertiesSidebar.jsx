@@ -17,6 +17,7 @@ export default function PropertiesSidebar({
   onSelectAsset,
   onAddAsset,
   activePageIndex = 0,
+  onCaptureCanvas,
 }) {
   const [activeTab, setActiveTab] = useState('properties')
 
@@ -103,7 +104,7 @@ export default function PropertiesSidebar({
         )}
 
         {activeTab === 'storyAI' && (
-          <StoryAIPanel />
+          <StoryAIPanel onCaptureCanvas={onCaptureCanvas} />
         )}
       </div>
     </aside>

@@ -51,6 +51,18 @@ export default function ProjectPage() {
   const [showAIModal, setShowAIModal] = useState(false)
   const [isExporting, setIsExporting] = useState(false)
 
+  // Callback to capture canvas for Story AI
+  const captureCanvasForAI = useCallback(async () => {
+    if (!canvasRef.current) return null
+    try {
+      const dataUrl = await canvasRef.current.generateThumbnail()
+      return dataUrl
+    } catch (error) {
+      console.error('Failed to capture canvas for AI:', error)
+      return null
+    }
+  }, [])
+
   // Load project on mount
   useEffect(() => {
     loadProject(projectId)
@@ -389,6 +401,7 @@ export default function ProjectPage() {
             onSelectAsset={setSelectedAssetId}
             onAddAsset={addAssetToPage}
             activePageIndex={activePageIndex}
+            onCaptureCanvas={captureCanvasForAI}
           />
         </div>
 

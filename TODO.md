@@ -8,6 +8,7 @@
 - - Improve character descriptions which will be used when the AI is thinking about the current story
 - - Set up "Motion" / Video generation
 - - AI Voice?!? Can we have AI Voices read the text / script and then also save the audio? Perhaps we save 1 audio file per page and as the user turns the page it plays that audio after a small delay?
+- Add a "Story Agent Prompt" editor. We will set a default but users can edit their story agent so they have control over how it works and responds to them.
 
 - Add more Fal Models?
 - - With Pony can we use Civitai LoRAs?
