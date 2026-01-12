@@ -3,6 +3,8 @@
 - Update the home and marketing page!
 - - Improve mobile menu
 
+- Set up prompt to include things like setting, scene, lighting, etc.
+
 - Can this app even work in mobile? Perhaps mobile is a "view only" version?
 
 - Update the AI features to only work with a paid account.

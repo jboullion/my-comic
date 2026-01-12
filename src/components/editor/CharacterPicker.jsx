@@ -13,21 +13,16 @@ function CharacterPickerItem({ character, selected, onSelect, disabled }) {
   const profileImageUrl = useCharacterImageFromBlob(character.profileImage?.blob)
 
   return (
-    <label
+    <button
+      type="button"
+      onClick={() => !disabled && onSelect(character.id)}
+      disabled={disabled}
       className={`
-        flex items-center gap-3 p-2 rounded-lg cursor-pointer transition-colors
+        w-full flex items-center gap-3 p-2 rounded-lg transition-colors text-left
         ${selected ? 'bg-indigo-500/20 border border-indigo-500/50' : 'hover:bg-slate-700/50 border border-transparent'}
-        ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
+        ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
       `}
     >
-      <input
-        type="radio"
-        checked={selected}
-        onChange={() => onSelect(character.id)}
-        disabled={disabled}
-        className="sr-only"
-      />
-
       {/* Thumbnail */}
       <div className="w-8 h-8 rounded-lg bg-slate-700 flex items-center justify-center overflow-hidden shrink-0">
         {profileImageUrl ? (
@@ -55,7 +50,7 @@ function CharacterPickerItem({ character, selected, onSelect, disabled }) {
           <div className="w-2 h-2 rounded-full bg-indigo-500" />
         )}
       </div>
-    </label>
+    </button>
   )
 }
 
