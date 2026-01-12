@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { FiImage, FiMessageSquare, FiSmartphone } from 'react-icons/fi'
 import PublicLayout from '../layouts/PublicLayout'
+import FeatureSection from '../components/public/FeatureSection'
 
 export default function HomePage() {
   return (
@@ -8,45 +9,66 @@ export default function HomePage() {
       {/* Hero Section */}
       <div className="max-w-6xl mx-auto px-4 py-16">
         <div className="text-center mb-16">
-          <h1 className="text-5xl font-bold mb-6 bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">
+          <h1 className="text-6xl lg:text-7xl font-bold mb-6 bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">
             Create Amazing Comics
           </h1>
           <p className="text-xl text-slate-400 mb-8 max-w-2xl mx-auto">
-            A powerful, free comic book editor that works entirely in your browser. Your data stays on your device.
+            A powerful, free comic book editor that works entirely in your browser.
+            Create professional comics with.
           </p>
-          <button className="px-8 py-4 bg-indigo-500 hover:bg-indigo-600 rounded-xl text-lg font-semibold transition-colors shadow-lg shadow-indigo-500/25">
-            Start Creating
-          </button>
-        </div>
-
-        {/* Feature Cards */}
-        <div className="grid md:grid-cols-3 gap-6 mb-16">
-          <FeatureCard 
-            icon={<FiImage className="w-6 h-6" />}
-            title="Drag & Drop Editor"
-            description="Intuitive panel layout with drag-and-drop support. Add images, resize, and arrange with ease."
-          />
-          <FeatureCard 
-            icon={<FiMessageSquare className="w-6 h-6" />}
-            title="Speech Bubbles & Text"
-            description="Professional speech bubbles, thought clouds, captions, and sound effects with custom styling."
-          />
-          <FeatureCard 
-            icon={<FiSmartphone className="w-6 h-6" />}
-            title="Works Offline"
-            description="Install as an app and work offline. Your projects are saved locally and always accessible."
-          />
-        </div>
-
-        {/* Status Indicator */}
-        <div className="text-center">
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-slate-800 rounded-full text-sm text-slate-400">
-            <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-            PWA Ready • React + Vite • Tailwind CSS
+          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+            <Link to="/app" className="px-8 py-4 bg-indigo-500 hover:bg-indigo-600 rounded-xl text-lg font-semibold transition-colors shadow-lg shadow-indigo-500/25">
+              Start Creating
+            </Link>
+            <Link to="/pricing" className="px-8 py-4 border-2 border-indigo-500 text-indigo-400 hover:bg-indigo-500/10 rounded-xl text-lg font-semibold transition-colors">
+              View Pricing
+            </Link>
           </div>
         </div>
-
       </div>
+
+      {/* Create Comics Section */}
+      <FeatureSection
+        title="Create Comics Like a Pro"
+        description="Professional drag-and-drop editor with everything you need to bring your stories to life."
+        imagePosition="left"
+      >
+        <ul className="space-y-2 text-slate-400 mb-6">
+          <li>• Intuitive panel-based layout</li>
+          <li>• Professional speech bubbles and text effects</li>
+          <li>• Multi-page project management</li>
+          <li>• Export to multiple formats (WebP, PNG, JPEG)</li>
+        </ul>
+      </FeatureSection>
+
+      {/* Save Locally Section */}
+      <FeatureSection
+        title="Your Data, Your Device"
+        description="Privacy-first, offline-capable architecture. Your creative work stays on your device—no backend storage."
+        imagePosition="right"
+      >
+        <ul className="space-y-2 text-slate-400 mb-6">
+          <li>• Export anytime for backup</li>
+          <li>• You own your creations</li>
+        </ul>
+      </FeatureSection>
+
+      {/* AI Features Section */}
+      <FeatureSection
+        title="AI-Powered Image Generation"
+        description="Create stunning comic art with state-of-the-art AI models. Generate character-consistent images with FLUX Pro and custom LoRA support."
+        imagePosition="left"
+        ctaLink={{ text: 'View AI Features →', to: '/pricing' }}
+      >
+        <ul className="space-y-2 text-slate-400 mb-6">
+          <li>• FLUX 2 Pro, Dev, and Nano models</li>
+          <li>• Character-consistent generation</li>
+          <li>• LoRA model support</li>
+          <li>• Comic, Manga, Realistic, and Retro styles</li>
+          <li>• Custom model integration (CivitAI)</li>
+        </ul>
+      </FeatureSection>
+
     </PublicLayout>
   )
 }

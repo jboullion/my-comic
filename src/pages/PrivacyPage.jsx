@@ -24,7 +24,6 @@ export default function PrivacyPage() {
             <ul className="list-disc list-inside space-y-2">
               <li>Your comic projects and artwork</li>
               <li>Images you upload to the editor</li>
-              <li>Personal information (no account required)</li>
             </ul>
           </section>
 

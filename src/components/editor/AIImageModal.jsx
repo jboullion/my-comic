@@ -117,6 +117,25 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
   const [imageSize, setImageSize] = useState('match_page')
   const [selectedCharacterIds, setSelectedCharacterIds] = useState([])
 
+  // Advanced tab structured prompts
+  const [advancedPrompts, setAdvancedPrompts] = useState({
+    scene: '',
+    character: '',
+    lighting: '',
+    composition: ''
+  })
+
+  // Advanced tab style (free text instead of dropdown)
+  const [advancedStyle, setAdvancedStyle] = useState('')
+
+  // Advanced parameters
+  const [advancedParams, setAdvancedParams] = useState({
+    guidanceScale: 7.5,  // CFG scale (1-20)
+    inferenceSteps: 28,  // Steps (15-50)
+    negativePrompt: 'blurry, low quality, distorted, deformed, ugly, bad anatomy',
+    seed: null
+  })
+
   // Get allowMature from project settings
   const allowMature = customModel?.allowMature || false
 
@@ -173,6 +192,20 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
     }
   }, [isOpen, projectId])
 
+  // Auto-fill character description in advanced tab
+  useEffect(() => {
+    if (activeTab !== 'advanced') return
+    if (selectedCharacterIds.length === 0) return
+
+    const selectedChar = characters.find(c => selectedCharacterIds.includes(c.id))
+    if (selectedChar?.description) {
+      setAdvancedPrompts(prev => ({
+        ...prev,
+        character: selectedChar.description
+      }))
+    }
+  }, [selectedCharacterIds, activeTab, characters])
+
   const imageSizeOptions = [
     { value: 'match_page', label: `${matchPageDimensions.width}x${matchPageDimensions.height}`, description: 'Match Page' },
     { value: 'square_hd', label: '1024x1024', description: 'Square HD' },
@@ -182,20 +215,24 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
     { value: 'landscape_16_9', label: '1024x576', description: 'Landscape 16:9' },
   ]
 
-  // Build prompt with character descriptions
+  // Build prompt with character descriptions (no longer auto-appends)
   const buildPromptWithCharacters = useCallback((basePrompt) => {
-    if (selectedCharacterIds.length === 0) return basePrompt
+    // Character descriptions are only for reference in CharacterPicker preview
+    return basePrompt
+  }, [])
 
-    const selectedChars = characters.filter(c => selectedCharacterIds.includes(c.id))
-    const charDescriptions = selectedChars
-      .filter(c => c.description)
-      .map(c => `${c.name}: ${c.description}`)
-      .join('\n')
+  // Combine structured prompts for advanced tab
+  const combineStructuredPrompts = useCallback(() => {
+    const parts = []
 
-    if (!charDescriptions) return basePrompt
+    if (advancedPrompts.character) parts.push(advancedPrompts.character)
+    if (advancedPrompts.scene) parts.push(advancedPrompts.scene)
+    if (advancedPrompts.lighting) parts.push(advancedPrompts.lighting)
+    if (advancedPrompts.composition) parts.push(advancedPrompts.composition)
+    if (advancedStyle) parts.push(advancedStyle)
 
-    return `Characters in scene:\n${charDescriptions}\n\nScene: ${basePrompt}`
-  }, [selectedCharacterIds, characters])
+    return parts.filter(p => p.trim()).join(', ')
+  }, [advancedPrompts, advancedStyle])
 
   // Handle prompt enhancement with AI
   const handleEnhancePrompt = useCallback(async () => {
@@ -292,6 +329,67 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
     }
   }, [prompt, style, model, imageSize, projectId, buildPromptWithCharacters, getCharacterLora, allowMature, matchPageDimensions, customModel, wasEnhanced])
 
+  const handleAdvancedGenerate = useCallback(async () => {
+    const combinedPrompt = combineStructuredPrompts()
+
+    if (!combinedPrompt.trim()) {
+      setError('Please fill in at least one prompt field')
+      return
+    }
+
+    setIsGenerating(true)
+    setError(null)
+    setProgress(null)
+
+    try {
+      // Get LoRA from selected character (only for custom models - FLUX doesn't support LoRAs)
+      const lora = model === 'custom' ? getCharacterLora() : null
+
+      // Use custom dimensions for "match_page", otherwise use preset string
+      const imageSizeParam = imageSize === 'match_page'
+        ? matchPageDimensions
+        : imageSize
+
+      const result = await generateImage({
+        prompt: combinedPrompt,
+        style: 'none', // Style is included in the text prompt for advanced tab
+        model,
+        imageSize: imageSizeParam,
+        seed: advancedParams.seed,
+        allowMature,
+        lora,
+        customModel: model === 'custom' ? customModel : null,
+        // Advanced parameters
+        guidanceScale: advancedParams.guidanceScale,
+        inferenceSteps: advancedParams.inferenceSteps,
+        negativePrompt: advancedParams.negativePrompt,
+        onProgress: setProgress
+      })
+
+      setGeneratedImage({ ...result, style: advancedStyle })
+
+      // Save to history with structured prompts
+      const historyEntry = {
+        id: Date.now(),
+        prompt: combinedPrompt,
+        structuredPrompts: advancedPrompts,
+        advancedParams: advancedParams,
+        advancedStyle,
+        model,
+        imageSize,
+        timestamp: Date.now()
+      }
+      const updatedHistory = saveToHistory(projectId, historyEntry)
+      setHistory(updatedHistory)
+    } catch (err) {
+      setError(err.message)
+      setGeneratedImage(null)
+    } finally {
+      setIsGenerating(false)
+      setProgress(null)
+    }
+  }, [combineStructuredPrompts, advancedStyle, model, imageSize, projectId, getCharacterLora, allowMature, matchPageDimensions, customModel, advancedPrompts, advancedParams])
+
   const handleSave = useCallback(async () => {
     if (!generatedImage?.imageUrl) return
 
@@ -343,8 +441,17 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
   }, [onClose])
 
   const handleHistoryClick = (entry) => {
-    setPrompt(entry.prompt)
-    setStyle(entry.style)
+    // Check if this is an advanced tab entry with structured prompts
+    if (entry.structuredPrompts) {
+      setAdvancedPrompts(entry.structuredPrompts)
+      setAdvancedStyle(entry.advancedStyle || '')
+      setActiveTab('advanced')
+    } else {
+      setPrompt(entry.prompt)
+      setStyle(entry.style)
+      setActiveTab('generate')
+    }
+
     // Handle both old 'mode' format and new 'model' format from history
     if (entry.model) {
       setModel(entry.model)
@@ -354,7 +461,6 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
       setModel('flux-1-dev')
     }
     setImageSize(entry.imageSize)
-    setActiveTab('generate')
   }
 
   const handleDeleteHistory = (entryId, e) => {
@@ -409,6 +515,17 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
             >
               <FiZap className="w-4 h-4" />
               Generate
+            </button>
+            <button
+              onClick={() => setActiveTab('advanced')}
+              className={`flex items-center gap-2 px-4 py-3 text-sm font-medium transition-colors border-b-2 -mb-px ${
+                activeTab === 'advanced'
+                  ? 'text-white border-indigo-500'
+                  : 'text-slate-400 border-transparent hover:text-white hover:border-slate-600'
+              }`}
+            >
+              <FiCpu className="w-4 h-4" />
+              Advanced
             </button>
             <button
               onClick={() => setActiveTab('history')}
@@ -520,35 +637,6 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
                 disabled={isGenerating}
               />
 
-              {/* LoRA Indicator - only shown when custom model selected AND character has LoRA configured */}
-              {hasLora && modelSupportsLora && (
-                <div className="bg-indigo-500/10 border border-indigo-500/30 rounded-lg px-4 py-3">
-                  <div className="flex items-center gap-2">
-                    <span className="text-indigo-400 text-sm font-medium">LoRA Active</span>
-                    <span className="text-slate-400 text-xs">
-                      {characterLora.characterName}
-                      {characterLora.triggerWord && ` - "${characterLora.triggerWord}"`}
-                    </span>
-                  </div>
-                  <p className="text-[10px] text-slate-500 mt-1">
-                    Trigger word will be auto-prepended to your prompt. Strength: {Math.round(characterLora.scale * 100)}%
-                  </p>
-                </div>
-              )}
-
-              {/* LoRA Warning - shown when character has LoRA but FLUX model selected */}
-              {hasLora && !modelSupportsLora && (
-                <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg px-4 py-3">
-                  <div className="flex items-center gap-2">
-                    <FiAlertCircle className="w-4 h-4 text-amber-400 shrink-0" />
-                    <span className="text-amber-300 text-sm">LoRAs are only available for custom models</span>
-                  </div>
-                  <p className="text-[10px] text-slate-500 mt-1">
-                    {characterLora.characterName} has a LoRA configured. Switch to a Custom Model to use it.
-                  </p>
-                </div>
-              )}
-
               {/* Style Dropdown */}
               <div className="space-y-2">
                 <label className="text-[10px] text-slate-500 uppercase font-bold">Style</label>
@@ -582,13 +670,6 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
                     disabled={isGenerating}
                     className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 disabled:opacity-50"
                   >
-                    {/* Series custom model (if enabled) */}
-                    {customModel?.enabled && customModel?.url && (
-                      <option value="custom">
-                        📌 {customModel.name || 'Custom Model'}
-                      </option>
-                    )}
-                    {/* Standard FLUX models */}
                     {Object.entries(AI_MODELS).map(([key, modelConfig]) => (
                       <option key={key} value={key}>
                         {modelConfig.name}
@@ -596,10 +677,7 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
                     ))}
                   </select>
                   <p className="text-[10px] text-slate-500">
-                    {model === 'custom'
-                      ? `Series custom ${customModel?.type?.toUpperCase() || ''} model`
-                      : `${AI_MODELS[model]?.description} (${AI_MODELS[model]?.cost})`
-                    }
+                    {AI_MODELS[model]?.description} ({AI_MODELS[model]?.cost})
                   </p>
                 </div>
 
@@ -620,15 +698,6 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
                   </select>
                 </div>
               </div>
-
-              {/* Mature Content Indicator (controlled in Series Settings) */}
-              {allowMature && (
-                <div className="flex items-center gap-2 px-3 py-2 bg-amber-500/10 border border-amber-500/30 rounded-lg">
-                  <span className="text-xs text-amber-300">
-                    Mature content enabled (Series Settings → AI Model)
-                  </span>
-                </div>
-              )}
 
               {/* Error Display */}
               {error && (
@@ -670,7 +739,187 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
                   </div>
                   <p className="text-xs text-slate-500">
                     {generatedImage.width}x{generatedImage.height} - {generatedImage.usedCustomModel ? generatedImage.customModelName : (AI_MODELS[generatedImage.model]?.name || generatedImage.model)} - Seed: {generatedImage.seed}
-                    {generatedImage.usedLora && ' - Used LoRA'}
+                    {generatedImage.usedCustomModel && ' - Custom model'}
+                  </p>
+                </div>
+              )}
+            </>
+          ) : activeTab === 'advanced' ? (
+            /* Advanced Tab */
+            <>
+              {/* Structured Prompt Fields */}
+              <div className="space-y-3">
+
+                {/* Scene/Setting Field */}
+                <div>
+                  <label htmlFor="adv-scene" className="text-xs text-slate-400 block mb-1">
+                    Scene / Setting
+                  </label>
+                  <textarea
+                    id="adv-scene"
+                    value={advancedPrompts.scene}
+                    onChange={(e) => setAdvancedPrompts({...advancedPrompts, scene: e.target.value})}
+                    placeholder="Location, environment, background details..."
+                    rows={3}
+                    disabled={isGenerating}
+                    className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 disabled:opacity-50 resize-none"
+                  />
+                </div>
+
+                {/* Lighting/Atmosphere Field */}
+                <div>
+                  <label htmlFor="adv-lighting" className="text-xs text-slate-400 block mb-1">
+                    Lighting / Atmosphere
+                  </label>
+                  <textarea
+                    id="adv-lighting"
+                    value={advancedPrompts.lighting}
+                    onChange={(e) => setAdvancedPrompts({...advancedPrompts, lighting: e.target.value})}
+                    placeholder="Time of day, mood, lighting direction, weather..."
+                    rows={3}
+                    disabled={isGenerating}
+                    className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 disabled:opacity-50 resize-none"
+                  />
+                </div>
+
+                {/* Composition/Framing Field */}
+                <div>
+                  <label htmlFor="adv-composition" className="text-xs text-slate-400 block mb-1">
+                    Composition / Framing
+                  </label>
+                  <textarea
+                    id="adv-composition"
+                    value={advancedPrompts.composition}
+                    onChange={(e) => setAdvancedPrompts({...advancedPrompts, composition: e.target.value})}
+                    placeholder="Camera angle, shot type (close-up, wide shot), perspective..."
+                    rows={3}
+                    disabled={isGenerating}
+                    className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 disabled:opacity-50 resize-none"
+                  />
+                </div>
+              </div>
+
+              {/* Character/Subject Field */}
+              <div>
+                <label htmlFor="adv-character" className="text-xs text-slate-400 block mb-1">
+                  Character / Subject
+                </label>
+                <textarea
+                  id="adv-character"
+                  value={advancedPrompts.character}
+                  onChange={(e) => setAdvancedPrompts({...advancedPrompts, character: e.target.value})}
+                  placeholder="Who or what is in the image, their actions, poses..."
+                  rows={3}
+                  disabled={isGenerating}
+                  className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 disabled:opacity-50 resize-none"
+                />
+              </div>
+
+              {/* Character Picker */}
+              <CharacterPicker
+                selectedIds={selectedCharacterIds}
+                onChange={setSelectedCharacterIds}
+                disabled={isGenerating}
+                showDescription={false}
+              />
+
+              {/* Style Text Input */}
+              <div className="space-y-2">
+                <label htmlFor="adv-style" className="text-[10px] text-slate-500 uppercase font-bold block">
+                  Style (Optional)
+                </label>
+                <input
+                  id="adv-style"
+                  type="text"
+                  value={advancedStyle}
+                  onChange={(e) => setAdvancedStyle(e.target.value)}
+                  placeholder="e.g., comic book style, manga, photorealistic, watercolor..."
+                  disabled={isGenerating}
+                  className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 disabled:opacity-50"
+                />
+                <p className="text-[10px] text-slate-500 italic">
+                  Add style keywords to refine the artistic direction
+                </p>
+              </div>
+
+              {/* Options Row */}
+              <div className="grid grid-cols-2 gap-4">
+                {/* Model Selection */}
+                <div className="space-y-2">
+                  <label className="text-[10px] text-slate-500 uppercase font-bold">Model</label>
+                  <select
+                    value={model}
+                    onChange={(e) => setModel(e.target.value)}
+                    disabled={isGenerating}
+                    className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 disabled:opacity-50"
+                  >
+                    {Object.entries(AI_MODELS).map(([key, modelConfig]) => (
+                      <option key={key} value={key}>
+                        {modelConfig.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Image Size Selection */}
+                <div className="space-y-2">
+                  <label className="text-[10px] text-slate-500 uppercase font-bold">Image Size</label>
+                  <select
+                    value={imageSize}
+                    onChange={(e) => setImageSize(e.target.value)}
+                    disabled={isGenerating}
+                    className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 disabled:opacity-50"
+                  >
+                    {imageSizeOptions.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.description} - {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* Error Display */}
+              {error && (
+                <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-3">
+                  <div className="flex items-center gap-2">
+                    <FiAlertCircle className="w-4 h-4 text-red-400 shrink-0" />
+                    <p className="text-sm text-red-300">{error}</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Progress Display */}
+              {isGenerating && (
+                <div className="bg-slate-800 rounded-lg p-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-5 h-5 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+                    <div>
+                      <p className="text-sm text-white">
+                        {progress?.status === 'COMPLETED' ? 'Completed' : 'Generating...'}
+                      </p>
+                      {progress?.logs && progress.logs.length > 0 && (
+                        <p className="text-xs text-slate-400 mt-1">
+                          {progress.logs[progress.logs.length - 1]}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Generated Image Preview */}
+              {generatedImage && (
+                <div className="space-y-3">
+                  <div className="relative bg-slate-900 rounded-lg border border-slate-700 overflow-hidden">
+                    <img
+                      src={generatedImage.imageUrl}
+                      alt="Generated"
+                      className="w-full h-auto max-h-96 object-contain"
+                    />
+                  </div>
+                  <p className="text-xs text-slate-500">
+                    {generatedImage.width}x{generatedImage.height} - {generatedImage.usedCustomModel ? generatedImage.customModelName : (AI_MODELS[generatedImage.model]?.name || generatedImage.model)} - Seed: {generatedImage.seed}
                     {generatedImage.usedCustomModel && ' - Custom model'}
                   </p>
                 </div>
@@ -709,9 +958,11 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
                             {entry.prompt}
                           </p>
                           <div className="flex items-center gap-2 mt-2 flex-wrap">
-                            <span className="px-2 py-0.5 text-[10px] bg-indigo-500/20 text-indigo-300 rounded">
-                              {AI_STYLES[entry.style]?.name || entry.style}
-                            </span>
+                            {(entry.advancedStyle || entry.style) && (
+                              <span className="px-2 py-0.5 text-[10px] bg-indigo-500/20 text-indigo-300 rounded">
+                                {entry.advancedStyle || AI_STYLES[entry.style]?.name || entry.style}
+                              </span>
+                            )}
                             <span className="px-2 py-0.5 text-[10px] bg-slate-700 text-slate-300 rounded">
                               {AI_MODELS[entry.model]?.name || entry.mode || 'Unknown'}
                             </span>
@@ -782,6 +1033,52 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
                 <button
                   onClick={handleGenerate}
                   disabled={isGenerating || !prompt.trim()}
+                  className="px-4 py-2 text-sm bg-indigo-500 hover:bg-indigo-600 disabled:opacity-50 text-white rounded-lg font-medium transition-colors flex items-center gap-2"
+                >
+                  <FiZap className="w-4 h-4" />
+                  {isGenerating ? 'Generating...' : 'Generate'}
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Footer - Advanced Tab */}
+        {isConfigured && activeTab === 'advanced' && (
+          <div className="flex justify-between items-center gap-3 px-6 py-4 border-t border-slate-700">
+            <button
+              onClick={handleClose}
+              className="px-4 py-2 text-sm text-slate-400 hover:text-white transition-colors"
+            >
+              Cancel
+            </button>
+
+            <div className="flex gap-2">
+              {generatedImage && !isGenerating && (
+                <>
+                  <button
+                    onClick={handleSave}
+                    disabled={isSaving}
+                    className="px-4 py-2 text-sm bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors flex items-center gap-2 disabled:opacity-50"
+                  >
+                    <FiCheck className="w-4 h-4" />
+                    {isSaving ? 'Saving...' : 'Save to Canvas'}
+                  </button>
+                  <button
+                    onClick={handleAdvancedGenerate}
+                    disabled={isGenerating}
+                    className="px-4 py-2 text-sm bg-slate-700 hover:bg-slate-600 text-white rounded-lg font-medium transition-colors flex items-center gap-2 disabled:opacity-50"
+                  >
+                    <FiRefreshCw className="w-4 h-4" />
+                    Regenerate
+                  </button>
+                </>
+              )}
+
+              {!generatedImage && (
+                <button
+                  onClick={handleAdvancedGenerate}
+                  disabled={isGenerating || !combineStructuredPrompts().trim()}
                   className="px-4 py-2 text-sm bg-indigo-500 hover:bg-indigo-600 disabled:opacity-50 text-white rounded-lg font-medium transition-colors flex items-center gap-2"
                 >
                   <FiZap className="w-4 h-4" />
