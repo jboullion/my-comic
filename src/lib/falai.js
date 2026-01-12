@@ -1,4 +1,5 @@
 import { fal } from '@fal-ai/client'
+import { buildDefaultStoryPrompt } from './ai/openrouter'
 
 const falApiKey = import.meta.env.VITE_FAL_AI_KEY
 const openRouterKey = import.meta.env.VITE_OPENROUTER_KEY
@@ -573,6 +574,7 @@ async function callOpenRouterVision(modelId, systemPrompt, userMessage, imageUrl
  * @param {number} options.projectContext.pageNumber - Current page number
  * @param {number} options.projectContext.totalPages - Total pages in project
  * @param {Array<{name: string, description: string}>} options.projectContext.characters - Characters in series
+ * @param {string} [options.projectContext.customStoryPrompt] - Custom prompt template (optional)
  * @returns {Promise<string>} - AI response
  */
 export async function chatWithStoryAI(userMessage, options = {}) {
@@ -593,36 +595,23 @@ export async function chatWithStoryAI(userMessage, options = {}) {
     throw new Error(`Invalid model: ${modelKey}`)
   }
 
-  // Build character context
-  const characterList = projectContext.characters?.length > 0
-    ? projectContext.characters.map(c => `- ${c.name}: ${c.description || 'No description'}`).join('\n')
-    : 'No characters defined yet.'
+  // Build system prompt (use custom prompt from series if available)
+  let systemPrompt
+  if (projectContext.customStoryPrompt) {
+    // Use custom prompt with variable interpolation
+    const characterList = projectContext.characters?.length > 0
+      ? projectContext.characters.map(c => `- ${c.name}: ${c.description || 'No description'}`).join('\n')
+      : 'No characters defined yet.'
 
-  // System prompt for story assistance (simplified for vision mode)
-  const systemPrompt = `You are an expert comic book writer and story assistant. You help users create compelling comic book stories with vivid dialogue, interesting plots, and memorable characters.
-
-## Current Project Context
-- **Title:** ${projectContext.title || 'Untitled'}
-- **Current Page:** ${projectContext.pageNumber || 1} of ${projectContext.totalPages || 1}
-
-## Characters
-${characterList}
-
-## Your Capabilities
-1. **Visual Analysis:** Describe what you see in the comic page image
-2. **Dialogue Writing:** Suggest natural, character-appropriate dialogue for speech bubbles
-3. **Plot Development:** Help with story arcs, plot twists, and narrative flow
-4. **Character Development:** Suggest character motivations, backstories, and growth
-5. **Image Prompts:** Convert story ideas into detailed AI image generation prompts
-6. **Pacing:** Advise on panel layout and story pacing
-
-## Guidelines
-- Be creative and helpful
-- Keep responses concise but useful (under 300 words unless more detail is requested)
-- When suggesting dialogue, format it clearly
-- When generating image prompts, be detailed and visual
-- Consider the established characters and their personalities
-- When an image is provided, analyze what you see and reference visual elements`
+    systemPrompt = projectContext.customStoryPrompt
+      .replace(/\$\{projectContext\.title\s*\|\|\s*['"]Untitled['"]\}/g, projectContext.title || 'Untitled')
+      .replace(/\$\{projectContext\.pageNumber\s*\|\|\s*1\}/g, String(projectContext.pageNumber || 1))
+      .replace(/\$\{projectContext\.totalPages\s*\|\|\s*1\}/g, String(projectContext.totalPages || 1))
+      .replace(/\$\{characterList\}/g, characterList)
+  } else {
+    // Use default prompt
+    systemPrompt = buildDefaultStoryPrompt(projectContext)
+  }
 
   try {
     // For vision models with an image, call OpenRouter directly

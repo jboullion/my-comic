@@ -1,9 +1,10 @@
 import { useState, useRef, useEffect } from 'react'
-import { FiSend, FiTrash2, FiCpu, FiAlertCircle, FiImage, FiChevronDown, FiCamera, FiUpload, FiX } from 'react-icons/fi'
+import { FiSend, FiTrash2, FiCpu, FiAlertCircle, FiImage, FiChevronDown, FiCamera, FiUpload, FiX, FiEdit3 } from 'react-icons/fi'
 import { chatWithStoryAI, isOpenRouterConfigured, STORY_AI_MODELS } from '../../../lib/ai/openrouter'
 import { uploadImageToFal } from '../../../lib/ai/falai'
 import { useProjectStore } from '../../../stores/useProjectStore'
 import { useCharactersStore } from '../../../stores/useCharactersStore'
+import useSeriesStore from '../../../stores/useSeriesStore'
 
 /**
  * Get localStorage key for chat history
@@ -44,6 +45,10 @@ export default function StoryAIPanel({ onCaptureCanvas }) {
   const currentProject = useProjectStore(state => state.currentProject)
   const activePageIndex = useProjectStore(state => state.activePageIndex)
   const { characters } = useCharactersStore()
+  const { openStoryPromptModal, getSeriesStoryPrompt, getSeriesById } = useSeriesStore()
+
+  const seriesId = currentProject?.seriesId
+  const customPrompt = seriesId ? getSeriesStoryPrompt(seriesId) : null
   
   const [messages, setMessages] = useState([])
   const [inputValue, setInputValue] = useState('')
@@ -79,7 +84,7 @@ export default function StoryAIPanel({ onCaptureCanvas }) {
   // Build project context for AI
   const buildContext = () => {
     const seriesCharacters = characters.filter(c => c.seriesId === currentProject?.seriesId)
-    
+
     return {
       title: currentProject?.title || 'Untitled Project',
       pageNumber: (activePageIndex || 0) + 1,
@@ -87,7 +92,8 @@ export default function StoryAIPanel({ onCaptureCanvas }) {
       characters: seriesCharacters.map(c => ({
         name: c.name,
         description: c.description || ''
-      }))
+      })),
+      customStoryPrompt: customPrompt  // Add custom prompt from series
     }
   }
   
@@ -205,7 +211,18 @@ export default function StoryAIPanel({ onCaptureCanvas }) {
       localStorage.removeItem(getHistoryKey(projectId))
     }
   }
-  
+
+  const handleEditPrompt = () => {
+    if (!seriesId) {
+      setError('Cannot edit prompt: project is not assigned to a series')
+      return
+    }
+    const series = getSeriesById(seriesId)
+    if (series) {
+      openStoryPromptModal(series)
+    }
+  }
+
   const handleAttachPage = async () => {
     if (!onCaptureCanvas) return
     try {
@@ -317,6 +334,14 @@ export default function StoryAIPanel({ onCaptureCanvas }) {
           <span className="text-sm font-medium text-white">Story Assistant</span>
         </div>
         <div className="flex items-center gap-2">
+          <button
+            onClick={handleEditPrompt}
+            disabled={!seriesId}
+            className="p-1.5 text-slate-500 hover:text-slate-300 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+            title={seriesId ? "Edit Story AI prompt" : "Assign project to a series to edit prompt"}
+          >
+            <FiEdit3 className="w-4 h-4" />
+          </button>
           {messages.length > 0 && (
             <button
               onClick={handleClearHistory}

@@ -183,6 +183,73 @@ export const STORY_AI_MODELS = {
 }
 
 /**
+ * Build the default Story AI system prompt with interpolated values
+ * @param {Object} projectContext - Current project context
+ * @returns {string} System prompt with actual values
+ */
+export function buildDefaultStoryPrompt(projectContext) {
+  const characterList = projectContext.characters?.length > 0
+    ? projectContext.characters.map(c => `- ${c.name}: ${c.description || 'No description'}`).join('\n')
+    : 'No characters defined yet.'
+
+  return `You are an expert comic book writer and story assistant. You help users create compelling comic book stories with vivid dialogue, interesting plots, and memorable characters.
+
+## Current Project Context
+- **Title:** ${projectContext.title || 'Untitled'}
+- **Current Page:** ${projectContext.pageNumber || 1} of ${projectContext.totalPages || 1}
+
+## Characters
+${characterList}
+
+## Your Capabilities
+1. **Visual Analysis:** Describe what you see in the comic page image
+2. **Dialogue Writing:** Suggest natural, character-appropriate dialogue for speech bubbles
+3. **Plot Development:** Help with story arcs, plot twists, and narrative flow
+4. **Character Development:** Suggest character motivations, backstories, and growth
+5. **Image Prompts:** Convert story ideas into detailed AI image generation prompts
+6. **Pacing:** Advise on panel layout and story pacing
+
+## Guidelines
+- Be creative and helpful
+- Keep responses concise but useful (under 300 words unless more detail is requested)
+- When suggesting dialogue, format it clearly
+- When generating image prompts, be detailed and visual
+- Consider the established characters and their personalities
+- When an image is provided, analyze what you see and reference visual elements`
+}
+
+/**
+ * Get the default prompt template (without interpolation) for editing
+ * @returns {string} Template with ${...} placeholders
+ */
+export function getDefaultStoryPromptTemplate() {
+  return `You are an expert comic book writer and story assistant. You help users create compelling comic book stories with vivid dialogue, interesting plots, and memorable characters.
+
+## Current Project Context
+- **Title:** \${projectContext.title || 'Untitled'}
+- **Current Page:** \${projectContext.pageNumber || 1} of \${projectContext.totalPages || 1}
+
+## Characters
+\${characterList}
+
+## Your Capabilities
+1. **Visual Analysis:** Describe what you see in the comic page image
+2. **Dialogue Writing:** Suggest natural, character-appropriate dialogue for speech bubbles
+3. **Plot Development:** Help with story arcs, plot twists, and narrative flow
+4. **Character Development:** Suggest character motivations, backstories, and growth
+5. **Image Prompts:** Convert story ideas into detailed AI image generation prompts
+6. **Pacing:** Advise on panel layout and story pacing
+
+## Guidelines
+- Be creative and helpful
+- Keep responses concise but useful (under 300 words unless more detail is requested)
+- When suggesting dialogue, format it clearly
+- When generating image prompts, be detailed and visual
+- Consider the established characters and their personalities
+- When an image is provided, analyze what you see and reference visual elements`
+}
+
+/**
  * Call OpenRouter directly for vision-capable LLM requests
  */
 async function callOpenRouterVision(modelId, systemPrompt, userMessage, imageUrl, chatHistory = []) {
@@ -300,7 +367,7 @@ async function callOpenRouterText(modelId, systemPrompt, userMessage, chatHistor
 /**
  * Chat with Story AI assistant for comic writing help
  * Supports vision models with canvas screenshot
- * 
+ *
  * @param {string} userMessage - The user's message/question
  * @param {Object} options - Chat options
  * @param {string} options.model - Model key (e.g., 'gemini-2.5-flash')
@@ -308,6 +375,11 @@ async function callOpenRouterText(modelId, systemPrompt, userMessage, chatHistor
  * @param {string} options.imageUrl - URL of canvas screenshot (for vision models)
  * @param {Array<{role: string, content: string, attachedImage?: {dataUrl: string, name: string}}>} options.chatHistory - Previous messages
  * @param {Object} options.projectContext - Current project context
+ *   @param {string} options.projectContext.title - Project title
+ *   @param {number} options.projectContext.pageNumber - Current page number
+ *   @param {number} options.projectContext.totalPages - Total pages
+ *   @param {Array} options.projectContext.characters - Character list
+ *   @param {string} [options.projectContext.customStoryPrompt] - Custom prompt template (optional)
  * @returns {Promise<string>} - AI response
  */
 export async function chatWithStoryAI(userMessage, options = {}) {
@@ -334,36 +406,23 @@ export async function chatWithStoryAI(userMessage, options = {}) {
     throw new Error(`Invalid model: ${modelKey}`)
   }
 
-  // Build character context
-  const characterList = projectContext.characters?.length > 0
-    ? projectContext.characters.map(c => `- ${c.name}: ${c.description || 'No description'}`).join('\n')
-    : 'No characters defined yet.'
+  // Build system prompt (use custom prompt from series if available)
+  let systemPrompt
+  if (projectContext.customStoryPrompt) {
+    // Use custom prompt with variable interpolation
+    const characterList = projectContext.characters?.length > 0
+      ? projectContext.characters.map(c => `- ${c.name}: ${c.description || 'No description'}`).join('\n')
+      : 'No characters defined yet.'
 
-  // System prompt for story assistance
-  const systemPrompt = `You are an expert comic book writer and story assistant. You help users create compelling comic book stories with vivid dialogue, interesting plots, and memorable characters.
-
-## Current Project Context
-- **Title:** ${projectContext.title || 'Untitled'}
-- **Current Page:** ${projectContext.pageNumber || 1} of ${projectContext.totalPages || 1}
-
-## Characters
-${characterList}
-
-## Your Capabilities
-1. **Visual Analysis:** Describe what you see in the comic page image
-2. **Dialogue Writing:** Suggest natural, character-appropriate dialogue for speech bubbles
-3. **Plot Development:** Help with story arcs, plot twists, and narrative flow
-4. **Character Development:** Suggest character motivations, backstories, and growth
-5. **Image Prompts:** Convert story ideas into detailed AI image generation prompts
-6. **Pacing:** Advise on panel layout and story pacing
-
-## Guidelines
-- Be creative and helpful
-- Keep responses concise but useful (under 300 words unless more detail is requested)
-- When suggesting dialogue, format it clearly
-- When generating image prompts, be detailed and visual
-- Consider the established characters and their personalities
-- When an image is provided, analyze what you see and reference visual elements`
+    systemPrompt = projectContext.customStoryPrompt
+      .replace(/\$\{projectContext\.title\s*\|\|\s*['"]Untitled['"]\}/g, projectContext.title || 'Untitled')
+      .replace(/\$\{projectContext\.pageNumber\s*\|\|\s*1\}/g, String(projectContext.pageNumber || 1))
+      .replace(/\$\{projectContext\.totalPages\s*\|\|\s*1\}/g, String(projectContext.totalPages || 1))
+      .replace(/\$\{characterList\}/g, characterList)
+  } else {
+    // Use default prompt
+    systemPrompt = buildDefaultStoryPrompt(projectContext)
+  }
 
   try {
     if (imageUrl && modelConfig.vision) {
