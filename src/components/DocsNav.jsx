@@ -15,7 +15,7 @@ export default function DocsNav() {
 
   // Build navigation links
   const navLinks = [
-    { label: 'Home', to: '/' },
+    { label: 'Documentation', to: '/docs' },
     { label: 'Pricing', to: '/pricing' },
   ]
 
@@ -31,6 +31,9 @@ export default function DocsNav() {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-6">
+            <Link to="/docs" className="text-slate-400 hover:text-white transition-colors">
+              Documentation
+            </Link>
             <Link to="/pricing" className="text-slate-400 hover:text-white transition-colors">
               Pricing
             </Link>
@@ -43,24 +46,25 @@ export default function DocsNav() {
 
           {/* Right side - Mobile menu button + User menu */}
           <div className="flex items-center gap-3">
-            <button
-              onClick={() => setIsMobileMenuOpen(true)}
-              className="md:hidden text-slate-400 hover:text-white transition-colors p-2"
-              aria-label="Open menu"
-            >
-              <FiMenu className="w-5 h-5" />
-            </button>
+            {/* Mobile menu dropdown */}
+            <div className="relative md:hidden">
+              <button
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                className="text-slate-400 hover:text-white transition-colors p-2"
+                aria-label="Open menu"
+              >
+                <FiMenu className="w-5 h-5" />
+              </button>
+              <MobileNav
+                isOpen={isMobileMenuOpen}
+                onClose={() => setIsMobileMenuOpen(false)}
+                links={navLinks}
+              />
+            </div>
             <UserMenu />
           </div>
         </div>
       </header>
-
-      {/* Mobile Navigation */}
-      <MobileNav
-        isOpen={isMobileMenuOpen}
-        onClose={() => setIsMobileMenuOpen(false)}
-        links={navLinks}
-      />
     </>
   )
 }

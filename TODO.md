@@ -1,6 +1,9 @@
 ## Current TODOs
 
 - Update the home and marketing page!
+- - Improve mobile menu
+
+- Can this app even work in mobile? Perhaps mobile is a "view only" version?
 
 - Update the AI features to only work with a paid account.
 
