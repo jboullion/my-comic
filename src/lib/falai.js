@@ -412,3 +412,103 @@ Return ONLY the enhanced prompt, no explanations or formatting.`
     throw new Error(`Prompt enhancement failed: ${error.message}`)
   }
 }
+
+/**
+ * Chat with Story AI assistant for comic writing help
+ * 
+ * @param {string} userMessage - The user's message/question
+ * @param {Object} options - Chat options
+ * @param {Array<{role: string, content: string}>} options.chatHistory - Previous messages for context
+ * @param {Object} options.projectContext - Current project context
+ * @param {string} options.projectContext.title - Project title
+ * @param {number} options.projectContext.pageNumber - Current page number
+ * @param {number} options.projectContext.totalPages - Total pages in project
+ * @param {Array<{name: string, description: string}>} options.projectContext.characters - Characters in series
+ * @param {Object} options.projectContext.currentPageContent - Text content from current page
+ * @returns {Promise<string>} - AI response
+ */
+export async function chatWithStoryAI(userMessage, options = {}) {
+  const { chatHistory = [], projectContext = {} } = options
+
+  if (!falApiKey) {
+    throw new Error('Fal.ai API key not configured')
+  }
+
+  // Build character context
+  const characterList = projectContext.characters?.length > 0
+    ? projectContext.characters.map(c => `- ${c.name}: ${c.description || 'No description'}`).join('\n')
+    : 'No characters defined yet.'
+
+  // Build current page content context
+  const pageContent = projectContext.currentPageContent || {}
+  const dialogText = pageContent.speechBubbles?.length > 0
+    ? `Speech bubbles on current page:\n${pageContent.speechBubbles.map((t, i) => `${i + 1}. "${t}"`).join('\n')}`
+    : 'No dialogue on current page yet.'
+  
+  const narrationText = pageContent.textElements?.length > 0
+    ? `Narration/captions:\n${pageContent.textElements.map((t, i) => `${i + 1}. "${t}"`).join('\n')}`
+    : ''
+
+  const effectsText = pageContent.textEffects?.length > 0
+    ? `Sound effects: ${pageContent.textEffects.join(', ')}`
+    : ''
+
+  // System prompt for story assistance
+  const systemPrompt = `You are an expert comic book writer and story assistant. You help users create compelling comic book stories with vivid dialogue, interesting plots, and memorable characters.
+
+## Current Project Context
+- **Title:** ${projectContext.title || 'Untitled'}
+- **Current Page:** ${projectContext.pageNumber || 1} of ${projectContext.totalPages || 1}
+
+## Characters
+${characterList}
+
+## Current Page Content
+${dialogText}
+${narrationText}
+${effectsText}
+
+## Your Capabilities
+1. **Dialogue Writing:** Suggest natural, character-appropriate dialogue for speech bubbles
+2. **Plot Development:** Help with story arcs, plot twists, and narrative flow
+3. **Character Development:** Suggest character motivations, backstories, and growth
+4. **Image Prompts:** Convert story ideas into detailed AI image generation prompts
+5. **Pacing:** Advise on panel layout and story pacing
+6. **Tone & Style:** Help maintain consistent voice and artistic direction
+
+## Guidelines
+- Be creative and helpful
+- Keep responses concise but useful (under 300 words unless more detail is requested)
+- When suggesting dialogue, format it clearly
+- When generating image prompts, be detailed and visual
+- Consider the established characters and their personalities
+- Reference the current page content when relevant`
+
+  try {
+    const result = await fal.subscribe('fal-ai/any-llm', {
+      input: {
+        model: 'meta-llama/llama-3.1-70b-instruct',
+        prompt: userMessage,
+        system_prompt: systemPrompt,
+        chat_history: chatHistory.map(m => ({
+          role: m.role,
+          content: m.content
+        })),
+        max_tokens: 800,
+        temperature: 0.7
+      }
+    })
+
+    const output = result.data?.output || result.output || ''
+    return output.trim()
+  } catch (error) {
+    if (error.message?.includes('401')) {
+      throw new Error('Invalid Fal.ai API key')
+    }
+    if (error.message?.includes('402')) {
+      throw new Error('Insufficient Fal.ai credits')
+    }
+    throw new Error(`Story AI failed: ${error.message}`)
+  }
+}
+

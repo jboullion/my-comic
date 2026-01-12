@@ -4,6 +4,7 @@ import MultiElementProperties from './properties/MultiElementProperties'
 import PageSettingsPanel from './properties/PageSettingsPanel'
 import AssetGallery from './properties/AssetGallery'
 import AssetPropertiesWidget from './properties/AssetPropertiesWidget'
+import StoryAIPanel from './properties/StoryAIPanel'
 
 /**
  * PropertiesSidebar Component
@@ -26,7 +27,7 @@ export default function PropertiesSidebar({
   const [showUnusedOnly, setShowUnusedOnly] = useState(false)
 
   return (
-    <aside className="w-72 shrink-0 border-l border-slate-800 flex flex-col bg-slate-900">
+    <aside className="w-[338px] shrink-0 border-l border-slate-800 flex flex-col bg-slate-900">
       {/* Tabs */}
       <div className="flex border-b border-slate-800">
         <TabButton
@@ -43,6 +44,11 @@ export default function PropertiesSidebar({
           label="Page"
           active={activeTab === 'page'}
           onClick={() => setActiveTab('page')}
+        />
+        <TabButton
+          label="Story AI"
+          active={activeTab === 'storyAI'}
+          onClick={() => setActiveTab('storyAI')}
         />
       </div>
 
@@ -94,6 +100,10 @@ export default function PropertiesSidebar({
 
         {activeTab === 'page' && (
           <PageSettingsPanel />
+        )}
+
+        {activeTab === 'storyAI' && (
+          <StoryAIPanel />
         )}
       </div>
     </aside>
