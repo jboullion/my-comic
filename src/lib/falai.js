@@ -88,9 +88,6 @@ export const AI_MODELS = {
   }
 }
 
-// Model for reference-based generation (supports IP-Adapter style reference)
-const FLUX_GENERAL_MODEL = 'fal-ai/flux-general'
-
 // Model for LoRA-based generation (FLUX models)
 const FLUX_LORA_MODEL = 'fal-ai/flux-lora'
 
@@ -124,10 +121,8 @@ export async function uploadImageToFal(blob, filename = 'reference.png') {
  * @param {string} options.model - Model key from AI_MODELS (e.g., 'flux-2-pro', 'flux-2', 'schnell') or 'custom' for project custom model
  * @param {string|{width: number, height: number}} options.imageSize - Image dimensions preset string or custom {width, height}
  * @param {number} options.seed - Optional seed for reproducibility
- * @param {Blob} options.referenceImage - Optional reference image blob for character consistency
- * @param {number} options.referenceStrength - Reference image influence (0-1, default 0.65)
  * @param {boolean} options.allowMature - Allow mature/NSFW content (disables safety filters)
- * @param {Object} options.lora - Optional LoRA configuration
+ * @param {Object} options.lora - Optional LoRA configuration (only for custom models, not FLUX)
  * @param {string} options.lora.url - LoRA download URL (CivitAI or direct)
  * @param {string} options.lora.triggerWord - Trigger word to activate the LoRA
  * @param {number} options.lora.scale - LoRA strength (0-1, default 0.8)
@@ -144,8 +139,6 @@ export async function generateImage({
   model: modelKey = 'flux-2',
   imageSize = 'square_hd',
   seed = null,
-  referenceImage = null,
-  referenceStrength = 0.65,
   allowMature = false,
   lora = null,
   customModel = null,
@@ -175,9 +168,8 @@ export async function generateImage({
   const fullPrompt = finalPrompt + styleConfig.suffix
 
   // Determine which model/endpoint to use
-  // Priority: Custom Model > LoRA > Reference > Standard model
+  // Priority: Custom Model > LoRA > Standard model
   const useLora = lora?.url !== null && lora?.url !== undefined
-  const useReference = referenceImage !== null && !useLora && !useCustomModel // Reference not supported with LoRA or custom model
 
   let modelId
   if (useCustomModel) {
@@ -191,8 +183,6 @@ export async function generateImage({
     }
   } else if (useLora) {
     modelId = FLUX_LORA_MODEL
-  } else if (useReference) {
-    modelId = FLUX_GENERAL_MODEL
   } else {
     modelId = modelConfig.id
   }
@@ -211,6 +201,7 @@ export async function generateImage({
     if (typeof imageSize === 'object') {
       // Calculate closest aspect ratio from width/height
       const ratio = imageSize.width / imageSize.height
+      console.log('[Nano Banana] Custom dimensions:', imageSize, 'ratio:', ratio)
       if (ratio > 2) aspectRatio = '21:9'
       else if (ratio > 1.6) aspectRatio = '16:9'
       else if (ratio > 1.4) aspectRatio = '3:2'
@@ -232,7 +223,9 @@ export async function generateImage({
         'landscape_16_9': '16:9'
       }
       aspectRatio = presetMap[imageSize] || '1:1'
+      console.log('[Nano Banana] Preset:', imageSize, '-> aspect_ratio:', aspectRatio)
     }
+    console.log('[Nano Banana] Final aspect_ratio:', aspectRatio)
     input.aspect_ratio = aspectRatio
   } else {
     // Standard image_size for FLUX and Pony models
@@ -259,10 +252,8 @@ export async function generateImage({
     input.num_inference_steps = 28
   } else if (useLora) {
     input.num_inference_steps = 28 // Standard steps for LoRA mode
-  } else if (modelConfig?.steps !== null && !useReference) {
+  } else if (modelConfig?.steps !== null) {
     input.num_inference_steps = modelConfig.steps
-  } else if (useReference) {
-    input.num_inference_steps = 28 // Use standard steps for reference mode
   }
 
   // Add safety/mature content settings
@@ -279,24 +270,6 @@ export async function generateImage({
   // Add seed if provided (for regeneration with same seed)
   if (seed !== null) {
     input.seed = seed
-  }
-
-  // If reference image provided, upload it and add to input
-  if (useReference) {
-    try {
-      // Update progress to show upload status
-      if (onProgress) {
-        onProgress({ status: 'UPLOADING', message: 'Uploading reference image...' })
-      }
-
-      const referenceUrl = await uploadImageToFal(referenceImage, 'character-reference.png')
-      input.reference_image_url = referenceUrl
-      input.reference_strength = referenceStrength
-      input.reference_end = 0.8 // Stop reference guidance at 80% to allow style to come through
-    } catch (uploadError) {
-      console.error('Failed to upload reference image:', uploadError)
-      throw new Error('Failed to upload reference image. Generating without reference.')
-    }
   }
 
   // If LoRA provided, add it to input
@@ -335,7 +308,6 @@ export async function generateImage({
       fullPrompt: fullPrompt,   // Prompt with style suffix applied (and trigger word if LoRA)
       model: modelKey,          // Model key used (or 'custom')
       customModelName: useCustomModel ? customModel.name : null,
-      usedReference: useReference,
       usedLora: useLora,
       usedCustomModel: useCustomModel
     }

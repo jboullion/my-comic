@@ -115,27 +115,12 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
   const [model, setModel] = useState('flux-2')
   const [imageSize, setImageSize] = useState('match_page')
   const [selectedCharacterIds, setSelectedCharacterIds] = useState([])
-  const [referenceStrength, setReferenceStrength] = useState(0.65)
 
   // Get allowMature from project settings
   const allowMature = customModel?.allowMature || false
 
   // Get characters from store for prompt building
   const { characters } = useCharactersStore()
-
-  // Get reference image from first selected character with a profile image
-  const getReferenceImage = useCallback(() => {
-    if (selectedCharacterIds.length === 0) return null
-
-    // Find first selected character with a profile image
-    for (const id of selectedCharacterIds) {
-      const char = characters.find(c => c.id === id)
-      if (char?.profileImage?.blob) {
-        return char.profileImage.blob
-      }
-    }
-    return null
-  }, [selectedCharacterIds, characters])
 
   // Get LoRA from first selected character that has one configured
   const getCharacterLora = useCallback(() => {
@@ -156,12 +141,12 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
     return null
   }, [selectedCharacterIds, characters])
 
-  // Check if we have a reference image available
-  const hasReferenceImage = getReferenceImage() !== null
-
   // Check if we have a LoRA available (for UI indicator)
   const characterLora = getCharacterLora()
   const hasLora = characterLora !== null
+
+  // Check if current model supports LoRA (only custom models support LoRA, not FLUX)
+  const modelSupportsLora = model === 'custom'
 
   // Generation state
   const [isGenerating, setIsGenerating] = useState(false)
@@ -226,7 +211,7 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
         .map(c => ({ name: c.name, description: c.description || '' }))
 
       const enhanced = await enhanceImagePrompt(prompt.trim(), {
-        style,
+        model,
         characters: selectedChars
       })
 
@@ -237,7 +222,7 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
     } finally {
       setIsEnhancing(false)
     }
-  }, [prompt, isEnhancing, style, characters, selectedCharacterIds])
+  }, [prompt, isEnhancing, model, characters, selectedCharacterIds])
 
   // Handle reverting to original prompt
   const handleRevertPrompt = useCallback(() => {
@@ -262,11 +247,8 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
       // Build prompt with character descriptions
       const fullPrompt = buildPromptWithCharacters(prompt.trim())
 
-      // Get reference image if available (only used if no LoRA - LoRA takes priority)
-      const referenceImage = getReferenceImage()
-
-      // Get LoRA from selected character
-      const lora = getCharacterLora()
+      // Get LoRA from selected character (only for custom models - FLUX doesn't support LoRAs)
+      const lora = model === 'custom' ? getCharacterLora() : null
 
       // Use custom dimensions for "match_page", otherwise use preset string
       const imageSizeParam = imageSize === 'match_page'
@@ -278,8 +260,6 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
         style,
         model,
         imageSize: imageSizeParam,
-        referenceImage,
-        referenceStrength,
         allowMature,
         lora,
         customModel: model === 'custom' ? customModel : null,
@@ -306,7 +286,7 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
       setIsGenerating(false)
       setProgress(null)
     }
-  }, [prompt, style, model, imageSize, projectId, buildPromptWithCharacters, getReferenceImage, getCharacterLora, referenceStrength, allowMature, matchPageDimensions, customModel])
+  }, [prompt, style, model, imageSize, projectId, buildPromptWithCharacters, getCharacterLora, allowMature, matchPageDimensions, customModel])
 
   const handleSave = useCallback(async () => {
     if (!generatedImage?.imageUrl) return
@@ -536,8 +516,8 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
                 disabled={isGenerating}
               />
 
-              {/* LoRA Indicator - shown when character with LoRA is selected */}
-              {hasLora && (
+              {/* LoRA Indicator - only shown when custom model selected AND character has LoRA configured */}
+              {hasLora && modelSupportsLora && (
                 <div className="bg-indigo-500/10 border border-indigo-500/30 rounded-lg px-4 py-3">
                   <div className="flex items-center gap-2">
                     <span className="text-indigo-400 text-sm font-medium">LoRA Active</span>
@@ -552,28 +532,15 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
                 </div>
               )}
 
-              {/* Reference Strength Slider - only shown when character with profile image is selected and no LoRA */}
-              {hasReferenceImage && !hasLora && (
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <label className="text-[10px] text-slate-500 uppercase font-bold">
-                      Reference Strength
-                    </label>
-                    <span className="text-xs text-slate-400">
-                      {Math.round(referenceStrength * 100)}%
-                    </span>
+              {/* LoRA Warning - shown when character has LoRA but FLUX model selected */}
+              {hasLora && !modelSupportsLora && (
+                <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg px-4 py-3">
+                  <div className="flex items-center gap-2">
+                    <FiAlertCircle className="w-4 h-4 text-amber-400 shrink-0" />
+                    <span className="text-amber-300 text-sm">LoRA not compatible with FLUX models</span>
                   </div>
-                  <input
-                    type="range"
-                    min="0"
-                    max="100"
-                    value={referenceStrength * 100}
-                    onChange={(e) => setReferenceStrength(Number(e.target.value) / 100)}
-                    disabled={isGenerating}
-                    className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-indigo-500 disabled:opacity-50"
-                  />
-                  <p className="text-[10px] text-slate-500">
-                    Higher values match the character&apos;s profile image more closely
+                  <p className="text-[10px] text-slate-500 mt-1">
+                    {characterLora.characterName} has a LoRA configured, but FLUX models don&apos;t support LoRAs. Switch to a Custom Model to use LoRAs.
                   </p>
                 </div>
               )}
@@ -699,7 +666,6 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
                   </div>
                   <p className="text-xs text-slate-500">
                     {generatedImage.width}x{generatedImage.height} - {generatedImage.usedCustomModel ? generatedImage.customModelName : (AI_MODELS[generatedImage.model]?.name || generatedImage.model)} - Seed: {generatedImage.seed}
-                    {generatedImage.usedReference && ' - Used character reference'}
                     {generatedImage.usedLora && ' - Used LoRA'}
                     {generatedImage.usedCustomModel && ' - Custom model'}
                   </p>
