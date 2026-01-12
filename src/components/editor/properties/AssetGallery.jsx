@@ -104,7 +104,7 @@ export default function AssetGallery({
 
   return (
     <div
-      className="space-y-3 relative"
+      className="space-y-3 relative p-4"
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}

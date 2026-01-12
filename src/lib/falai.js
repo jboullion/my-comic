@@ -1,12 +1,22 @@
 import { fal } from '@fal-ai/client'
 
 const falApiKey = import.meta.env.VITE_FAL_AI_KEY
+const openRouterKey = import.meta.env.VITE_OPENROUTER_KEY
 
 if (!falApiKey) {
   console.warn(
     'Missing Fal.ai API key. AI image generation will not work.\n' +
     'Create a .env.local file with:\n' +
     '  VITE_FAL_AI_KEY=your-fal-ai-key'
+  )
+}
+
+if (!openRouterKey) {
+  console.warn(
+    'Missing OpenRouter API key. Vision-based Story AI will not work.\n' +
+    'Create a .env.local file with:\n' +
+    '  VITE_OPENROUTER_KEY=your-openrouter-key\n' +
+    'Get a key at: https://openrouter.ai/keys'
   )
 }
 
@@ -449,7 +459,7 @@ export const STORY_AI_MODELS = {
     vision: true,
     premium: true
   },
-  
+
   // === OPENAI ===
   'gpt-5': {
     id: 'openai/gpt-5-chat',
@@ -481,6 +491,72 @@ export const STORY_AI_MODELS = {
     vision: true,
     premium: true
   }
+}
+
+/**
+ * Call OpenRouter directly for vision-capable LLM requests
+ * OpenRouter supports proper multimodal message format
+ */
+async function callOpenRouterVision(modelId, systemPrompt, userMessage, imageUrl, chatHistory = []) {
+  if (!openRouterKey) {
+    throw new Error('OpenRouter API key not configured. Add VITE_OPENROUTER_KEY to your .env.local file. Get a key at https://openrouter.ai/keys')
+  }
+
+  // Build messages array with proper vision format
+  const messages = [
+    { role: 'system', content: systemPrompt }
+  ]
+  
+  // Add chat history
+  for (const msg of chatHistory) {
+    messages.push({
+      role: msg.role,
+      content: msg.content
+    })
+  }
+  
+  // Add current message with image
+  messages.push({
+    role: 'user',
+    content: [
+      {
+        type: 'image_url',
+        image_url: { url: imageUrl }
+      },
+      {
+        type: 'text',
+        text: userMessage
+      }
+    ]
+  })
+
+  console.log('[Story AI] Calling OpenRouter directly for vision...')
+  console.log('[Story AI] Model:', modelId)
+  
+  const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${openRouterKey}`,
+      'Content-Type': 'application/json',
+      'HTTP-Referer': window.location.origin,
+      'X-Title': 'Comic Book Maker'
+    },
+    body: JSON.stringify({
+      model: modelId,
+      messages: messages,
+      max_tokens: 800,
+      temperature: 0.7
+    })
+  })
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}))
+    console.error('[Story AI] OpenRouter error:', errorData)
+    throw new Error(errorData.error?.message || `OpenRouter request failed: ${response.status}`)
+  }
+
+  const data = await response.json()
+  return data.choices?.[0]?.message?.content || ''
 }
 
 /**
@@ -549,23 +625,29 @@ ${characterList}
 - When an image is provided, analyze what you see and reference visual elements`
 
   try {
-    // Build the prompt - for vision models, the image is included as a media URL
-    let prompt = userMessage
+    // For vision models with an image, call OpenRouter directly
+    // because fal-ai/any-llm doesn't support vision
+    if (imageUrl && modelConfig.vision) {
+      console.log('[Story AI] Using OpenRouter for vision request...')
+      const response = await callOpenRouterVision(
+        modelConfig.id,
+        systemPrompt,
+        userMessage,
+        imageUrl,
+        chatHistory
+      )
+      return response.trim()
+    }
     
-    // Build input for fal-ai/any-llm
+    // For text-only requests, use fal-ai/any-llm
     const input = {
       model: modelConfig.id,
-      prompt: prompt,
       system_prompt: systemPrompt,
       max_tokens: 800,
-      temperature: 0.7
+      temperature: 0.7,
+      prompt: userMessage
     }
-
-    // Add image for vision-capable models
-    if (imageUrl && modelConfig.vision) {
-      input.media_url = imageUrl
-    }
-
+    
     // Add chat history if available
     if (chatHistory.length > 0) {
       input.chat_history = chatHistory.map(m => ({
@@ -573,6 +655,8 @@ ${characterList}
         content: m.content
       }))
     }
+    
+    console.log('[Story AI] Sending text-only request via Fal.ai')
 
     const result = await fal.subscribe('fal-ai/any-llm', { input })
 

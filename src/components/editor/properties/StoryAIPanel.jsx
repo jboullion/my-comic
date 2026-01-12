@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
-import { FiSend, FiTrash2, FiCpu, FiAlertCircle, FiImage, FiChevronDown } from 'react-icons/fi'
-import { chatWithStoryAI, isFalConfigured, uploadImageToFal, STORY_AI_MODELS } from '../../../lib/falai'
+import { FiSend, FiTrash2, FiCpu, FiAlertCircle, FiImage, FiChevronDown, FiCamera, FiUpload, FiX } from 'react-icons/fi'
+import { chatWithStoryAI, isOpenRouterConfigured, STORY_AI_MODELS } from '../../../lib/ai/openrouter'
+import { uploadImageToFal } from '../../../lib/ai/falai'
 import { useProjectStore } from '../../../stores/useProjectStore'
 import { useCharactersStore } from '../../../stores/useCharactersStore'
 
@@ -48,8 +49,11 @@ export default function StoryAIPanel({ onCaptureCanvas }) {
   const [inputValue, setInputValue] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState(null)
+  const [selectedProvider, setSelectedProvider] = useState('google')
   const [selectedModel, setSelectedModel] = useState('gemini-2.5-flash')
   const [showModelDropdown, setShowModelDropdown] = useState(false)
+  const [attachedImage, setAttachedImage] = useState(null) // { type: 'page'|'upload', dataUrl: string, name: string }
+  const [isDragOver, setIsDragOver] = useState(false)
   
   const messagesEndRef = useRef(null)
   const inputRef = useRef(null)
@@ -57,7 +61,7 @@ export default function StoryAIPanel({ onCaptureCanvas }) {
   const projectId = currentProject?.id
   
   // Get current model config
-  const modelConfig = STORY_AI_MODELS[selectedModel]
+  const modelConfig = STORY_AI_MODELS[selectedProvider]?.[selectedModel]
   
   // Load chat history on mount/project change
   useEffect(() => {
@@ -98,12 +102,14 @@ export default function StoryAIPanel({ onCaptureCanvas }) {
       id: Date.now(),
       role: 'user',
       content: trimmedInput,
+      attachedImage: attachedImage,
       timestamp: Date.now()
     }
     
     const newMessages = [...messages, userMessage]
     setMessages(newMessages)
     setInputValue('')
+    setAttachedImage(null)
     setIsLoading(true)
     
     try {
@@ -115,25 +121,52 @@ export default function StoryAIPanel({ onCaptureCanvas }) {
         content: m.content
       }))
       
-      // Capture canvas and upload for vision models
+      const modelConfig = STORY_AI_MODELS[selectedProvider]?.[selectedModel]
+      
+      // Use attached image if available, otherwise auto-capture if vision is enabled
       let imageUrl = null
-      if (modelConfig?.vision && onCaptureCanvas) {
+      if (attachedImage) {
+        // Upload attached image to Fal storage
+        console.log('[Story AI] Using manually attached image')
         try {
+          const blob = await fetch(attachedImage.dataUrl).then(r => r.blob())
+          imageUrl = await uploadImageToFal(blob, attachedImage.name)
+          console.log('[Story AI] Attached image uploaded:', imageUrl)
+        } catch (uploadError) {
+          console.warn('[Story AI] Failed to upload attached image:', uploadError)
+        }
+      } else if (modelConfig?.vision && onCaptureCanvas) {
+        // Auto-capture canvas (legacy behavior)
+        try {
+          console.log('[Story AI] Capturing canvas...')
           const dataUrl = await onCaptureCanvas()
           if (dataUrl) {
+            console.log('[Story AI] Canvas captured, size:', dataUrl.length, 'bytes')
             // Convert data URL to blob
             const response = await fetch(dataUrl)
             const blob = await response.blob()
+            console.log('[Story AI] Uploading image to Fal storage...')
             // Upload to Fal storage
             imageUrl = await uploadImageToFal(blob, 'canvas-screenshot.jpg')
+            console.log('[Story AI] Image uploaded:', imageUrl)
+          } else {
+            console.warn('[Story AI] Canvas capture returned null')
           }
         } catch (captureError) {
-          console.warn('Failed to capture canvas for AI:', captureError)
+          console.warn('[Story AI] Failed to capture canvas for AI:', captureError)
           // Continue without image
+        }
+      } else {
+        if (!modelConfig?.vision) {
+          console.log('[Story AI] Model does not support vision')
+        }
+        if (!onCaptureCanvas) {
+          console.log('[Story AI] No onCaptureCanvas callback provided')
         }
       }
       
       const response = await chatWithStoryAI(trimmedInput, {
+        provider: selectedProvider,
         model: selectedModel,
         imageUrl,
         chatHistory: chatHistory.slice(0, -1), // Exclude the current message
@@ -173,10 +206,110 @@ export default function StoryAIPanel({ onCaptureCanvas }) {
     }
   }
   
-  const isConfigured = isFalConfigured()
+  const handleAttachPage = async () => {
+    if (!onCaptureCanvas) return
+    try {
+      const dataUrl = await onCaptureCanvas()
+      if (dataUrl) {
+        setAttachedImage({
+          type: 'page',
+          dataUrl,
+          name: `page-${(activePageIndex || 0) + 1}.jpg`
+        })
+      }
+    } catch (error) {
+      console.error('Failed to capture page:', error)
+    }
+  }
+  
+  const handleRemoveAttachment = () => {
+    setAttachedImage(null)
+  }
+  
+  const handleFileUpload = (e) => {
+    const file = e.target.files?.[0]
+    if (!file || !file.type.startsWith('image/')) return
+    
+    const reader = new FileReader()
+    reader.onload = (evt) => {
+      if (evt.target?.result) {
+        setAttachedImage({
+          type: 'upload',
+          dataUrl: evt.target.result,
+          name: file.name
+        })
+      }
+    }
+    reader.readAsDataURL(file)
+  }
+  
+  const handleDragOver = (e) => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (!modelConfig?.vision) return
+    setIsDragOver(true)
+  }
+  
+  const handleDragEnter = (e) => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (!modelConfig?.vision) return
+    setIsDragOver(true)
+  }
+  
+  const handleDragLeave = (e) => {
+    e.preventDefault()
+    e.stopPropagation()
+    // Only set to false if leaving the drop zone entirely
+    if (e.currentTarget.contains(e.relatedTarget)) return
+    setIsDragOver(false)
+  }
+  
+  const handleDrop = async (e) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragOver(false)
+    
+    if (!modelConfig?.vision) return
+    
+    // Check for page thumbnail from PagesSidebar
+    const pageData = e.dataTransfer.getData('text/plain')
+    if (pageData?.startsWith('page:')) {
+      const pageIndex = parseInt(pageData.split(':')[1])
+      const dataUrl = e.dataTransfer.getData('image/dataurl')
+      if (dataUrl) {
+        setAttachedImage({
+          type: 'page',
+          dataUrl,
+          name: `page-${pageIndex + 1}.jpg`
+        })
+        return
+      }
+    }
+    
+    // Check for external file drop
+    const files = Array.from(e.dataTransfer.files)
+    const imageFile = files.find(f => f.type.startsWith('image/'))
+    
+    if (imageFile) {
+      const reader = new FileReader()
+      reader.onload = (evt) => {
+        if (evt.target?.result) {
+          setAttachedImage({
+            type: 'upload',
+            dataUrl: evt.target.result,
+            name: imageFile.name
+          })
+        }
+      }
+      reader.readAsDataURL(imageFile)
+    }
+  }
+  
+  const isConfigured = isOpenRouterConfigured()
   
   return (
-    <div className="flex flex-col h-full -m-4">
+    <div className="flex flex-col h-full">
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-slate-800">
         <div className="flex items-center gap-2">
@@ -211,32 +344,51 @@ export default function StoryAIPanel({ onCaptureCanvas }) {
           </button>
           
           {showModelDropdown && (
-            <div className="absolute top-full left-0 right-0 mt-1 bg-slate-800 border border-slate-700 rounded-lg shadow-xl z-20 py-1 max-h-64 overflow-y-auto">
-              {Object.entries(STORY_AI_MODELS).map(([key, model]) => (
-                <button
-                  key={key}
-                  onClick={() => {
-                    setSelectedModel(key)
-                    setShowModelDropdown(false)
-                  }}
-                  className={`w-full text-left px-3 py-2 hover:bg-slate-700 transition-colors ${
-                    key === selectedModel ? 'bg-slate-700' : ''
-                  }`}
-                >
-                  <div className="flex items-center gap-2">
-                    {model.vision && <FiImage className="w-3.5 h-3.5 text-indigo-400 shrink-0" />}
-                    {!model.vision && <span className="w-3.5 shrink-0" />}
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-sm text-white truncate">{model.name}</span>
-                        {model.premium && (
-                          <span className="text-[9px] px-1 py-0.5 bg-amber-500/20 text-amber-400 rounded">PRO</span>
-                        )}
-                      </div>
-                      <div className="text-[10px] text-slate-500 truncate">{model.description}</div>
-                    </div>
+            <div className="absolute top-full left-0 right-0 mt-1 bg-slate-800 border border-slate-700 rounded-lg shadow-xl z-20 py-1 max-h-96 overflow-y-auto">
+              {Object.entries(STORY_AI_MODELS).map(([providerKey, models]) => (
+                <div key={providerKey}>
+                  {/* Provider header */}
+                  <div className="px-3 py-1.5 text-[10px] text-slate-400 uppercase font-bold tracking-wide border-t border-slate-700 first:border-t-0">
+                    {providerKey === 'google' ? 'Google' :
+                     providerKey === 'anthropic' ? 'Anthropic' :
+                     providerKey === 'openai' ? 'OpenAI' :
+                     providerKey === 'meta' ? 'Meta' :
+                     providerKey === 'bytedance' ? 'ByteDance' :
+                     'Other'}
                   </div>
-                </button>
+                  {/* Models in this provider */}
+                  {Object.entries(models).map(([modelKey, model]) => (
+                    <button
+                      key={modelKey}
+                      onClick={() => {
+                        setSelectedProvider(providerKey)
+                        setSelectedModel(modelKey)
+                        setShowModelDropdown(false)
+                      }}
+                      className={`w-full text-left px-3 py-2 hover:bg-slate-700 transition-colors ${
+                        providerKey === selectedProvider && modelKey === selectedModel ? 'bg-slate-700' : ''
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        {model.vision && <FiImage className="w-3.5 h-3.5 text-indigo-400 shrink-0" />}
+                        {!model.vision && <span className="w-3.5 shrink-0" />}
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-sm text-white truncate">{model.name}</span>
+                            {model.inputPrice === 0 && model.outputPrice === 0 ? (
+                              <span className="text-[9px] px-1 py-0.5 bg-green-500/20 text-green-400 rounded">FREE</span>
+                            ) : (
+                              <span className="text-[9px] px-1 py-0.5 bg-slate-700 text-slate-400 rounded">
+                                ${model.inputPrice}/{model.outputPrice === model.inputPrice ? model.outputPrice : model.outputPrice}
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-[10px] text-slate-500 truncate">{model.description}</div>
+                        </div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
               ))}
             </div>
           )}
@@ -256,7 +408,7 @@ export default function StoryAIPanel({ onCaptureCanvas }) {
             <div className="flex items-start gap-2">
               <FiAlertCircle className="w-4 h-4 text-amber-400 mt-0.5 shrink-0" />
               <p className="text-xs text-amber-200">
-                Fal.ai API key not configured. Add VITE_FAL_AI_KEY to your .env.local file.
+                OpenRouter API key not configured. Add VITE_OPENROUTER_KEY to your .env.local file.
               </p>
             </div>
           </div>
@@ -299,25 +451,94 @@ export default function StoryAIPanel({ onCaptureCanvas }) {
       </div>
       
       {/* Input Area */}
-      <div className="p-4 border-t border-slate-800">
+      <div 
+        className={`relative p-4 border-t border-slate-800 transition-colors ${
+          isDragOver ? 'bg-indigo-500/10 border-indigo-500' : ''
+        }`}
+        onDragOver={handleDragOver}
+        onDragEnter={handleDragEnter}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+      >
+        {/* Drag overlay */}
+        {isDragOver && (
+          <div className="absolute inset-0 flex items-center justify-center bg-indigo-500/20 border-2 border-dashed border-indigo-500 rounded-lg pointer-events-none z-10">
+            <div className="text-center">
+              <FiImage className="w-8 h-8 text-indigo-400 mx-auto mb-2" />
+              <p className="text-sm text-indigo-300 font-medium">Drop image to attach</p>
+            </div>
+          </div>
+        )}
+        
+        {/* Attachment Preview */}
+        {attachedImage && (
+          <div className="mb-2 flex items-center gap-2 p-2 bg-slate-800 border border-indigo-500/50 rounded-lg">
+            <img
+              src={attachedImage.dataUrl}
+              alt="Attached"
+              className="w-12 h-12 object-cover rounded"
+            />
+            <div className="flex-1 min-w-0">
+              <p className="text-xs text-white truncate">{attachedImage.name}</p>
+              <p className="text-[10px] text-slate-500">
+                {attachedImage.type === 'page' ? '📄 Current page' : '📁 Uploaded file'}
+              </p>
+            </div>
+            <button
+              onClick={handleRemoveAttachment}
+              className="p-1 hover:bg-slate-700 rounded transition-colors"
+              title="Remove attachment"
+            >
+              <FiX className="w-4 h-4 text-slate-400" />
+            </button>
+          </div>
+        )}
+        
         <div className="flex gap-2">
           <textarea
             ref={inputRef}
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Ask about story, dialogue, or prompts..."
+            placeholder={modelConfig?.vision ? "Ask about the image, story, dialogue..." : "Ask about story, dialogue, or prompts..."}
             disabled={!isConfigured || isLoading}
             className="flex-1 bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 resize-none focus:outline-none focus:ring-2 focus:ring-indigo-500/50 disabled:opacity-50"
             rows={2}
           />
-          <button
-            onClick={handleSend}
-            disabled={!inputValue.trim() || !isConfigured || isLoading}
-            className="px-3 py-2 bg-indigo-500 hover:bg-indigo-600 disabled:bg-slate-700 disabled:text-slate-500 text-white rounded-lg transition-colors self-end"
-          >
-            <FiSend className="w-4 h-4" />
-          </button>
+          <div className="flex flex-col gap-1.5">
+            {/* Vision model controls */}
+            {modelConfig?.vision && (
+              <div className="flex gap-1">
+                {onCaptureCanvas && (
+                  <button
+                    onClick={handleAttachPage}
+                    disabled={!isConfigured || isLoading}
+                    className="px-2 py-1 bg-slate-700 hover:bg-slate-600 disabled:bg-slate-800 disabled:text-slate-600 text-white rounded transition-colors text-xs"
+                    title="Attach current page"
+                  >
+                    <FiCamera className="w-3.5 h-3.5" />
+                  </button>
+                )}
+                <label className="px-2 py-1 bg-slate-700 hover:bg-slate-600 text-white rounded transition-colors cursor-pointer text-xs">
+                  <FiUpload className="w-3.5 h-3.5" />
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileUpload}
+                    disabled={!isConfigured || isLoading}
+                    className="hidden"
+                  />
+                </label>
+              </div>
+            )}
+            <button
+              onClick={handleSend}
+              disabled={!inputValue.trim() || !isConfigured || isLoading}
+              className="px-3 py-2 bg-indigo-500 hover:bg-indigo-600 disabled:bg-slate-700 disabled:text-slate-500 text-white rounded-lg transition-colors"
+            >
+              <FiSend className="w-4 h-4" />
+            </button>
+          </div>
         </div>
         <p className="mt-2 text-[10px] text-slate-600">
           Press Enter to send, Shift+Enter for new line
@@ -336,13 +557,26 @@ function MessageBubble({ message }) {
   return (
     <div className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}>
       <div
-        className={`max-w-[85%] px-3 py-2 rounded-lg text-sm ${
+        className={`max-w-[95%] rounded-lg text-sm ${
           isUser
             ? 'bg-indigo-500 text-white'
             : 'bg-slate-800 text-slate-200 border border-slate-700'
         }`}
       >
-        <p className="whitespace-pre-wrap break-words">{message.content}</p>
+        {/* Show attached image if present */}
+        {message.attachedImage && (
+          <div className="p-2 border-b border-white/10">
+            <img
+              src={message.attachedImage.dataUrl}
+              alt="Attached"
+              className="max-w-full h-auto rounded"
+            />
+            <p className="text-[10px] opacity-70 mt-1 truncate">{message.attachedImage.name}</p>
+          </div>
+        )}
+        <p className={`whitespace-pre-wrap break-words ${message.attachedImage ? 'p-3' : 'px-3 py-2'}`}>
+          {message.content}
+        </p>
       </div>
     </div>
   )

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { FiPlus, FiEdit2, FiCheck, FiTrash2, FiCpu, FiCopy } from 'react-icons/fi'
 import { useAsset } from '../../../hooks/useAsset'
 import useProjectStore from '../../../stores/useProjectStore'
-import { AI_STYLES, AI_MODELS } from '../../../lib/falai'
+import { AI_STYLES, AI_MODELS } from '../../../lib/ai/falai'
 
 /**
  * AssetPropertiesWidget Component

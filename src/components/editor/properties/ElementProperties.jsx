@@ -32,7 +32,7 @@ export default function ElementProperties({ element }) {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 p-4">
       {/* Header with element type and delete button */}
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold text-white">

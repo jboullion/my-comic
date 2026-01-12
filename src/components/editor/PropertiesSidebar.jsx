@@ -28,7 +28,7 @@ export default function PropertiesSidebar({
   const [showUnusedOnly, setShowUnusedOnly] = useState(false)
 
   return (
-    <aside className="w-[338px] shrink-0 border-l border-slate-800 flex flex-col bg-slate-900">
+    <aside className="w-[400px] shrink-0 border-l border-slate-800 flex flex-col bg-slate-900">
       {/* Tabs */}
       <div className="flex border-b border-slate-800">
         <TabButton
@@ -53,7 +53,7 @@ export default function PropertiesSidebar({
         />
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4">
+      <div className="flex-1 overflow-y-auto">
         {activeTab === 'properties' && (
           <div className="space-y-6">
             {selectedElements.length > 1 ? (

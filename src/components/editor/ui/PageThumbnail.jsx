@@ -17,7 +17,7 @@ export default function PageThumbnail({
   return (
     <div
       draggable
-      onDragStart={onDragStart}
+      onDragStart={(e) => onDragStart(e)}
       onDragEnd={onDragEnd}
       onDragOver={onDragOver}
       onDragLeave={onDragLeave}

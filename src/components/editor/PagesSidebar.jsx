@@ -10,8 +10,13 @@ export default function PagesSidebar({ pages, activePageIndex, onPageSelect, onA
   const [draggedIndex, setDraggedIndex] = useState(null)
   const [dropTargetIndex, setDropTargetIndex] = useState(null)
 
-  const handleDragStart = (index) => {
+  const handleDragStart = (e, index) => {
     setDraggedIndex(index)
+    // Set data for external drop targets (like Story AI)
+    e.dataTransfer.setData('text/plain', `page:${index}`)
+    if (pages[index]?.thumbnail) {
+      e.dataTransfer.setData('image/dataurl', pages[index].thumbnail)
+    }
   }
 
   const handleDragEnd = () => {
@@ -57,7 +62,7 @@ export default function PagesSidebar({ pages, activePageIndex, onPageSelect, onA
             thumbnail={page.thumbnail}
             isDragging={draggedIndex === index}
             isDropTarget={dropTargetIndex === index}
-            onDragStart={() => handleDragStart(index)}
+            onDragStart={(e) => handleDragStart(e, index)}
             onDragEnd={handleDragEnd}
             onDragOver={(e) => handleDragOver(e, index)}
             onDragLeave={handleDragLeave}

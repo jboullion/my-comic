@@ -1,5 +1,7 @@
 ## Current TODOs
 
+- Set up ability for agent to use application in VS Code. Bypass authentication?
+
 - AI Generation notes
 - - Give a warning that custom models take longer to load and have limited flexability. If you really want full control over your image generation you will likely want to work outside of Comic Book Maker and import your images.
 - - We will update and improve our AI models and generation as the models themselves improve!
