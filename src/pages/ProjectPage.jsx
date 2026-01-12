@@ -10,6 +10,7 @@ import PropertiesSidebar from '../components/editor/PropertiesSidebar'
 import ExportModal from '../components/editor/ExportModal'
 import AIImageModal from '../components/editor/AIImageModal'
 import StoryPromptModal from '../components/series/StoryPromptModal'
+import AssetPropertiesPopup from '../components/editor/properties/AssetPropertiesPopup'
 import { exportPagesToZip } from '../lib/export'
 
 export default function ProjectPage() {
@@ -51,6 +52,7 @@ export default function ProjectPage() {
   const [showExportModal, setShowExportModal] = useState(false)
   const [showAIModal, setShowAIModal] = useState(false)
   const [isExporting, setIsExporting] = useState(false)
+  const [propertiesActiveTab, setPropertiesActiveTab] = useState('properties')
 
   // Callback to capture canvas for Story AI
   const captureCanvasForAI = useCallback(async () => {
@@ -395,15 +397,27 @@ export default function ProjectPage() {
           </main>
 
           {/* Right Sidebar - Properties Panel */}
-          <PropertiesSidebar
-            currentProject={currentProject}
-            selectedElements={selectedElements}
-            selectedAssetId={selectedAssetId}
-            onSelectAsset={setSelectedAssetId}
-            onAddAsset={addAssetToPage}
-            activePageIndex={activePageIndex}
-            onCaptureCanvas={captureCanvasForAI}
-          />
+          <div className="relative">
+            <PropertiesSidebar
+              currentProject={currentProject}
+              selectedElements={selectedElements}
+              selectedAssetId={selectedAssetId}
+              onSelectAsset={setSelectedAssetId}
+              onAddAsset={addAssetToPage}
+              activePageIndex={activePageIndex}
+              onCaptureCanvas={captureCanvasForAI}
+              onActiveTabChange={setPropertiesActiveTab}
+            />
+
+            {/* Asset Properties Popup */}
+            {propertiesActiveTab === 'assets' && selectedAssetId && (
+              <AssetPropertiesPopup
+                assetId={selectedAssetId}
+                onAdd={addAssetToPage}
+                onClose={() => setSelectedAssetId(null)}
+              />
+            )}
+          </div>
         </div>
 
         {/* Export Modal */}

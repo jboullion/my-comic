@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { FiPlus, FiEdit2, FiCheck, FiTrash2, FiCpu, FiCopy } from 'react-icons/fi'
 import { useAsset } from '../../../hooks/useAsset'
+import { useImageUrl } from '../../../hooks/useImage'
 import useProjectStore from '../../../stores/useProjectStore'
 import { AI_STYLES, AI_MODELS } from '../../../lib/ai/falai'
 
@@ -8,8 +9,9 @@ import { AI_STYLES, AI_MODELS } from '../../../lib/ai/falai'
  * AssetPropertiesWidget Component
  * Display metadata and actions for selected asset
  */
-export default function AssetPropertiesWidget({ assetId, onAdd }) {
+export default function AssetPropertiesWidget({ assetId, onAdd, showInPopup = false }) {
   const asset = useAsset(assetId)
+  const imageUrl = useImageUrl(assetId)
   const { renameAsset, deleteAsset, isAssetUsed } = useProjectStore()
   const [isEditing, setIsEditing] = useState(false)
   const [tempName, setTempName] = useState('')
@@ -46,8 +48,22 @@ export default function AssetPropertiesWidget({ assetId, onAdd }) {
   const fileSize = (asset.size / 1024).toFixed(1) + ' KB'
 
   return (
-    <div className="bg-slate-900/50 rounded-xl p-4 border border-slate-800">
+    <div className={showInPopup
+      ? "p-6" // Padding for popup
+      : "bg-slate-900/50 rounded-xl p-4 border border-slate-800" // Inline styling
+    }>
       <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Asset Properties</h3>
+
+      {/* Thumbnail preview (only in popup) */}
+      {showInPopup && imageUrl && (
+        <div className="mb-4 flex justify-center">
+          <img
+            src={imageUrl}
+            alt={asset.name}
+            className="max-w-[200px] max-h-[200px] rounded-lg border border-slate-700 object-contain bg-slate-950"
+          />
+        </div>
+      )}
 
       <div className="space-y-3">
         <div className="flex justify-between items-start">

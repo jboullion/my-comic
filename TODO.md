@@ -1,14 +1,5 @@
 ## Current TODOs
 
-- Set up AI Dialog and Image Prompt helpers
-- - Improve character descriptions which will be used when the AI is thinking about the current story
-- - Set up "Motion" / Video generation
-- - AI Voice?!? Can we have AI Voices read the text / script and then also save the audio? Perhaps we save 1 audio file per page and as the user turns the page it plays that audio after a small delay?
-- Add a "Story Agent Prompt" editor. We will set a default but users can edit their story agent so they have control over how it works and responds to them.
-
-
-- Improve the Asset toolbar experience
-
 - Update the home and marketing page!
 
 - Update the AI features to only work with a paid account.
@@ -110,16 +101,14 @@
 I think a lot of people in other countries would like this application. Can I keep it in english only? There really isn't much to read. What is for reading should probably be auto transaltable to their language in their browser.
 
 
-### AI TODOs
+### AI
 
 - AI Image Iteration. Could we take a base image and give a prompt for altering it using it as a reference?
 - AI Inpainting
 - Tweak tweak tweak the character integration. THIS IS KEY
 
-
-#### Voice?!?
-
-Could we set up the comic to "read"? Can each character have a voice? Plus a Narrator?
+- - Set up "Motion" / Video generation
+- - AI Voice?!? Can we have AI Voices read the text / script and then also save the audio? Perhaps we save 1 audio file per page and as the user turns the page it plays that audio after a small delay?
 
 
 

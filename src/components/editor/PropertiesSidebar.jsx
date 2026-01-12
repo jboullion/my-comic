@@ -1,9 +1,8 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import ElementProperties from './properties/ElementProperties'
 import MultiElementProperties from './properties/MultiElementProperties'
 import PageSettingsPanel from './properties/PageSettingsPanel'
 import AssetGallery from './properties/AssetGallery'
-import AssetPropertiesWidget from './properties/AssetPropertiesWidget'
 import StoryAIPanel from './properties/StoryAIPanel'
 
 /**
@@ -18,6 +17,7 @@ export default function PropertiesSidebar({
   onAddAsset,
   activePageIndex = 0,
   onCaptureCanvas,
+  onActiveTabChange,
 }) {
   const [activeTab, setActiveTab] = useState('properties')
 
@@ -27,8 +27,20 @@ export default function PropertiesSidebar({
   const [showOnPageOnly, setShowOnPageOnly] = useState(false)
   const [showUnusedOnly, setShowUnusedOnly] = useState(false)
 
+  // Notify parent when tab changes
+  useEffect(() => {
+    onActiveTabChange?.(activeTab)
+  }, [activeTab, onActiveTabChange])
+
+  // Clear asset selection when leaving Assets tab
+  useEffect(() => {
+    if (activeTab !== 'assets' && selectedAssetId) {
+      onSelectAsset(null)
+    }
+  }, [activeTab]) // eslint-disable-line react-hooks/exhaustive-deps
+
   return (
-    <aside className="w-[400px] shrink-0 border-l border-slate-800 flex flex-col bg-slate-900">
+    <aside className="w-[400px] h-full shrink-0 border-l border-slate-800 flex flex-col bg-slate-900">
       {/* Tabs */}
       <div className="flex border-b border-slate-800">
         <TabButton
@@ -69,34 +81,21 @@ export default function PropertiesSidebar({
         )}
 
         {activeTab === 'assets' && (
-          <div className="flex flex-col h-full">
-            <div className="flex-1 overflow-y-auto pr-2">
-              <AssetGallery
-                imageIds={currentProject.assets?.imageIds || []}
-                selectedAssetId={selectedAssetId}
-                onSelect={onSelectAsset}
-                onAdd={onAddAsset}
-                activePageIndex={activePageIndex}
-                searchQuery={assetSearchQuery}
-                onSearchChange={setAssetSearchQuery}
-                sortBy={assetSortBy}
-                onSortChange={setAssetSortBy}
-                showOnPageOnly={showOnPageOnly}
-                onShowOnPageOnlyChange={setShowOnPageOnly}
-                showUnusedOnly={showUnusedOnly}
-                onShowUnusedOnlyChange={setShowUnusedOnly}
-              />
-            </div>
-            
-            {selectedAssetId && (
-              <div className="mt-4">
-                <AssetPropertiesWidget 
-                  assetId={selectedAssetId} 
-                  onAdd={onAddAsset}
-                />
-              </div>
-            )}
-          </div>
+          <AssetGallery
+            imageIds={currentProject.assets?.imageIds || []}
+            selectedAssetId={selectedAssetId}
+            onSelect={onSelectAsset}
+            onAdd={onAddAsset}
+            activePageIndex={activePageIndex}
+            searchQuery={assetSearchQuery}
+            onSearchChange={setAssetSearchQuery}
+            sortBy={assetSortBy}
+            onSortChange={setAssetSortBy}
+            showOnPageOnly={showOnPageOnly}
+            onShowOnPageOnlyChange={setShowOnPageOnly}
+            showUnusedOnly={showUnusedOnly}
+            onShowUnusedOnlyChange={setShowUnusedOnly}
+          />
         )}
 
         {activeTab === 'page' && (
