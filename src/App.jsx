@@ -14,7 +14,6 @@ import ProjectSettingsPage from './pages/ProjectSettingsPage'
 import ProfilePage from './pages/ProfilePage'
 import CharactersPage from './pages/CharactersPage'
 import NotFoundPage from './pages/NotFoundPage'
-import PWAUpdatePrompt from './components/PWAUpdatePrompt'
 import OfflineIndicator from './components/OfflineIndicator'
 
 // Redirect components for backward compatibility
@@ -44,8 +43,6 @@ import DocsStorage from './pages/docs/DocsStorage'
 function App() {
   return (
     <>
-      {/* PWA Components */}
-      <PWAUpdatePrompt />
       <OfflineIndicator />
       
       <Routes>

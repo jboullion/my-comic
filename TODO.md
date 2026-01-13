@@ -1,10 +1,5 @@
 ## Current TODOs
 
-- Update the home and marketing page!
-- - Improve mobile menu
-
-- Set up prompt to include things like setting, scene, lighting, etc.
-
 - Can this app even work in mobile? Perhaps mobile is a "view only" version?
 
 - Update the AI features to only work with a paid account.
@@ -13,12 +8,16 @@
 
 - Need to set up some kind of token system for users. Right now the hobbyist tier should probably give X credits a month. Need to figure out how much that should be and also how to track it per user.
 
-- Set up netlify deployment
-
 - Remove the "toast" in the bottom right that says your app is ready to work offline.
 - - Potentially just remove all of the PWA / install feature. Probably keep the service workers for performance?
 
 - Set up "Locations", and other things to work similar to characters for easy AI reference
+
+- AI Documentation
+- - Character documentation
+- - Models and limitations
+- - AI Prompt Suggestion
+- - Story AI
 
 ## Bugs
 
