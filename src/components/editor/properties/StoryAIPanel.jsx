@@ -1,10 +1,12 @@
 import { useState, useRef, useEffect } from 'react'
-import { FiSend, FiTrash2, FiCpu, FiAlertCircle, FiImage, FiChevronDown, FiCamera, FiUpload, FiX, FiEdit3 } from 'react-icons/fi'
-import { chatWithStoryAI, isOpenRouterConfigured, STORY_AI_MODELS } from '../../../lib/ai/openrouter'
+import { FiSend, FiTrash2, FiCpu, FiAlertCircle, FiImage, FiChevronDown, FiCamera, FiUpload, FiX, FiEdit3, FiZap } from 'react-icons/fi'
+import { STORY_AI_MODELS } from '../../../lib/ai/openrouter'
+import { storyChatViaEdge, getStoryChatCost } from '../../../lib/ai/edgeFunctions'
 import { uploadImageToFal } from '../../../lib/ai/falai'
 import { useProjectStore } from '../../../stores/useProjectStore'
 import { useCharactersStore } from '../../../stores/useCharactersStore'
 import useSeriesStore from '../../../stores/useSeriesStore'
+import { useCredits } from '../../../hooks/useCredits'
 
 /**
  * Get localStorage key for chat history
@@ -46,6 +48,9 @@ export default function StoryAIPanel({ onCaptureCanvas }) {
   const activePageIndex = useProjectStore(state => state.activePageIndex)
   const { characters } = useCharactersStore()
   const { openStoryPromptModal, getSeriesStoryPrompt, getSeriesById } = useSeriesStore()
+
+  // Get credits info for cost preview and auth check
+  const { balance, isLoggedIn, hasCredits } = useCredits()
 
   const seriesId = currentProject?.seriesId
   const customPrompt = seriesId ? getSeriesStoryPrompt(seriesId) : null
@@ -100,9 +105,16 @@ export default function StoryAIPanel({ onCaptureCanvas }) {
   const handleSend = async () => {
     const trimmedInput = inputValue.trim()
     if (!trimmedInput || isLoading) return
-    
+
+    // Check credits before sending
+    const cost = getStoryChatCost(selectedModel)
+    if (!hasCredits(cost)) {
+      setError(`Not enough credits. This costs ${cost} credit${cost !== 1 ? 's' : ''}, but you only have ${balance ?? 0}.`)
+      return
+    }
+
     setError(null)
-    
+
     // Add user message
     const userMessage = {
       id: Date.now(),
@@ -111,24 +123,24 @@ export default function StoryAIPanel({ onCaptureCanvas }) {
       attachedImage: attachedImage,
       timestamp: Date.now()
     }
-    
+
     const newMessages = [...messages, userMessage]
     setMessages(newMessages)
     setInputValue('')
     setAttachedImage(null)
     setIsLoading(true)
-    
+
     try {
       const context = buildContext()
-      
+
       // Build chat history for API (last 10 messages for context window)
       const chatHistory = newMessages.slice(-10).map(m => ({
         role: m.role,
         content: m.content
       }))
-      
+
       const modelConfig = STORY_AI_MODELS[selectedProvider]?.[selectedModel]
-      
+
       // Use attached image if available, otherwise auto-capture if vision is enabled
       let imageUrl = null
       if (attachedImage) {
@@ -170,23 +182,24 @@ export default function StoryAIPanel({ onCaptureCanvas }) {
           console.log('[Story AI] No onCaptureCanvas callback provided')
         }
       }
-      
-      const response = await chatWithStoryAI(trimmedInput, {
+
+      const result = await storyChatViaEdge({
+        message: trimmedInput,
         provider: selectedProvider,
         model: selectedModel,
         imageUrl,
         chatHistory: chatHistory.slice(0, -1), // Exclude the current message
         projectContext: context
       })
-      
+
       // Add assistant message
       const assistantMessage = {
         id: Date.now() + 1,
         role: 'assistant',
-        content: response,
+        content: result.response,
         timestamp: Date.now()
       }
-      
+
       const updatedMessages = [...newMessages, assistantMessage]
       setMessages(updatedMessages)
       saveChatHistory(projectId, updatedMessages)
@@ -323,7 +336,11 @@ export default function StoryAIPanel({ onCaptureCanvas }) {
     }
   }
   
-  const isConfigured = isOpenRouterConfigured()
+  // Check if user is logged in (Edge Functions require authentication)
+  const isConfigured = isLoggedIn
+
+  // Get current model cost for preview
+  const currentCost = getStoryChatCost(selectedModel)
   
   return (
     <div className="flex flex-col h-full">
@@ -425,7 +442,7 @@ export default function StoryAIPanel({ onCaptureCanvas }) {
             <div className="flex items-start gap-2">
               <FiAlertCircle className="w-4 h-4 text-amber-400 mt-0.5 shrink-0" />
               <p className="text-xs text-amber-200">
-                OpenRouter API key not configured. Add VITE_OPENROUTER_KEY to your .env.local file.
+                Please sign in to use Story AI. Your account includes free credits each month.
               </p>
             </div>
           </div>
@@ -557,9 +574,17 @@ export default function StoryAIPanel({ onCaptureCanvas }) {
             </button>
           </div>
         </div>
-        <p className="mt-2 text-[10px] text-slate-600">
-          Press Enter to send, Shift+Enter for new line
-        </p>
+        <div className="mt-2 flex items-center justify-between">
+          <p className="text-[10px] text-slate-600">
+            Press Enter to send, Shift+Enter for new line
+          </p>
+          {isConfigured && (
+            <span className="text-[10px] text-slate-500 flex items-center gap-1">
+              <FiZap className="w-3 h-3 text-amber-400" />
+              {currentCost} {currentCost === 1 ? 'credit' : 'credits'} per message
+            </span>
+          )}
+        </div>
       </div>
     </div>
   )

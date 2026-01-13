@@ -26,7 +26,7 @@
 
 ## Bugs
 
-
+- Allow mature is being sent as false even when set as true with all models
 - Project Header should use the standard user menu
 - Have each AI Image generated save in a temporary storage so users can access it even if they don't use it. Perhaps save it and show it as a thumbnail in the history?
 - Cloud SVG is overflowing container.

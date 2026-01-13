@@ -6,10 +6,62 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { handleCors, jsonResponse, errorResponse } from '../_shared/cors.ts'
 import { verifyAuth } from '../_shared/auth.ts'
-import { createAdminClient, checkCredits, deductCredits, refundCredits } from '../_shared/credits.ts'
+import { createAdminClient, checkCredits, deductCredits } from '../_shared/credits.ts'
 
 // Fal.ai API configuration
-const FAL_API_URL = 'https://queue.fal.run'
+const FAL_QUEUE_URL = 'https://queue.fal.run'
+
+// Polling configuration
+const POLL_INTERVAL_MS = 1000 // 1 second
+const MAX_POLL_TIME_MS = 120000 // 2 minutes max
+
+// Helper to poll for queue result
+async function pollForResult(
+  modelId: string,
+  requestId: string,
+  apiKey: string
+): Promise<{ data: Record<string, unknown> | null; error: string | null }> {
+  const startTime = Date.now()
+  const statusUrl = `${FAL_QUEUE_URL}/${modelId}/requests/${requestId}/status`
+  const resultUrl = `${FAL_QUEUE_URL}/${modelId}/requests/${requestId}`
+
+  while (Date.now() - startTime < MAX_POLL_TIME_MS) {
+    // Check status
+    const statusResponse = await fetch(statusUrl, {
+      headers: { 'Authorization': `Key ${apiKey}` },
+    })
+
+    if (!statusResponse.ok) {
+      return { data: null, error: `Status check failed: ${statusResponse.status}` }
+    }
+
+    const status = await statusResponse.json()
+    console.log(`[generate-image] Queue status: ${status.status}`)
+
+    if (status.status === 'COMPLETED') {
+      // Fetch the result
+      const resultResponse = await fetch(resultUrl, {
+        headers: { 'Authorization': `Key ${apiKey}` },
+      })
+
+      if (!resultResponse.ok) {
+        return { data: null, error: `Result fetch failed: ${resultResponse.status}` }
+      }
+
+      const result = await resultResponse.json()
+      return { data: result, error: null }
+    }
+
+    if (status.status === 'FAILED') {
+      return { data: null, error: status.error || 'Generation failed' }
+    }
+
+    // Wait before next poll
+    await new Promise(resolve => setTimeout(resolve, POLL_INTERVAL_MS))
+  }
+
+  return { data: null, error: 'Generation timed out' }
+}
 
 // Model ID mapping (matches frontend)
 const MODEL_IDS: Record<string, string> = {
@@ -85,7 +137,7 @@ serve(async (req: Request) => {
     // Create admin client for credit operations
     const adminClient = createAdminClient()
 
-    // Check credits
+    // Check credits (but don't deduct yet - only deduct after successful generation)
     const creditCheck = await checkCredits(adminClient, userId, 'fal', modelKey)
     if (!creditCheck.success) {
       return errorResponse(creditCheck.error || 'Credit check failed', 402, creditCheck.errorCode)
@@ -93,25 +145,9 @@ serve(async (req: Request) => {
 
     const cost = creditCheck.cost!
 
-    // Deduct credits before making the API call
-    const deductResult = await deductCredits(
-      adminClient,
-      userId,
-      cost,
-      'ai_image',
-      `Image generation: ${modelKey}`,
-      { model: modelKey, promptPreview: prompt.substring(0, 100) }
-    )
-
-    if (!deductResult.success) {
-      return errorResponse(deductResult.error || 'Failed to deduct credits', 402, 'DEDUCT_FAILED')
-    }
-
     // Get Fal.ai API key from secrets
     const falApiKey = Deno.env.get('FAL_AI_KEY')
     if (!falApiKey) {
-      // Refund on configuration error
-      await refundCredits(adminClient, userId, cost, 'API key not configured', { model: modelKey })
       return errorResponse('Fal.ai API key not configured', 500, 'CONFIG_ERROR')
     }
 
@@ -230,11 +266,11 @@ serve(async (req: Request) => {
       }]
     }
 
-    // Call Fal.ai API
-    console.log(`[generate-image] Calling Fal.ai: ${modelId}`)
+    // Submit to Fal.ai queue
+    console.log(`[generate-image] Submitting to Fal.ai queue: ${modelId}`)
     console.log(`[generate-image] User: ${userId}, Cost: ${cost}`)
 
-    const falResponse = await fetch(`${FAL_API_URL}/${modelId}`, {
+    const queueResponse = await fetch(`${FAL_QUEUE_URL}/${modelId}`, {
       method: 'POST',
       headers: {
         'Authorization': `Key ${falApiKey}`,
@@ -243,33 +279,52 @@ serve(async (req: Request) => {
       body: JSON.stringify(input),
     })
 
-    if (!falResponse.ok) {
-      const errorData = await falResponse.json().catch(() => ({}))
-      console.error('[generate-image] Fal.ai error:', errorData)
-
-      // Refund credits on API failure
-      await refundCredits(
-        adminClient,
-        userId,
-        cost,
-        `Fal.ai error: ${errorData.detail || falResponse.status}`,
-        { model: modelKey, error: errorData }
-      )
+    if (!queueResponse.ok) {
+      const errorData = await queueResponse.json().catch(() => ({}))
+      console.error('[generate-image] Fal.ai queue error:', errorData)
 
       return errorResponse(
-        errorData.detail || `Fal.ai request failed: ${falResponse.status}`,
-        falResponse.status === 401 ? 500 : falResponse.status,
+        errorData.detail || `Fal.ai request failed: ${queueResponse.status}`,
+        queueResponse.status === 401 ? 500 : queueResponse.status,
         'FAL_API_ERROR'
       )
     }
 
-    const result = await falResponse.json()
-    const image = result.images?.[0]
+    const queueResult = await queueResponse.json()
+    const requestId = queueResult.request_id
+
+    if (!requestId) {
+      return errorResponse('Failed to queue image generation', 500, 'QUEUE_ERROR')
+    }
+
+    console.log(`[generate-image] Queued with request_id: ${requestId}`)
+
+    // Poll for result
+    const { data: result, error: pollError } = await pollForResult(modelId, requestId, falApiKey)
+
+    if (pollError || !result) {
+      return errorResponse(pollError || 'Image generation failed', 500, 'GENERATION_FAILED')
+    }
+
+    const image = (result.images as Array<{ url: string; width: number; height: number }>)?.[0]
 
     if (!image) {
-      // Refund if no image returned
-      await refundCredits(adminClient, userId, cost, 'No image returned from Fal.ai', { model: modelKey })
       return errorResponse('No image generated', 500, 'NO_IMAGE')
+    }
+
+    // SUCCESS! Now deduct credits (only after successful generation)
+    const deductResult = await deductCredits(
+      adminClient,
+      userId,
+      cost,
+      'ai_image',
+      `Image generation: ${modelKey}`,
+      { model: modelKey, promptPreview: prompt.substring(0, 100) }
+    )
+
+    if (!deductResult.success) {
+      // This shouldn't happen since we checked credits earlier, but handle it gracefully
+      console.error('[generate-image] Failed to deduct credits after successful generation:', deductResult.error)
     }
 
     // Return success with image data
@@ -287,7 +342,7 @@ serve(async (req: Request) => {
       usedCustomModel: useCustomModel,
       credits: {
         cost,
-        newBalance: deductResult.newBalance,
+        newBalance: deductResult.newBalance ?? (creditCheck.balance! - cost),
       },
     })
   } catch (error) {
