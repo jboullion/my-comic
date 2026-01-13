@@ -1,4 +1,7 @@
-import { FiInfo } from 'react-icons/fi'
+import { useState } from 'react'
+import { FiInfo, FiSearch } from 'react-icons/fi'
+import { isCivitaiConfigured } from '../../lib/civitai'
+import CivitAIBrowserModal from '../civitai/CivitAIBrowserModal'
 
 /**
  * Model architecture options for the custom model dropdown
@@ -14,6 +17,9 @@ const MODEL_TYPES = [
  * Custom AI model configuration for the project
  */
 export default function AIModelSettingsTab({ settings, onUpdate }) {
+  const [showBrowser, setShowBrowser] = useState(false)
+  const civitaiConnected = isCivitaiConfigured()
+
   const customModel = settings || {
     enabled: false,
     name: '',
@@ -24,6 +30,18 @@ export default function AIModelSettingsTab({ settings, onUpdate }) {
 
   const handleChange = (field, value) => {
     onUpdate({ ...customModel, [field]: value })
+  }
+
+  const handleModelSelect = (model) => {
+    // Auto-populate all fields from selected model
+    onUpdate({
+      ...customModel,
+      enabled: true,
+      name: model.name,
+      type: model.type,
+      url: model.url,
+    })
+    setShowBrowser(false)
   }
 
   return (
@@ -109,13 +127,30 @@ export default function AIModelSettingsTab({ settings, onUpdate }) {
             <label className="text-[10px] text-slate-500 uppercase font-bold">
               CivitAI Model URL
             </label>
-            <input
-              type="text"
-              value={customModel.url}
-              onChange={(e) => handleChange('url', e.target.value)}
-              placeholder="https://civitai.com/api/download/models/..."
-              className="w-full px-4 py-2.5 bg-slate-900 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm"
-            />
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={customModel.url}
+                onChange={(e) => handleChange('url', e.target.value)}
+                placeholder="https://civitai.com/api/download/models/..."
+                className="flex-1 px-4 py-2.5 bg-slate-900 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm"
+              />
+              {civitaiConnected && (
+                <button
+                  type="button"
+                  onClick={() => setShowBrowser(true)}
+                  className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 whitespace-nowrap"
+                >
+                  <FiSearch className="w-4 h-4" />
+                  Browse
+                </button>
+              )}
+            </div>
+            {!civitaiConnected && (
+              <p className="text-[10px] text-slate-500">
+                Connect CivitAI in <span className="text-indigo-400">Profile &gt; Connected Accounts</span> to browse models directly
+              </p>
+            )}
           </div>
 
           {/* Info Box */}
@@ -240,6 +275,15 @@ export default function AIModelSettingsTab({ settings, onUpdate }) {
           </div>
         </div>
       </div>
+
+      {/* CivitAI Browser Modal */}
+      <CivitAIBrowserModal
+        isOpen={showBrowser}
+        onClose={() => setShowBrowser(false)}
+        onSelect={handleModelSelect}
+        mode="checkpoint"
+        allowNsfw={customModel.allowMature}
+      />
     </div>
   )
 }

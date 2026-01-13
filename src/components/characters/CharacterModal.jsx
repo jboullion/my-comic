@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react'
-import { FiX, FiLoader, FiInfo } from 'react-icons/fi'
+import { FiX, FiLoader, FiInfo, FiSearch, FiTrash2 } from 'react-icons/fi'
 import useCharactersStore from '../../stores/useCharactersStore'
 import useSeriesStore from '../../stores/useSeriesStore'
 import CharacterImageUpload from './CharacterImageUpload'
 import SeriesSelector from '../series/SeriesSelector'
+import CivitAIBrowserModal from '../civitai/CivitAIBrowserModal'
+import { isCivitaiConfigured } from '../../lib/civitai'
 
 /**
  * CharacterModal Component
@@ -27,6 +29,14 @@ export default function CharacterModal({ defaultSeriesId = null }) {
   const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState(null)
 
+  // LoRA fields
+  const [loraUrl, setLoraUrl] = useState('')
+  const [loraTriggerWord, setLoraTriggerWord] = useState('')
+  const [loraScale, setLoraScale] = useState(0.8)
+  const [loraName, setLoraName] = useState('') // Display name for UI
+  const [showLoraBrowser, setShowLoraBrowser] = useState(false)
+
+  const civitaiConnected = isCivitaiConfigured()
   const isEditing = !!editingCharacter
 
   // Load series when modal opens (only if not already loaded/loading)
@@ -54,10 +64,20 @@ export default function CharacterModal({ defaultSeriesId = null }) {
         } else {
           setProfileImage(null)
         }
+        // Set LoRA fields
+        setLoraUrl(editingCharacter.loraUrl || '')
+        setLoraTriggerWord(editingCharacter.loraTriggerWord || '')
+        setLoraScale(editingCharacter.loraScale ?? 0.8)
+        setLoraName(editingCharacter.loraUrl ? 'Custom LoRA' : '')
       } else {
         setName('')
         setDescription('')
         setProfileImage(null)
+        // Reset LoRA fields
+        setLoraUrl('')
+        setLoraTriggerWord('')
+        setLoraScale(0.8)
+        setLoraName('')
         // Set default series
         if (defaultSeriesId) {
           setSeriesId(defaultSeriesId)
@@ -108,11 +128,19 @@ export default function CharacterModal({ defaultSeriesId = null }) {
     setIsSaving(true)
 
     try {
+      // Build LoRA data
+      const loraData = {
+        loraUrl: loraUrl.trim() || null,
+        loraTriggerWord: loraTriggerWord.trim() || null,
+        loraScale: loraScale,
+      }
+
       if (isEditing) {
         // Update existing character
         await updateCharacter(editingCharacter.id, {
           name: name.trim(),
-          description: description.trim()
+          description: description.trim(),
+          ...loraData,
         })
 
         // If there's a new profile image (has file property), upload it
@@ -120,8 +148,8 @@ export default function CharacterModal({ defaultSeriesId = null }) {
           await addCharacterImage(editingCharacter.id, profileImage.file, 'profile')
         }
       } else {
-        // Create new character
-        const character = await createCharacter(name.trim(), description.trim(), seriesId)
+        // Create new character with LoRA data
+        const character = await createCharacter(name.trim(), description.trim(), seriesId, loraData)
 
         // Upload profile image if provided
         if (profileImage?.file) {
@@ -160,6 +188,20 @@ export default function CharacterModal({ defaultSeriesId = null }) {
       URL.revokeObjectURL(profileImage.url)
     }
     setProfileImage(null)
+  }
+
+  const handleLoraSelect = (model) => {
+    setLoraUrl(model.url)
+    setLoraName(model.name)
+    setLoraTriggerWord(model.triggerWords?.[0] || '')
+    setShowLoraBrowser(false)
+  }
+
+  const handleLoraClear = () => {
+    setLoraUrl('')
+    setLoraName('')
+    setLoraTriggerWord('')
+    setLoraScale(0.8)
   }
 
   if (!isCharacterModalOpen) return null
@@ -254,6 +296,89 @@ export default function CharacterModal({ defaultSeriesId = null }) {
               </p>
             </div>
 
+            {/* LoRA Section */}
+            <div className="space-y-3">
+              <label className="block text-[10px] text-slate-500 uppercase font-bold">
+                Character LoRA (Optional)
+              </label>
+
+              {loraUrl ? (
+                // LoRA configured
+                <div className="bg-slate-900/50 rounded-lg p-3 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-white">{loraName || 'Custom LoRA'}</p>
+                      <p className="text-[10px] text-slate-500 truncate max-w-[250px]">{loraUrl}</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleLoraClear}
+                      disabled={isSaving}
+                      className="p-1.5 text-slate-500 hover:text-red-400 hover:bg-red-400/10 rounded transition-colors"
+                      title="Remove LoRA"
+                    >
+                      <FiTrash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+
+                  {/* Trigger Word */}
+                  <div>
+                    <label className="block text-[10px] text-slate-500 mb-1">Trigger Word</label>
+                    <input
+                      type="text"
+                      value={loraTriggerWord}
+                      onChange={(e) => setLoraTriggerWord(e.target.value)}
+                      placeholder="e.g., character_name"
+                      disabled={isSaving}
+                      className="w-full px-3 py-1.5 bg-slate-800 border border-slate-700 rounded text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
+                    />
+                  </div>
+
+                  {/* Scale Slider */}
+                  <div>
+                    <label className="block text-[10px] text-slate-500 mb-1">
+                      Scale: {loraScale.toFixed(2)}
+                    </label>
+                    <input
+                      type="range"
+                      min="0.1"
+                      max="1.5"
+                      step="0.05"
+                      value={loraScale}
+                      onChange={(e) => setLoraScale(parseFloat(e.target.value))}
+                      disabled={isSaving}
+                      className="w-full accent-indigo-500"
+                    />
+                  </div>
+                </div>
+              ) : (
+                // No LoRA configured
+                <div className="flex gap-2">
+                  {civitaiConnected ? (
+                    <button
+                      type="button"
+                      onClick={() => setShowLoraBrowser(true)}
+                      disabled={isSaving}
+                      className="flex-1 p-3 border border-dashed border-slate-700 hover:border-slate-600 rounded-lg text-sm text-slate-400 hover:text-white transition-colors flex items-center justify-center gap-2"
+                    >
+                      <FiSearch className="w-4 h-4" />
+                      Browse LoRAs on CivitAI
+                    </button>
+                  ) : (
+                    <div className="flex-1 p-3 bg-slate-900/50 rounded-lg">
+                      <p className="text-xs text-slate-500 text-center">
+                        Connect CivitAI in <span className="text-indigo-400">Profile &gt; Connected Accounts</span> to browse LoRAs
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <p className="text-[10px] text-slate-500">
+                A LoRA helps AI generate consistent images of this character.
+              </p>
+            </div>
+
             {/* Info Box */}
             <div className="bg-slate-900/50 rounded-lg px-4 py-3 text-sm text-slate-400">
               <div className="flex items-start gap-2">
@@ -303,6 +428,14 @@ export default function CharacterModal({ defaultSeriesId = null }) {
           </div>
         </form>
       </div>
+
+      {/* CivitAI LoRA Browser Modal */}
+      <CivitAIBrowserModal
+        isOpen={showLoraBrowser}
+        onClose={() => setShowLoraBrowser(false)}
+        onSelect={handleLoraSelect}
+        mode="lora"
+      />
     </div>
   )
 }

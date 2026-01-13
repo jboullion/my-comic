@@ -4,6 +4,8 @@ import { FiX, FiZap, FiRefreshCw, FiCheck, FiAlertCircle, FiCpu, FiClock, FiTras
 import { generateImage, AI_MODELS, AI_STYLES, isFalConfigured, enhanceImagePrompt } from '../../lib/ai/falai'
 import { fetchImageAsBlob } from '../../lib/ai/utils'
 import CharacterPicker from './CharacterPicker'
+import LoRAList from '../civitai/LoRAList'
+import { isCivitaiConfigured } from '../../lib/civitai'
 import useCharactersStore from '../../stores/useCharactersStore'
 import useProjectStore from '../../stores/useProjectStore'
 import useSeriesStore from '../../stores/useSeriesStore'
@@ -117,6 +119,12 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
   const [imageSize, setImageSize] = useState('match_page')
   const [selectedCharacterIds, setSelectedCharacterIds] = useState([])
 
+  // Additional LoRAs from CivitAI browser (besides character LoRAs)
+  const [additionalLoras, setAdditionalLoras] = useState([])
+
+  // Check if CivitAI is configured
+  const civitaiConnected = isCivitaiConfigured()
+
   // Advanced tab structured prompts
   const [advancedPrompts, setAdvancedPrompts] = useState({
     scene: '',
@@ -142,28 +150,56 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
   // Get characters from store for prompt building
   const { characters } = useCharactersStore()
 
-  // Get LoRA from first selected character that has one configured
-  const getCharacterLora = useCallback(() => {
-    if (selectedCharacterIds.length === 0) return null
+  // Get LoRAs from selected characters that have them configured
+  const getCharacterLoras = useCallback(() => {
+    if (selectedCharacterIds.length === 0) return []
 
-    // Find first selected character with a LoRA configured
+    const loras = []
     for (const id of selectedCharacterIds) {
       const char = characters.find(c => c.id === id)
       if (char?.loraUrl) {
-        return {
+        loras.push({
+          id: `char-${char.id}`,
+          name: char.name,
           url: char.loraUrl,
-          triggerWord: char.loraTriggerWord || '',
+          triggerWords: char.loraTriggerWord ? [char.loraTriggerWord] : [],
           scale: char.loraScale ?? 0.8,
-          characterName: char.name
-        }
+          thumbnail: char.profileImage?.url || null,
+          fromCharacter: true,
+        })
       }
     }
-    return null
+    return loras
   }, [selectedCharacterIds, characters])
 
-  // Check if we have a LoRA available (for UI indicator)
-  const characterLora = getCharacterLora()
-  const hasLora = characterLora !== null
+  // Legacy function for backward compatibility
+  const getCharacterLora = useCallback(() => {
+    const loras = getCharacterLoras()
+    if (loras.length === 0) return null
+    return {
+      url: loras[0].url,
+      triggerWord: loras[0].triggerWords?.[0] || '',
+      scale: loras[0].scale,
+      characterName: loras[0].name,
+    }
+  }, [getCharacterLoras])
+
+  // Combine character LoRAs with additional LoRAs from browser
+  const getAllLoras = useCallback(() => {
+    const charLoras = getCharacterLoras()
+    // Combine, avoiding duplicates by URL
+    const allLoras = [...charLoras]
+    for (const lora of additionalLoras) {
+      if (!allLoras.some(l => l.url === lora.url)) {
+        allLoras.push(lora)
+      }
+    }
+    return allLoras
+  }, [getCharacterLoras, additionalLoras])
+
+  // Check if we have any LoRAs available (for UI indicator)
+  const allLoras = getAllLoras()
+  const hasLora = allLoras.length > 0
 
   // Check if current model supports LoRA (only custom models support LoRA, not FLUX)
   const modelSupportsLora = model === 'custom'
@@ -288,8 +324,8 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
         ? prompt.trim()
         : buildPromptWithCharacters(prompt.trim())
 
-      // Get LoRA from selected character (only for custom models - FLUX doesn't support LoRAs)
-      const lora = model === 'custom' ? getCharacterLora() : null
+      // Get all LoRAs (character + additional) - only for custom models
+      const lorasToUse = model === 'custom' ? getAllLoras() : []
 
       // Use custom dimensions for "match_page", otherwise use preset string
       const imageSizeParam = imageSize === 'match_page'
@@ -302,7 +338,7 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
         model,
         imageSize: imageSizeParam,
         allowMature,
-        lora,
+        loras: lorasToUse,
         customModel: model === 'custom' ? customModel : null,
         onProgress: setProgress
       })
@@ -327,7 +363,7 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
       setIsGenerating(false)
       setProgress(null)
     }
-  }, [prompt, style, model, imageSize, projectId, buildPromptWithCharacters, getCharacterLora, allowMature, matchPageDimensions, customModel, wasEnhanced])
+  }, [prompt, style, model, imageSize, projectId, buildPromptWithCharacters, getAllLoras, allowMature, matchPageDimensions, customModel, wasEnhanced])
 
   const handleAdvancedGenerate = useCallback(async () => {
     const combinedPrompt = combineStructuredPrompts()
@@ -342,8 +378,8 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
     setProgress(null)
 
     try {
-      // Get LoRA from selected character (only for custom models - FLUX doesn't support LoRAs)
-      const lora = model === 'custom' ? getCharacterLora() : null
+      // Get all LoRAs (character + additional) - only for custom models
+      const lorasToUse = model === 'custom' ? getAllLoras() : []
 
       // Use custom dimensions for "match_page", otherwise use preset string
       const imageSizeParam = imageSize === 'match_page'
@@ -357,7 +393,7 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
         imageSize: imageSizeParam,
         seed: advancedParams.seed,
         allowMature,
-        lora,
+        loras: lorasToUse,
         customModel: model === 'custom' ? customModel : null,
         // Advanced parameters
         guidanceScale: advancedParams.guidanceScale,
@@ -388,7 +424,7 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
       setIsGenerating(false)
       setProgress(null)
     }
-  }, [combineStructuredPrompts, advancedStyle, model, imageSize, projectId, getCharacterLora, allowMature, matchPageDimensions, customModel, advancedPrompts, advancedParams])
+  }, [combineStructuredPrompts, advancedStyle, model, imageSize, projectId, getAllLoras, allowMature, matchPageDimensions, customModel, advancedPrompts, advancedParams])
 
   const handleSave = useCallback(async () => {
     if (!generatedImage?.imageUrl) return
@@ -670,6 +706,12 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
                     disabled={isGenerating}
                     className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 disabled:opacity-50"
                   >
+                    {/* Custom model from series settings */}
+                    {customModel?.enabled && (
+                      <option value="custom">
+                        ★ {customModel.name || 'Custom Model'}
+                      </option>
+                    )}
                     {Object.entries(AI_MODELS).map(([key, modelConfig]) => (
                       <option key={key} value={key}>
                         {modelConfig.name}
@@ -677,7 +719,10 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
                     ))}
                   </select>
                   <p className="text-[10px] text-slate-500">
-                    {AI_MODELS[model]?.description} ({AI_MODELS[model]?.cost})
+                    {model === 'custom'
+                      ? `Custom ${customModel?.type?.toUpperCase()} model from CivitAI`
+                      : `${AI_MODELS[model]?.description} (${AI_MODELS[model]?.cost})`
+                    }
                   </p>
                 </div>
 
@@ -698,6 +743,21 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
                   </select>
                 </div>
               </div>
+
+              {/* LoRA Section - Only show when CivitAI connected and using custom model */}
+              {civitaiConnected && model === 'custom' && (
+                <LoRAList
+                  loras={getAllLoras()}
+                  onChange={(newLoras) => {
+                    // Filter out character LoRAs (they're managed separately)
+                    const nonCharacterLoras = newLoras.filter(l => !l.fromCharacter)
+                    setAdditionalLoras(nonCharacterLoras)
+                  }}
+                  baseModelFilter={customModel?.type === 'sdxl' ? 'SDXL 1.0' : customModel?.type === 'flux' ? 'Flux.1 D' : ''}
+                  disabled={isGenerating}
+                  allowNsfw={allowMature}
+                />
+              )}
 
               {/* Error Display */}
               {error && (
@@ -853,6 +913,12 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
                     disabled={isGenerating}
                     className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 disabled:opacity-50"
                   >
+                    {/* Custom model from series settings */}
+                    {customModel?.enabled && (
+                      <option value="custom">
+                        ★ {customModel.name || 'Custom Model'}
+                      </option>
+                    )}
                     {Object.entries(AI_MODELS).map(([key, modelConfig]) => (
                       <option key={key} value={key}>
                         {modelConfig.name}

@@ -1,5 +1,6 @@
 import { useAuth } from '../contexts/AuthContext'
 import AppSidebarLayout from '../layouts/AppSidebarLayout'
+import ConnectedAccountsSection from '../components/profile/ConnectedAccountsSection'
 
 export default function ProfilePage() {
   const { user } = useAuth()
@@ -69,11 +70,7 @@ export default function ProfilePage() {
             description="Manage your project storage and backups"
             comingSoon
           />
-          <SettingsSection
-            title="Connected Accounts"
-            description="Manage linked social accounts"
-            comingSoon
-          />
+          <ConnectedAccountsSection />
         </div>
 
         {/* Danger Zone */}

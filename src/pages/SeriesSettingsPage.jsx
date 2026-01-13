@@ -11,8 +11,8 @@ import ErrorMessage from '../components/ui/ErrorMessage'
 import { seriesDb } from '../lib/series'
 
 const TABS = [
-  { id: 'general', label: 'General', icon: FiSettings }
-  // AI Model tab hidden - mature content now defaults to enabled
+  { id: 'general', label: 'General', icon: FiSettings },
+  { id: 'ai-model', label: 'AI Models', icon: FiCpu }
 ]
 
 /**
@@ -358,7 +358,7 @@ export default function SeriesSettingsPage() {
               </div>
             )}
 
-            {activeTab === 'aiModel' && (
+            {activeTab === 'ai-model' && (
               <AIModelSettingsTab
                 settings={localCustomModel}
                 onUpdate={setLocalCustomModel}

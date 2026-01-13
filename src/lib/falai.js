@@ -133,10 +133,14 @@ export async function uploadImageToFal(blob, filename = 'reference.png') {
  * @param {string|{width: number, height: number}} options.imageSize - Image dimensions preset string or custom {width, height}
  * @param {number} options.seed - Optional seed for reproducibility
  * @param {boolean} options.allowMature - Allow mature/NSFW content (disables safety filters)
- * @param {Object} options.lora - Optional LoRA configuration (only for custom models, not FLUX)
+ * @param {Object} options.lora - Optional single LoRA configuration (legacy, prefer loras array)
  * @param {string} options.lora.url - LoRA download URL (CivitAI or direct)
  * @param {string} options.lora.triggerWord - Trigger word to activate the LoRA
  * @param {number} options.lora.scale - LoRA strength (0-1, default 0.8)
+ * @param {Array} options.loras - Optional array of LoRA configurations (supports multiple LoRAs)
+ * @param {string} options.loras[].url - LoRA download URL
+ * @param {Array} options.loras[].triggerWords - Trigger words array
+ * @param {number} options.loras[].scale - LoRA strength (0-1.5, default 0.8)
  * @param {Object} options.customModel - Optional custom base model configuration (from project settings)
  * @param {string} options.customModel.name - Display name of the custom model
  * @param {string} options.customModel.type - Model architecture ('flux', 'sdxl', 'sd15')
@@ -152,6 +156,7 @@ export async function generateImage({
   seed = null,
   allowMature = false,
   lora = null,
+  loras = null,
   customModel = null,
   onProgress = null
 }) {
@@ -171,16 +176,42 @@ export async function generateImage({
   // Apply style suffix to prompt
   const styleConfig = AI_STYLES[style] || AI_STYLES.none
 
-  // Build prompt with trigger word if LoRA is provided
+  // Combine single lora with loras array for backward compatibility
+  const allLoras = []
+
+  // Add legacy single LoRA if provided
+  if (lora?.url) {
+    allLoras.push({
+      url: lora.url,
+      scale: lora.scale ?? 0.8,
+      triggerWords: lora.triggerWord ? [lora.triggerWord] : [],
+    })
+  }
+
+  // Add multiple LoRAs if provided
+  if (loras && Array.isArray(loras)) {
+    for (const l of loras) {
+      if (l.url) {
+        allLoras.push({
+          url: l.url,
+          scale: l.scale ?? 0.8,
+          triggerWords: l.triggerWords || [],
+        })
+      }
+    }
+  }
+
+  // Build prompt with all trigger words from LoRAs
   let finalPrompt = prompt
-  if (lora?.triggerWord) {
-    finalPrompt = `${lora.triggerWord}, ${prompt}`
+  const allTriggerWords = allLoras.flatMap(l => l.triggerWords).filter(Boolean)
+  if (allTriggerWords.length > 0) {
+    finalPrompt = `${allTriggerWords.join(', ')}, ${prompt}`
   }
   const fullPrompt = finalPrompt + styleConfig.suffix
 
   // Determine which model/endpoint to use
   // Priority: Custom Model > LoRA > Standard model
-  const useLora = lora?.url !== null && lora?.url !== undefined
+  const useLora = allLoras.length > 0
 
   let modelId
   if (useCustomModel) {
@@ -283,13 +314,13 @@ export async function generateImage({
     input.seed = seed
   }
 
-  // If LoRA provided, add it to input
+  // If LoRAs provided, add them to input
   // LoRAs work with both standard FLUX models and custom models
   if (useLora) {
-    input.loras = [{
-      path: lora.url,
-      scale: lora.scale ?? 0.8
-    }]
+    input.loras = allLoras.map(l => ({
+      path: l.url,
+      scale: l.scale
+    }))
   }
 
   try {
@@ -316,10 +347,11 @@ export async function generateImage({
       height: image.height,
       seed: result.data.seed,
       prompt: prompt,           // Original prompt without style
-      fullPrompt: fullPrompt,   // Prompt with style suffix applied (and trigger word if LoRA)
+      fullPrompt: fullPrompt,   // Prompt with style suffix applied (and trigger words if LoRAs)
       model: modelKey,          // Model key used (or 'custom')
       customModelName: useCustomModel ? customModel.name : null,
       usedLora: useLora,
+      usedLoras: allLoras.length,  // Number of LoRAs used
       usedCustomModel: useCustomModel
     }
   } catch (error) {
