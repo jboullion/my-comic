@@ -2,7 +2,6 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { FiChevronDown, FiDownload, FiUser, FiLogOut } from 'react-icons/fi'
 import { useAuth } from '../../contexts/AuthContext'
-import usePWAInstall from '../../hooks/usePWAInstall'
 import LoginModal from '../auth/LoginModal'
 
 /**
@@ -14,7 +13,6 @@ import LoginModal from '../auth/LoginModal'
  */
 export default function UserMenu({ showSignIn = true, showLoading = true }) {
   const { user, loading, signOut } = useAuth()
-  const { isPWAInstallable, handleInstall } = usePWAInstall()
   const [isOpen, setIsOpen] = useState(false)
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false)
 
@@ -87,19 +85,6 @@ export default function UserMenu({ showSignIn = true, showLoading = true }) {
 
             {/* Menu Items */}
             <div className="py-1">
-              {isPWAInstallable && (
-                <button
-                  onClick={() => {
-                    setIsOpen(false)
-                    handleInstall()
-                  }}
-                  className="w-full flex items-center gap-3 px-4 py-2 text-sm text-slate-300 hover:bg-slate-700 hover:text-white transition-colors text-left"
-                >
-                  <FiDownload className="w-4 h-4" />
-                  Install App
-                </button>
-              )}
-
               <Link
                 to="/app/profile"
                 onClick={() => setIsOpen(false)}
