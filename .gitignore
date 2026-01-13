@@ -33,3 +33,6 @@ dev-dist
 
 nul
 .playwright-mcp
+.mcp.json
+
+tmpclaude*

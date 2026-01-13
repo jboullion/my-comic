@@ -55,13 +55,17 @@ export default function AssetPropertiesWidget({ assetId, onAdd, showInPopup = fa
       <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Asset Properties</h3>
 
       {/* Thumbnail preview (only in popup) */}
-      {showInPopup && imageUrl && (
-        <div className="mb-4 flex justify-center">
-          <img
-            src={imageUrl}
-            alt={asset.name}
-            className="max-w-[200px] max-h-[200px] rounded-lg border border-slate-700 object-contain bg-slate-950"
-          />
+      {showInPopup && (
+        <div className="mb-4 flex justify-center items-center min-h-25">
+          {imageUrl ? (
+            <img
+              src={imageUrl}
+              alt={asset.name}
+              className="max-w-50 max-h-50 rounded-lg border border-slate-700 object-contain bg-slate-950"
+            />
+          ) : (
+            <div className="w-25 h-25 rounded-lg border border-slate-700 bg-slate-950 animate-pulse" />
+          )}
         </div>
       )}
 

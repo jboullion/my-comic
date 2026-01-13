@@ -1,27 +1,33 @@
 ## Current TODOs
 
-- Need to set up some kind of token system for users. Right now the hobbyist tier should probably give X credits a month. Need to figure out how much that should be and also how to track it per user.
-- - Story prompts are 1
-- - Image prompts are ~5?
-- - Can the user buy more if they want?
+- Dashboard button should be highlighed and next to the user menu probably. See supabase for example
+
+- Token system refinement!
+- - Should we list Nana Banana as the default?
+- - Should we include other models besides Flux 2? 
+- - How much is "10 tokens"? Maybe we give 20 tokens or we reduce the token cost of the models?
 
 - Can this app even work in mobile? Perhaps mobile is a "view only" version?
 
-- Update the AI features to only work with a paid account.
-
 - General refactor to clean up large files?
-
 
 - Set up "Locations", and other things to work similar to characters for easy AI reference
 
 - Delete Account
 
+- If Supabase is set up we could do things like Share Comics page and lots of other features.
+- - Share Comics
+- - Find Comics
+- - Save information in DB
+
+
+
 
 
 ## Bugs
 
-
-- 
+- Allow mature is being sent as false even when set as true with all models
+- Project Header should use the standard user menu
 - Have each AI Image generated save in a temporary storage so users can access it even if they don't use it. Perhaps save it and show it as a thumbnail in the history?
 - Cloud SVG is overflowing container.
 - Some actions don't seem to get caught in the undo. Is there a redo?

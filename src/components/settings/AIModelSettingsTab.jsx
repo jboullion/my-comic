@@ -18,8 +18,8 @@ export default function AIModelSettingsTab({ settings, onUpdate }) {
     enabled: false,
     name: '',
     type: 'sdxl',
-    url: '',
-    allowMature: false
+    url: ''
+    // Note: allowMature removed - now always enabled for better image quality
   }
 
   const handleChange = (field, value) => {
@@ -139,46 +139,6 @@ export default function AIModelSettingsTab({ settings, onUpdate }) {
           </div>
         </div>
       )}
-
-      {/* Content Settings - Always visible */}
-      <div className="pt-4 border-t border-slate-700">
-        <h3 className="text-sm font-semibold text-white mb-4">Content Settings</h3>
-
-        {/* Allow Mature Content Toggle */}
-        <div className="flex items-center justify-between p-4 bg-slate-800/50 border border-slate-700 rounded-lg">
-          <div className="flex-1">
-            <label className="text-sm text-white font-medium">
-              Allow Mature Content
-            </label>
-            <p className="text-[10px] text-slate-500 mt-0.5">
-              Disables safety filters for all AI generations in this project
-            </p>
-          </div>
-          <button
-            type="button"
-            role="switch"
-            aria-checked={customModel.allowMature}
-            onClick={() => handleChange('allowMature', !customModel.allowMature)}
-            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-              customModel.allowMature ? 'bg-indigo-500' : 'bg-slate-600'
-            }`}
-          >
-            <span
-              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                customModel.allowMature ? 'translate-x-6' : 'translate-x-1'
-              }`}
-            />
-          </button>
-        </div>
-
-        {/* FLUX Models Warning */}
-        <div className="mt-3 bg-amber-900/30 border border-amber-700/50 rounded-lg px-4 py-3">
-          <p className="text-xs text-amber-200">
-            <span className="font-semibold">Note:</span> Default FLUX models have built-in content filters that cannot be fully disabled.
-            To generate mature/adult content, you must configure a custom model above (e.g., an SDXL or Pony Diffusion model from CivitAI).
-          </p>
-        </div>
-      </div>
 
       {/* Setup Guide */}
       <div className="pt-4 border-t border-slate-700">

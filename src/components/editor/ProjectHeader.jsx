@@ -4,6 +4,8 @@ import { FiChevronLeft, FiDownload, FiSettings, FiChevronDown, FiGrid, FiUser, F
 import { useAuth } from '../../contexts/AuthContext'
 import EditableTitle from './ui/EditableTitle'
 import FloatingToolbar from './FloatingToolbar'
+import CreditBalance from '../credits/CreditBalance'
+import CreditHistoryModal from '../credits/CreditHistoryModal'
 
 /**
  * ProjectHeader Component
@@ -33,6 +35,7 @@ export default function ProjectHeader({
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
   const [isPWAInstallable, setIsPWAInstallable] = useState(false)
   const [deferredPrompt, setDeferredPrompt] = useState(null)
+  const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false)
 
   useEffect(() => {
     const handler = (e) => {
@@ -104,6 +107,14 @@ export default function ProjectHeader({
       </div>
 
       <div className="flex items-center gap-2 min-w-[240px] justify-end">
+        {/* Credit Balance */}
+        {user && (
+          <CreditBalance
+            variant="compact"
+            onClick={() => setIsHistoryModalOpen(true)}
+          />
+        )}
+
         <a
           href="/docs"
           className="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
@@ -165,27 +176,6 @@ export default function ProjectHeader({
                   </div>
 
                   <div className="py-1">
-                    {isPWAInstallable && (
-                      <button
-                        onClick={() => {
-                          setIsUserMenuOpen(false)
-                          handleInstall()
-                        }}
-                        className="w-full flex items-center gap-3 px-4 py-2 text-sm text-slate-300 hover:bg-slate-700 hover:text-white transition-colors text-left"
-                      >
-                        <FiDownload className="w-4 h-4" />
-                        Install App
-                      </button>
-                    )}
-
-                    <Link
-                      to="/app/projects"
-                      onClick={() => setIsUserMenuOpen(false)}
-                      className="flex items-center gap-3 px-4 py-2 text-sm text-slate-300 hover:bg-slate-700 hover:text-white transition-colors"
-                    >
-                      <FiGrid className="w-4 h-4" />
-                      Projects
-                    </Link>
 
                     <Link
                       to="/app/profile"
@@ -213,6 +203,12 @@ export default function ProjectHeader({
           </div>
         )}
       </div>
+
+      {/* Credit History Modal */}
+      <CreditHistoryModal
+        isOpen={isHistoryModalOpen}
+        onClose={() => setIsHistoryModalOpen(false)}
+      />
     </div>
   )
 }

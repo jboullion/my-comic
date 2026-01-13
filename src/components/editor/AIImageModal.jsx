@@ -1,13 +1,16 @@
 import { useState, useCallback, useEffect, useMemo } from 'react'
 import { useParams } from 'react-router-dom'
 import { FiX, FiZap, FiRefreshCw, FiCheck, FiAlertCircle, FiCpu, FiClock, FiTrash2, FiLoader } from 'react-icons/fi'
-import { generateImage, AI_MODELS, AI_STYLES, isFalConfigured } from '../../lib/ai/falai'
-import { enhanceImagePrompt } from '../../lib/ai/openrouter'
+import { AI_MODELS, AI_STYLES } from '../../lib/ai/falai'
+import { generateImageViaEdge, enhancePromptViaEdge, getImageGenerationCost } from '../../lib/ai/edgeFunctions'
 import { fetchImageAsBlob } from '../../lib/ai/utils'
 import CharacterPicker from './CharacterPicker'
 import useCharactersStore from '../../stores/useCharactersStore'
 import useProjectStore from '../../stores/useProjectStore'
 import useSeriesStore from '../../stores/useSeriesStore'
+import { useCredits } from '../../hooks/useCredits'
+import { useIsImageGenRestricted, useImageGenLockoutMessage } from '../../stores/useCreditsStore'
+import CreditCostPreview from '../credits/CreditCostPreview'
 
 /**
  * Calculate AI-friendly dimensions that match a given aspect ratio
@@ -95,6 +98,13 @@ const formatTimeAgo = (timestamp) => {
 export default function AIImageModal({ isOpen, onClose, onSave }) {
   const { projectId } = useParams()
 
+  // Get credits info for cost preview and auth check
+  const { balance, isLoggedIn, hasCredits } = useCredits()
+
+  // Check if user is restricted from image generation
+  const isImageGenRestricted = useIsImageGenRestricted()
+  const lockoutMessage = useImageGenLockoutMessage()
+
   // Get current project settings for "Match Page" option
   const { currentProject } = useProjectStore()
   const pageSettings = currentProject?.settings || { width: 800, height: 1200 }
@@ -137,8 +147,9 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
     seed: null
   })
 
-  // Get allowMature from project settings
-  const allowMature = customModel?.allowMature || false
+  // Always allow mature content (safety filters disabled for better image quality)
+  // A proper content filter UI will be implemented later
+  const allowMature = true
 
   // Get characters from store for prompt building
   const { characters } = useCharactersStore()
@@ -248,19 +259,19 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
         .filter(c => selectedCharacterIds.includes(c.id))
         .map(c => ({ name: c.name, description: c.description || '' }))
 
-      const enhanced = await enhanceImagePrompt(prompt.trim(), {
-        model,
+      const result = await enhancePromptViaEdge({
+        prompt: prompt.trim(),
         characters: selectedChars
       })
 
-      setPrompt(enhanced)
+      setPrompt(result.enhancedPrompt)
       setWasEnhanced(true)
     } catch (err) {
       setError(`Enhancement failed: ${err.message}`)
     } finally {
       setIsEnhancing(false)
     }
-  }, [prompt, isEnhancing, model, characters, selectedCharacterIds])
+  }, [prompt, isEnhancing, characters, selectedCharacterIds])
 
   // Handle reverting to original prompt
   const handleRevertPrompt = useCallback(() => {
@@ -274,6 +285,13 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
   const handleGenerate = useCallback(async () => {
     if (!prompt.trim()) {
       setError('Please enter a prompt')
+      return
+    }
+
+    // Check credits before generating
+    const cost = getImageGenerationCost(model)
+    if (!hasCredits(cost)) {
+      setError(`Not enough credits. This generation costs ${cost} credits, but you only have ${balance ?? 0}.`)
       return
     }
 
@@ -296,7 +314,7 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
         ? matchPageDimensions
         : imageSize
 
-      const result = await generateImage({
+      const result = await generateImageViaEdge({
         prompt: fullPrompt,
         style,
         model,
@@ -327,13 +345,20 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
       setIsGenerating(false)
       setProgress(null)
     }
-  }, [prompt, style, model, imageSize, projectId, buildPromptWithCharacters, getCharacterLora, allowMature, matchPageDimensions, customModel, wasEnhanced])
+  }, [prompt, style, model, imageSize, projectId, buildPromptWithCharacters, getCharacterLora, allowMature, matchPageDimensions, customModel, wasEnhanced, hasCredits, balance])
 
   const handleAdvancedGenerate = useCallback(async () => {
     const combinedPrompt = combineStructuredPrompts()
 
     if (!combinedPrompt.trim()) {
       setError('Please fill in at least one prompt field')
+      return
+    }
+
+    // Check credits before generating
+    const cost = getImageGenerationCost(model)
+    if (!hasCredits(cost)) {
+      setError(`Not enough credits. This generation costs ${cost} credits, but you only have ${balance ?? 0}.`)
       return
     }
 
@@ -350,7 +375,7 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
         ? matchPageDimensions
         : imageSize
 
-      const result = await generateImage({
+      const result = await generateImageViaEdge({
         prompt: combinedPrompt,
         style: 'none', // Style is included in the text prompt for advanced tab
         model,
@@ -388,7 +413,7 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
       setIsGenerating(false)
       setProgress(null)
     }
-  }, [combineStructuredPrompts, advancedStyle, model, imageSize, projectId, getCharacterLora, allowMature, matchPageDimensions, customModel, advancedPrompts, advancedParams])
+  }, [combineStructuredPrompts, advancedStyle, model, imageSize, projectId, getCharacterLora, allowMature, matchPageDimensions, customModel, advancedPrompts, advancedParams, hasCredits, balance])
 
   const handleSave = useCallback(async () => {
     if (!generatedImage?.imageUrl) return
@@ -476,7 +501,11 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
 
   if (!isOpen) return null
 
-  const isConfigured = isFalConfigured()
+  // Check if user is logged in (Edge Functions require authentication)
+  const isConfigured = isLoggedIn
+
+  // Get current model cost for preview
+  const currentCost = getImageGenerationCost(model)
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
@@ -549,28 +578,14 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
           {!isConfigured ? (
-            /* Not Configured Warning */
+            /* Not Signed In Warning */
             <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-4">
               <div className="flex items-start gap-3">
                 <FiAlertCircle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
                 <div>
-                  <p className="text-sm text-amber-200 font-medium">API Key Required</p>
+                  <p className="text-sm text-amber-200 font-medium">Sign In Required</p>
                   <p className="text-xs text-amber-200/70 mt-1">
-                    Add your Fal.ai API key to <code className="bg-slate-800 px-1 rounded">.env.local</code>:
-                  </p>
-                  <code className="block text-xs bg-slate-800 px-2 py-1 rounded mt-2 text-slate-300">
-                    VITE_FAL_AI_KEY=your-key-here
-                  </code>
-                  <p className="text-xs text-amber-200/70 mt-2">
-                    Get your API key from{' '}
-                    <a
-                      href="https://fal.ai/dashboard/keys"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-indigo-400 hover:text-indigo-300 underline"
-                    >
-                      fal.ai/dashboard/keys
-                    </a>
+                    Please sign in to use AI image generation. Your account includes free credits each month.
                   </p>
                 </div>
               </div>
@@ -578,6 +593,19 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
           ) : activeTab === 'generate' ? (
             /* Generate Tab */
             <>
+              {/* Image Generation Lockout Banner */}
+              {isImageGenRestricted && lockoutMessage && (
+                <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4 mb-4">
+                  <div className="flex items-start gap-3">
+                    <FiAlertCircle className="w-5 h-5 text-red-400 shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-sm text-red-300 font-medium">Image Generation Restricted</p>
+                      <p className="text-xs text-red-300/70 mt-1">{lockoutMessage}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Prompt Input */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
@@ -747,6 +775,19 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
           ) : activeTab === 'advanced' ? (
             /* Advanced Tab */
             <>
+              {/* Image Generation Lockout Banner */}
+              {isImageGenRestricted && lockoutMessage && (
+                <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4 mb-4">
+                  <div className="flex items-start gap-3">
+                    <FiAlertCircle className="w-5 h-5 text-red-400 shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-sm text-red-300 font-medium">Image Generation Restricted</p>
+                      <p className="text-xs text-red-300/70 mt-1">{lockoutMessage}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Structured Prompt Fields */}
               <div className="space-y-3">
 
@@ -999,17 +1040,19 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
         {/* Footer */}
         {isConfigured && activeTab === 'generate' && (
           <div className="flex justify-between items-center gap-3 px-6 py-4 border-t border-slate-700">
-            <button
-              onClick={handleClose}
-              className="px-4 py-2 text-sm text-slate-400 hover:text-white transition-colors"
-            >
-              Cancel
-            </button>
+            <div className="flex items-center gap-4">
+              <button
+                onClick={handleClose}
+                className="px-4 py-2 text-sm text-slate-400 hover:text-white transition-colors"
+              >
+                Cancel
+              </button>
+              <CreditCostPreview cost={currentCost} actionLabel="Image generation" inline />
+            </div>
 
             <div className="flex gap-2">
               {generatedImage && !isGenerating && (
                 <>
-                  
                   <button
                     onClick={handleSave}
                     disabled={isSaving}
@@ -1032,7 +1075,7 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
               {!generatedImage && (
                 <button
                   onClick={handleGenerate}
-                  disabled={isGenerating || !prompt.trim()}
+                  disabled={isGenerating || !prompt.trim() || isImageGenRestricted}
                   className="px-4 py-2 text-sm bg-indigo-500 hover:bg-indigo-600 disabled:opacity-50 text-white rounded-lg font-medium transition-colors flex items-center gap-2"
                 >
                   <FiZap className="w-4 h-4" />
@@ -1046,12 +1089,15 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
         {/* Footer - Advanced Tab */}
         {isConfigured && activeTab === 'advanced' && (
           <div className="flex justify-between items-center gap-3 px-6 py-4 border-t border-slate-700">
-            <button
-              onClick={handleClose}
-              className="px-4 py-2 text-sm text-slate-400 hover:text-white transition-colors"
-            >
-              Cancel
-            </button>
+            <div className="flex items-center gap-4">
+              <button
+                onClick={handleClose}
+                className="px-4 py-2 text-sm text-slate-400 hover:text-white transition-colors"
+              >
+                Cancel
+              </button>
+              <CreditCostPreview cost={currentCost} actionLabel="Image generation" inline />
+            </div>
 
             <div className="flex gap-2">
               {generatedImage && !isGenerating && (
@@ -1078,7 +1124,7 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
               {!generatedImage && (
                 <button
                   onClick={handleAdvancedGenerate}
-                  disabled={isGenerating || !combineStructuredPrompts().trim()}
+                  disabled={isGenerating || !combineStructuredPrompts().trim() || isImageGenRestricted}
                   className="px-4 py-2 text-sm bg-indigo-500 hover:bg-indigo-600 disabled:opacity-50 text-white rounded-lg font-medium transition-colors flex items-center gap-2"
                 >
                   <FiZap className="w-4 h-4" />

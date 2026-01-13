@@ -74,8 +74,7 @@ export default function SeriesSettingsPage() {
             enabled: false,
             name: '',
             type: 'sdxl',
-            url: '',
-            allowMature: true  // Default to enabled for best image quality
+            url: ''
           })
           // Set existing cover image if available
           if (seriesData.coverImageUrl) {

@@ -17,7 +17,7 @@ export default function AuthCallbackPage() {
       
       if (error) {
         console.error('Auth callback error:', error)
-        navigate('/login?error=auth_failed')
+        navigate('/?error=auth_failed')
       } else {
         // Successful login - redirect to projects
         navigate('/projects')
