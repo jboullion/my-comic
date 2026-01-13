@@ -32,18 +32,12 @@ export default function NewProjectModal({ defaultSeriesId = null }) {
     }
   }, [isNewProjectModalOpen, series.length, seriesLoading, loadSeries])
 
-  // Set default series when modal opens or series loads
+  // Set default series when modal opens (only if explicitly provided)
   useEffect(() => {
-    if (isNewProjectModalOpen) {
-      if (defaultSeriesId) {
-        setSeriesId(defaultSeriesId)
-      } else if (series.length > 0 && !seriesId) {
-        // Default to Uncategorized if no default provided
-        const uncategorized = series.find(s => s.name === 'Uncategorized')
-        setSeriesId(uncategorized?.id || series[0]?.id)
-      }
+    if (isNewProjectModalOpen && defaultSeriesId) {
+      setSeriesId(defaultSeriesId)
     }
-  }, [isNewProjectModalOpen, defaultSeriesId, series, seriesId])
+  }, [isNewProjectModalOpen, defaultSeriesId])
 
   // Check if File System Access API is supported
   const hasFileSystemAccess = 'showSaveFilePicker' in window
@@ -51,12 +45,6 @@ export default function NewProjectModal({ defaultSeriesId = null }) {
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError(null)
-
-    if (!seriesId) {
-      setError('Please select a series')
-      return
-    }
-
     setIsCreating(true)
 
     try {

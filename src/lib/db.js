@@ -260,12 +260,9 @@ export const projectsDb = {
    * Create a new project
    * @param {string} title - Project title
    * @param {object} settings - Project settings
-   * @param {number} seriesId - Series ID (required)
+   * @param {number|null} seriesId - Series ID (optional, null for uncategorized)
    */
-  async create(title, settings = {}, seriesId) {
-    if (!seriesId) {
-      throw new Error('seriesId is required when creating a project')
-    }
+  async create(title, settings = {}, seriesId = null) {
     const now = new Date()
     const mergedSettings = { ...DEFAULT_PROJECT_SETTINGS, ...settings }
     const project = {

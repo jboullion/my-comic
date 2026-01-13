@@ -58,29 +58,13 @@ export default function CharacterModal({ defaultSeriesId = null }) {
         setName('')
         setDescription('')
         setProfileImage(null)
-        // Set default series
-        if (defaultSeriesId) {
-          setSeriesId(defaultSeriesId)
-        } else if (series.length > 0) {
-          const uncategorized = series.find(s => s.name === 'Uncategorized')
-          setSeriesId(uncategorized?.id || series[0]?.id)
-        }
+        // Set default series only if explicitly provided
+        setSeriesId(defaultSeriesId || null)
       }
       setError(null)
     }
-  }, [isCharacterModalOpen, editingCharacter, defaultSeriesId, series])
+  }, [isCharacterModalOpen, editingCharacter, defaultSeriesId])
 
-  // Update seriesId when series list loads (for new characters)
-  useEffect(() => {
-    if (isCharacterModalOpen && !isEditing && !seriesId && series.length > 0) {
-      if (defaultSeriesId) {
-        setSeriesId(defaultSeriesId)
-      } else {
-        const uncategorized = series.find(s => s.name === 'Uncategorized')
-        setSeriesId(uncategorized?.id || series[0]?.id)
-      }
-    }
-  }, [series, seriesId, defaultSeriesId, isCharacterModalOpen, isEditing])
 
   // Cleanup object URLs on unmount
   useEffect(() => {
@@ -97,11 +81,6 @@ export default function CharacterModal({ defaultSeriesId = null }) {
 
     if (!name.trim()) {
       setError('Please enter a character name')
-      return
-    }
-
-    if (!isEditing && !seriesId) {
-      setError('Please select a series')
       return
     }
 
@@ -257,11 +236,10 @@ export default function CharacterModal({ defaultSeriesId = null }) {
             {/* Info Box */}
             <div className="bg-slate-900/50 rounded-lg px-4 py-3 text-sm text-slate-400">
               <div className="flex items-start gap-2">
-                <FiInfo className="w-4 h-4 mt-0.5 flex-shrink-0 text-indigo-400" />
+                <FiInfo className="w-4 h-4 mt-0.5 shrink-0 text-indigo-400" />
                 <p>
-                  Characters belong to a series and are available to all projects
-                  within that series. Add detailed descriptions to help AI maintain
-                  consistent appearances.
+                  Characters can optionally belong to a series. Add detailed
+                  descriptions to help AI maintain consistent appearances.
                 </p>
               </div>
             </div>

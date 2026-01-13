@@ -59,12 +59,9 @@ export const useProjectStore = create(
        * Create a new project
        * @param {string} title - Project title
        * @param {object} settings - Project settings
-       * @param {number} seriesId - Series ID (required)
+       * @param {number|null} seriesId - Series ID (optional, null for uncategorized)
        */
-      createProject: async (title, settings = {}, seriesId) => {
-        if (!seriesId) {
-          throw new Error('seriesId is required when creating a project')
-        }
+      createProject: async (title, settings = {}, seriesId = null) => {
         try {
           const project = await projectsDb.create(title, settings, seriesId)
           set((state) => ({

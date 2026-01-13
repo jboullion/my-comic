@@ -11,7 +11,8 @@ export default function SeriesSelector({
   value,
   onChange,
   disabled = false,
-  className = ''
+  className = '',
+  allowNone = true
 }) {
   const { series, seriesLoading, loadSeries } = useSeriesStore()
 
@@ -22,6 +23,12 @@ export default function SeriesSelector({
     }
   }, [series.length, seriesLoading, loadSeries])
 
+  const handleChange = (e) => {
+    const val = e.target.value
+    // Convert to number or null for "none"
+    onChange(val === '' ? null : Number(val))
+  }
+
   return (
     <div className={className}>
       <label className="block text-[10px] text-slate-500 uppercase font-bold mb-2">
@@ -29,8 +36,8 @@ export default function SeriesSelector({
       </label>
       <div className="relative">
         <select
-          value={value || ''}
-          onChange={(e) => onChange(Number(e.target.value))}
+          value={value ?? ''}
+          onChange={handleChange}
           disabled={disabled || seriesLoading}
           className="w-full appearance-none px-4 py-2.5 pr-10 bg-slate-900 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent disabled:opacity-50 cursor-pointer"
         >
@@ -38,7 +45,7 @@ export default function SeriesSelector({
             <option value="">Loading...</option>
           ) : (
             <>
-              <option value="" disabled>Select a series</option>
+              {allowNone && <option value="">None (Uncategorized)</option>}
               {series.map((s) => (
                 <option key={s.id} value={s.id}>
                   {s.name}
@@ -62,7 +69,7 @@ export default function SeriesSelector({
 export function SeriesDisplay({ seriesId, className = '' }) {
   const { series, seriesLoading } = useSeriesStore()
 
-  const seriesItem = series.find(s => s.id === seriesId)
+  const seriesItem = seriesId ? series.find(s => s.id === seriesId) : null
 
   if (seriesLoading) {
     return (
@@ -72,14 +79,13 @@ export function SeriesDisplay({ seriesId, className = '' }) {
     )
   }
 
-  if (!seriesItem) {
-    return null
-  }
+  // Show "Uncategorized" for null seriesId
+  const displayName = seriesItem?.name || 'Uncategorized'
 
   return (
     <span className={`inline-flex items-center gap-1 text-xs text-slate-400 ${className}`}>
       <RiBookShelfFill className="w-3 h-3" />
-      {seriesItem.name}
+      {displayName}
     </span>
   )
 }

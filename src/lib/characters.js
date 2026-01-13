@@ -54,17 +54,14 @@ export const charactersDb = {
    * Create a new character
    * @param {string} name - Character name
    * @param {string} description - AI prompt description
-   * @param {number} seriesId - Series ID (required)
+   * @param {number|null} seriesId - Series ID (optional, null for uncategorized)
    * @param {Object} loraData - Optional LoRA configuration
    * @param {string} loraData.loraUrl - CivitAI or direct LoRA URL
    * @param {string} loraData.loraTriggerWord - Trigger word for LoRA
    * @param {number} loraData.loraScale - LoRA strength (0-1)
    * @returns {Promise<Object>} Created character
    */
-  async create(name, description = '', seriesId, loraData = {}) {
-    if (!seriesId) {
-      throw new Error('seriesId is required when creating a character')
-    }
+  async create(name, description = '', seriesId = null, loraData = {}) {
     const now = new Date()
     const character = {
       name: name || 'Unnamed Character',
