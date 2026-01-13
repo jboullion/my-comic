@@ -8,22 +8,19 @@
 
 - Need to set up some kind of token system for users. Right now the hobbyist tier should probably give X credits a month. Need to figure out how much that should be and also how to track it per user.
 
-- Remove the "toast" in the bottom right that says your app is ready to work offline.
-- - Potentially just remove all of the PWA / install feature. Probably keep the service workers for performance?
-
 - Set up "Locations", and other things to work similar to characters for easy AI reference
 
-- AI Documentation
-- - Character documentation
-- - Models and limitations
-- - AI Prompt Suggestion
-- - Story AI
+- The AI Prompt generator is TOO descriptive
+
+- Delete Account
+
+- Remove pricing page and hide AI features
+
 
 ## Bugs
 
-- Different users on the same machine will see different projects!
-- - Separate local projects into different users
-- Nano Banana isn't creating the correct size image
+
+- Update all models 
 - Have each AI Image generated save in a temporary storage so users can access it even if they don't use it. Perhaps save it and show it as a thumbnail in the history?
 - Cloud SVG is overflowing container.
 - Some actions don't seem to get caught in the undo. Is there a redo?
@@ -124,6 +121,12 @@ I think a lot of people in other countries would like this application. Can I ke
 - - Set up "Motion" / Video generation
 - - AI Voice?!? Can we have AI Voices read the text / script and then also save the audio? Perhaps we save 1 audio file per page and as the user turns the page it plays that audio after a small delay?
 
+
+- AI Documentation
+- - Character documentation
+- - Models and limitations
+- - AI Prompt Suggestion
+- - Story AI
 
 
 ## Marketing

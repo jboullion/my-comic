@@ -416,3 +416,78 @@ export async function chatWithStoryAI(userMessage, options = {}) {
 export function isOpenRouterConfigured() {
   return !!openRouterKey
 }
+
+/**
+ * Enhance an image prompt using OpenRouter LLM (Gemini 3 Flash)
+ * @param {string} userPrompt - Basic prompt from user
+ * @param {Object} options - Enhancement options
+ * @param {Array<{name: string, description: string}>} options.characters - Characters in the scene
+ * @returns {Promise<string>} - Enhanced prompt
+ */
+export async function enhanceImagePrompt(userPrompt, options = {}) {
+  const { characters = [] } = options
+
+  if (!openRouterKey) {
+    throw new Error('OpenRouter API key not configured')
+  }
+
+  const characterContext = characters.length > 0
+    ? `\nCharacters that may appear: ${characters.map(c => `${c.name} (${c.description || 'no description'})`).join(', ')}`
+    : ''
+
+  const systemPrompt = `You are a technical prompt engineer for FLUX image generation models.
+Transform the user's basic prompt into a structured, technical prompt optimized for AI image generation.
+
+Use this exact format: [Subject description], [pose/expression], [lighting], [background]
+
+Guidelines:
+- Subject description: Physical details, clothing, distinguishing features
+- Pose/expression: Body position, facial expression, action
+- Lighting: Light source direction, quality (soft/hard), color temperature
+- Background: Setting, environment, depth of field${characterContext}
+
+Rules:
+- Write exactly 30-80 words total
+- Use comma-separated technical descriptors
+- Be precise and literal, avoid flowery language
+- Do NOT add style modifiers (they are added separately)
+- Do NOT include negative prompts
+- Preserve the user's original subject and intent
+
+Return ONLY the enhanced prompt, no explanations.`
+
+  try {
+    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${openRouterKey}`,
+        'Content-Type': 'application/json',
+        'HTTP-Referer': window.location.origin,
+        'X-Title': 'Comic Book Maker'
+      },
+      body: JSON.stringify({
+        model: 'google/gemini-3-flash-preview',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: `User's basic prompt: "${userPrompt}"\n\nExpand this into a detailed image generation prompt:` }
+        ],
+        max_tokens: 300,
+        temperature: 0.7
+      })
+    })
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}))
+      throw new Error(errorData.error?.message || `OpenRouter request failed: ${response.status}`)
+    }
+
+    const data = await response.json()
+    const enhanced = data.choices?.[0]?.message?.content || ''
+    return enhanced.trim()
+  } catch (error) {
+    if (error.message?.includes('401')) {
+      throw new Error('Invalid OpenRouter API key')
+    }
+    throw new Error(`Prompt enhancement failed: ${error.message}`)
+  }
+}

@@ -320,12 +320,7 @@ Modal with two tabs:
 
 ### Image Size Handling
 
-**"Match Page" Mode:**
-- Reads current page dimensions from `useProjectStore`
-- Calculates aspect ratio
-- Rounds to nearest 64px multiple
-- Minimum dimension: 256px
-- Ensures optimal AI generation dimensions
+
 
 **Preset Sizes:**
 - Various standard sizes available in dropdown

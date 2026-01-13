@@ -1,7 +1,8 @@
 import { useState, useCallback, useEffect, useMemo } from 'react'
 import { useParams } from 'react-router-dom'
 import { FiX, FiZap, FiRefreshCw, FiCheck, FiAlertCircle, FiCpu, FiClock, FiTrash2, FiLoader } from 'react-icons/fi'
-import { generateImage, AI_MODELS, AI_STYLES, isFalConfigured, enhanceImagePrompt } from '../../lib/ai/falai'
+import { generateImage, AI_MODELS, AI_STYLES, isFalConfigured } from '../../lib/ai/falai'
+import { enhanceImagePrompt } from '../../lib/ai/openrouter'
 import { fetchImageAsBlob } from '../../lib/ai/utils'
 import CharacterPicker from './CharacterPicker'
 import useCharactersStore from '../../stores/useCharactersStore'
@@ -162,11 +163,11 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
   }, [selectedCharacterIds, characters])
 
   // Check if we have a LoRA available (for UI indicator)
-  const characterLora = getCharacterLora()
-  const hasLora = characterLora !== null
+  // const characterLora = getCharacterLora()
+  // const hasLora = characterLora !== null
 
   // Check if current model supports LoRA (only custom models support LoRA, not FLUX)
-  const modelSupportsLora = model === 'custom'
+  // const modelSupportsLora = model === 'custom'
 
   // Generation state
   const [isGenerating, setIsGenerating] = useState(false)
@@ -207,7 +208,6 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
   }, [selectedCharacterIds, activeTab, characters])
 
   const imageSizeOptions = [
-    { value: 'match_page', label: `${matchPageDimensions.width}x${matchPageDimensions.height}`, description: 'Match Page' },
     { value: 'square_hd', label: '1024x1024', description: 'Square HD' },
     { value: 'portrait_4_3', label: '768x1024', description: 'Portrait 3:4' },
     { value: 'portrait_16_9', label: '576x1024', description: 'Portrait 9:16' },

@@ -91,7 +91,7 @@ export const AI_MODELS = {
   'nano-banana': {
     id: 'fal-ai/nano-banana-pro',
     name: 'Nano Banana Pro',
-    description: 'Ultra-fast, budget-friendly',
+    description: 'Fast, budget-friendly',
     steps: null, // Doesn't use steps parameter
     cost: '~$0.001/MP',
     generation: 2,
