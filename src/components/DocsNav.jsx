@@ -37,14 +37,9 @@ export default function DocsNav() {
             {/* <Link to="/pricing" className="text-slate-400 hover:text-white transition-colors">
               Pricing
             </Link> */}
-            {user && (
-              <Link to="/app" className="text-slate-400 hover:text-white transition-colors">
-                Dashboard
-              </Link>
-            )}
           </div>
 
-          {/* Right side - Mobile menu button + User menu */}
+          {/* Right side - Mobile menu button + Dashboard + User menu */}
           <div className="flex items-center gap-3">
             {/* Mobile menu dropdown */}
             <div className="relative md:hidden">
@@ -61,6 +56,14 @@ export default function DocsNav() {
                 links={navLinks}
               />
             </div>
+            {user && (
+              <Link
+                to="/app"
+                className="hidden md:inline-flex px-3 py-1.5 bg-indigo-500 hover:bg-indigo-600 text-white text-sm font-medium rounded-md transition-colors"
+              >
+                Dashboard
+              </Link>
+            )}
             <UserMenu />
           </div>
         </div>
