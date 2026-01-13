@@ -14,4 +14,4 @@ SET
   image_gen_status = 'active',
   image_gen_locked_until = NULL,
   image_gen_violations_24h = 0
-WHERE user_id = '1f4e0804-042e-4208-b12b-815a02d4c9b2';
+WHERE user_id = 'your-user-id-here';  -- Replace with the actual user_id

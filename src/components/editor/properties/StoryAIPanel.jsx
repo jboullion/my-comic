@@ -2,7 +2,6 @@ import { useState, useRef, useEffect } from 'react'
 import { FiSend, FiTrash2, FiCpu, FiAlertCircle, FiImage, FiChevronDown, FiCamera, FiUpload, FiX, FiEdit3, FiZap } from 'react-icons/fi'
 import { STORY_AI_MODELS } from '../../../lib/ai/openrouter'
 import { storyChatViaEdge, getStoryChatCost } from '../../../lib/ai/edgeFunctions'
-import { uploadImageToFal } from '../../../lib/ai/falai'
 import { useProjectStore } from '../../../stores/useProjectStore'
 import { useCharactersStore } from '../../../stores/useCharactersStore'
 import useSeriesStore from '../../../stores/useSeriesStore'
@@ -141,46 +140,11 @@ export default function StoryAIPanel({ onCaptureCanvas }) {
 
       const modelConfig = STORY_AI_MODELS[selectedProvider]?.[selectedModel]
 
-      // Use attached image if available, otherwise auto-capture if vision is enabled
-      let imageUrl = null
-      if (attachedImage) {
-        // Upload attached image to Fal storage
-        console.log('[Story AI] Using manually attached image')
-        try {
-          const blob = await fetch(attachedImage.dataUrl).then(r => r.blob())
-          imageUrl = await uploadImageToFal(blob, attachedImage.name)
-          console.log('[Story AI] Attached image uploaded:', imageUrl)
-        } catch (uploadError) {
-          console.warn('[Story AI] Failed to upload attached image:', uploadError)
-        }
-      } else if (modelConfig?.vision && onCaptureCanvas) {
-        // Auto-capture canvas (legacy behavior)
-        try {
-          console.log('[Story AI] Capturing canvas...')
-          const dataUrl = await onCaptureCanvas()
-          if (dataUrl) {
-            console.log('[Story AI] Canvas captured, size:', dataUrl.length, 'bytes')
-            // Convert data URL to blob
-            const response = await fetch(dataUrl)
-            const blob = await response.blob()
-            console.log('[Story AI] Uploading image to Fal storage...')
-            // Upload to Fal storage
-            imageUrl = await uploadImageToFal(blob, 'canvas-screenshot.jpg')
-            console.log('[Story AI] Image uploaded:', imageUrl)
-          } else {
-            console.warn('[Story AI] Canvas capture returned null')
-          }
-        } catch (captureError) {
-          console.warn('[Story AI] Failed to capture canvas for AI:', captureError)
-          // Continue without image
-        }
-      } else {
-        if (!modelConfig?.vision) {
-          console.log('[Story AI] Model does not support vision')
-        }
-        if (!onCaptureCanvas) {
-          console.log('[Story AI] No onCaptureCanvas callback provided')
-        }
+      // Pass image directly as base64 data URL (no upload needed)
+      // OpenRouter and underlying AI providers accept data URLs directly
+      const imageUrl = attachedImage?.dataUrl || null
+      if (imageUrl) {
+        console.log('[Story AI] Using attached image (base64, size:', Math.round(imageUrl.length / 1024), 'KB)')
       }
 
       const result = await storyChatViaEdge({
@@ -452,8 +416,8 @@ export default function StoryAIPanel({ onCaptureCanvas }) {
           <div className="text-center py-8 text-slate-500 text-sm">
             <p className="mb-2">👋 Hi! I'm your story assistant.</p>
             <p className="text-xs text-slate-600">
-              {modelConfig?.vision 
-                ? "I can see your canvas! Ask me about what's on the page, dialogue ideas, or image prompts."
+              {modelConfig?.vision
+                ? "Use the 📷 button to share your page with me. I can help with dialogue, plot ideas, and image prompts."
                 : "Ask me to help with dialogue, plot ideas, character development, or image prompts."
               }
             </p>
