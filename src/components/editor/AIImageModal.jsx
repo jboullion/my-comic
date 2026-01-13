@@ -9,6 +9,7 @@ import useCharactersStore from '../../stores/useCharactersStore'
 import useProjectStore from '../../stores/useProjectStore'
 import useSeriesStore from '../../stores/useSeriesStore'
 import { useCredits } from '../../hooks/useCredits'
+import { useIsImageGenRestricted, useImageGenLockoutMessage } from '../../stores/useCreditsStore'
 import CreditCostPreview from '../credits/CreditCostPreview'
 
 /**
@@ -99,6 +100,10 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
 
   // Get credits info for cost preview and auth check
   const { balance, isLoggedIn, hasCredits } = useCredits()
+
+  // Check if user is restricted from image generation
+  const isImageGenRestricted = useIsImageGenRestricted()
+  const lockoutMessage = useImageGenLockoutMessage()
 
   // Get current project settings for "Match Page" option
   const { currentProject } = useProjectStore()
@@ -588,6 +593,19 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
           ) : activeTab === 'generate' ? (
             /* Generate Tab */
             <>
+              {/* Image Generation Lockout Banner */}
+              {isImageGenRestricted && lockoutMessage && (
+                <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4 mb-4">
+                  <div className="flex items-start gap-3">
+                    <FiAlertCircle className="w-5 h-5 text-red-400 shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-sm text-red-300 font-medium">Image Generation Restricted</p>
+                      <p className="text-xs text-red-300/70 mt-1">{lockoutMessage}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Prompt Input */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
@@ -757,6 +775,19 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
           ) : activeTab === 'advanced' ? (
             /* Advanced Tab */
             <>
+              {/* Image Generation Lockout Banner */}
+              {isImageGenRestricted && lockoutMessage && (
+                <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4 mb-4">
+                  <div className="flex items-start gap-3">
+                    <FiAlertCircle className="w-5 h-5 text-red-400 shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-sm text-red-300 font-medium">Image Generation Restricted</p>
+                      <p className="text-xs text-red-300/70 mt-1">{lockoutMessage}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Structured Prompt Fields */}
               <div className="space-y-3">
 
@@ -1044,7 +1075,7 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
               {!generatedImage && (
                 <button
                   onClick={handleGenerate}
-                  disabled={isGenerating || !prompt.trim()}
+                  disabled={isGenerating || !prompt.trim() || isImageGenRestricted}
                   className="px-4 py-2 text-sm bg-indigo-500 hover:bg-indigo-600 disabled:opacity-50 text-white rounded-lg font-medium transition-colors flex items-center gap-2"
                 >
                   <FiZap className="w-4 h-4" />
@@ -1093,7 +1124,7 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
               {!generatedImage && (
                 <button
                   onClick={handleAdvancedGenerate}
-                  disabled={isGenerating || !combineStructuredPrompts().trim()}
+                  disabled={isGenerating || !combineStructuredPrompts().trim() || isImageGenRestricted}
                   className="px-4 py-2 text-sm bg-indigo-500 hover:bg-indigo-600 disabled:opacity-50 text-white rounded-lg font-medium transition-colors flex items-center gap-2"
                 >
                   <FiZap className="w-4 h-4" />
