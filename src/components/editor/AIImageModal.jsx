@@ -142,8 +142,9 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
     seed: null
   })
 
-  // Get allowMature from project settings
-  const allowMature = customModel?.allowMature || false
+  // Always allow mature content (safety filters disabled for better image quality)
+  // A proper content filter UI will be implemented later
+  const allowMature = true
 
   // Get characters from store for prompt building
   const { characters } = useCharactersStore()

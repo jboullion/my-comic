@@ -112,8 +112,7 @@ db.version(8).stores({
  *     enabled: boolean,
  *     name: string,                 // Display name (e.g., "Pony Diffusion V6")
  *     type: 'flux' | 'sdxl' | 'sd15',
- *     url: string,                  // CivitAI download URL
- *     allowMature: boolean          // Safety filter override
+ *     url: string                   // CivitAI download URL
  *   } | null
  *   createdAt: Date
  *   updatedAt: Date
@@ -237,8 +236,8 @@ export const DEFAULT_PROJECT_SETTINGS = {
     enabled: false,
     name: '',                // Display name (e.g., "Pony Diffusion V6")
     type: 'sdxl',            // 'flux' | 'sdxl' | 'sd15' | 'pony'
-    url: '',                 // CivitAI download URL
-    allowMature: false       // Allow mature/NSFW content (disables safety filters)
+    url: ''                  // CivitAI download URL
+    // Note: allowMature removed - now always enabled for better image quality
   }
 }
 
