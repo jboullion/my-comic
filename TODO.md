@@ -1,5 +1,7 @@
 ## Current TODOs
 
+- Dashboard button should be highlighed and next to the user menu probably. See supabase for example
+
 - Need to set up some kind of token system for users. Right now the hobbyist tier should probably give X credits a month. Need to figure out how much that should be and also how to track it per user.
 - - Story prompts are 1
 - - Image prompts are ~5?
@@ -16,6 +18,10 @@
 
 - Delete Account
 
+- If Supabase is set up we could do things like Share Comics page and lots of other features.
+- - Share COmics
+- - Find Comics
+- - Save information in DB
 
 
 ## Bugs
