@@ -27,6 +27,8 @@ interface CreditsState {
 
   // Computed helpers
   hasCredits: (cost: number) => boolean
+  isImageGenRestricted: () => boolean
+  getImageGenLockoutMessage: () => string | null
 }
 
 // Cache duration: 30 seconds
@@ -137,6 +139,43 @@ export const useCreditsStore = create<CreditsState>((set, get) => ({
     if (!state.credits) return false
     return state.credits.balance >= cost
   },
+
+  /**
+   * Check if user is restricted from image generation
+   */
+  isImageGenRestricted: () => {
+    const state = get()
+    if (!state.credits) return false
+    if (state.credits.imageGenStatus !== 'restricted') return false
+
+    // Check if lockout has expired
+    if (state.credits.imageGenLockedUntil) {
+      const lockoutExpiry = new Date(state.credits.imageGenLockedUntil)
+      if (lockoutExpiry < new Date()) {
+        return false // Lockout expired
+      }
+    }
+    return true
+  },
+
+  /**
+   * Get a user-friendly lockout message
+   */
+  getImageGenLockoutMessage: () => {
+    const state = get()
+    if (!state.credits) return null
+    if (state.credits.imageGenStatus !== 'restricted') return null
+
+    if (state.credits.imageGenLockedUntil) {
+      const lockoutExpiry = new Date(state.credits.imageGenLockedUntil)
+      if (lockoutExpiry < new Date()) {
+        return null // Lockout expired
+      }
+      return `Image generation is temporarily unavailable until ${lockoutExpiry.toLocaleString()}`
+    }
+
+    return 'Image generation is temporarily unavailable for your account.'
+  },
 }))
 
 /**
@@ -159,4 +198,18 @@ export function useHasCredits(cost: number): boolean {
  */
 export function useTier(): string | null {
   return useCreditsStore((state) => state.credits?.tier ?? null)
+}
+
+/**
+ * Hook to check if image generation is restricted
+ */
+export function useIsImageGenRestricted(): boolean {
+  return useCreditsStore((state) => state.isImageGenRestricted())
+}
+
+/**
+ * Hook to get image generation lockout message
+ */
+export function useImageGenLockoutMessage(): string | null {
+  return useCreditsStore((state) => state.getImageGenLockoutMessage())
 }

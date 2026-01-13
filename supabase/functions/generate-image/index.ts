@@ -7,6 +7,12 @@ import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { handleCors, jsonResponse, errorResponse } from '../_shared/cors.ts'
 import { verifyAuth } from '../_shared/auth.ts'
 import { createAdminClient, checkCredits, deductCredits } from '../_shared/credits.ts'
+import {
+  checkImageGenStatus,
+  checkPromptContent,
+  recordImageViolation,
+  isFalContentPolicyError
+} from '../_shared/moderation.ts'
 
 // Fal.ai API configuration
 const FAL_QUEUE_URL = 'https://queue.fal.run'
@@ -137,7 +143,34 @@ serve(async (req: Request) => {
     // Create admin client for credit operations
     const adminClient = createAdminClient()
 
-    // Check credits (but don't deduct yet - only deduct after successful generation)
+    // 1. Check if user is restricted from image generation
+    const imageGenStatus = await checkImageGenStatus(adminClient, userId)
+    if (!imageGenStatus.canGenerate) {
+      return errorResponse(
+        imageGenStatus.message || 'Image generation is temporarily unavailable for your account.',
+        403,
+        'IMAGE_GEN_RESTRICTED'
+      )
+    }
+
+    // 2. Pre-screen prompt against content filters
+    const filterResult = await checkPromptContent(adminClient, prompt)
+    if (!filterResult.passed) {
+      // Record violation (fire and forget for speed)
+      recordImageViolation(adminClient, userId, 'pre_filter', prompt, {
+        category: filterResult.category,
+        severity: filterResult.severity,
+        metadata: { model: modelKey, style },
+      })
+
+      return errorResponse(
+        "Your prompt couldn't be processed. Please revise and try again.",
+        400,
+        'CONTENT_POLICY_VIOLATION'
+      )
+    }
+
+    // 3. Check credits (but don't deduct yet - only deduct after successful generation)
     const creditCheck = await checkCredits(adminClient, userId, 'fal', modelKey)
     if (!creditCheck.success) {
       return errorResponse(creditCheck.error || 'Credit check failed', 402, creditCheck.errorCode)
@@ -282,6 +315,22 @@ serve(async (req: Request) => {
     if (!queueResponse.ok) {
       const errorData = await queueResponse.json().catch(() => ({}))
       console.error('[generate-image] Fal.ai queue error:', errorData)
+
+      // Check if this is a content policy rejection (422)
+      if (isFalContentPolicyError(queueResponse.status, errorData)) {
+        // Record violation
+        await recordImageViolation(adminClient, userId, 'fal_rejection', prompt, {
+          severity: 2,
+          errorDetail: errorData.detail || 'Content policy violation',
+          metadata: { model: modelKey, style, falStatus: queueResponse.status },
+        })
+
+        return errorResponse(
+          "Your prompt couldn't be processed. Please revise and try again.",
+          400,
+          'CONTENT_POLICY_VIOLATION'
+        )
+      }
 
       return errorResponse(
         errorData.detail || `Fal.ai request failed: ${queueResponse.status}`,

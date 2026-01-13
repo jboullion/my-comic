@@ -38,10 +38,10 @@ serve(async (req: Request) => {
     // Create admin client
     const adminClient = createAdminClient()
 
-    // Get user credits
+    // Get user credits (including image generation moderation status)
     const { data: credits, error: creditsError } = await adminClient
       .from('user_credits')
-      .select('balance, monthly_allocation, tier, last_reset_at, created_at')
+      .select('balance, monthly_allocation, tier, last_reset_at, created_at, image_gen_status, image_gen_locked_until')
       .eq('user_id', userId)
       .single()
 
@@ -56,6 +56,18 @@ serve(async (req: Request) => {
     nextReset.setDate(nextReset.getDate() + 30)
     const daysUntilReset = Math.max(0, Math.ceil((nextReset.getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
 
+    // Check if image gen lockout has expired
+    let imageGenStatus = credits.image_gen_status || 'active'
+    let imageGenLockedUntil = credits.image_gen_locked_until
+    if (imageGenStatus === 'restricted' && imageGenLockedUntil) {
+      const lockoutExpiry = new Date(imageGenLockedUntil)
+      if (lockoutExpiry < new Date()) {
+        // Lockout expired - status will be auto-updated on next generation attempt
+        imageGenStatus = 'warned'
+        imageGenLockedUntil = null
+      }
+    }
+
     const response: Record<string, unknown> = {
       success: true,
       credits: {
@@ -66,6 +78,9 @@ serve(async (req: Request) => {
         nextResetAt: nextReset.toISOString(),
         daysUntilReset,
         memberSince: credits.created_at,
+        // Image generation moderation status
+        imageGenStatus,
+        imageGenLockedUntil,
       },
     }
 

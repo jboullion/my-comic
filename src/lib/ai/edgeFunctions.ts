@@ -111,6 +111,12 @@ export async function generateImageViaEdge(options: GenerateImageOptions): Promi
     if (errorCode === 'UNAUTHORIZED') {
       throw new Error('Please sign in to use AI image generation')
     }
+    if (errorCode === 'CONTENT_POLICY_VIOLATION') {
+      throw new Error('Your prompt couldn\'t be processed. Please revise it and try again.')
+    }
+    if (errorCode === 'IMAGE_GEN_RESTRICTED') {
+      throw new Error('Image generation is temporarily unavailable for your account. Please try again later or contact support.')
+    }
 
     throw new Error(errorMessage)
   }

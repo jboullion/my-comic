@@ -18,6 +18,9 @@ export interface UserCredits {
   nextResetAt: string
   daysUntilReset: number
   memberSince: string
+  // Image generation moderation status
+  imageGenStatus: 'active' | 'warned' | 'restricted'
+  imageGenLockedUntil: string | null
 }
 
 export interface CreditTransaction {
