@@ -12,7 +12,7 @@ export default function PublicNav() {
   // Build navigation links
   const navLinks = [
     { label: 'Documentation', to: '/docs' },
-    { label: 'Pricing', to: '/pricing' },
+    // { label: 'Pricing', to: '/pricing' },
   ]
 
   if (user) {
@@ -30,9 +30,9 @@ export default function PublicNav() {
             <Link to="/docs" className="text-slate-400 hover:text-white transition-colors">
               Documentation
             </Link>
-            <Link to="/pricing" className="text-slate-400 hover:text-white transition-colors">
+            {/* <Link to="/pricing" className="text-slate-400 hover:text-white transition-colors">
               Pricing
-            </Link>
+            </Link> */}
             {user && (
               <Link to="/app" className="text-slate-400 hover:text-white transition-colors">
                 Dashboard

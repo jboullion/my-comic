@@ -238,7 +238,7 @@ export default function CharacterModal({ defaultSeriesId = null }) {
                 htmlFor="description"
                 className="block text-[10px] text-slate-500 uppercase font-bold mb-2"
               >
-                Description (for AI)
+                Description
               </label>
               <textarea
                 id="description"
@@ -250,7 +250,7 @@ export default function CharacterModal({ defaultSeriesId = null }) {
                 className="w-full px-4 py-2.5 bg-slate-900 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent disabled:opacity-50 resize-none"
               />
               <p className="mt-1.5 text-xs text-slate-500">
-                This description will be used when generating AI images with this character.
+                This description can be used for AI prompt and story generation.
               </p>
             </div>
 

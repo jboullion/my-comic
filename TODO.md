@@ -1,31 +1,32 @@
 ## Current TODOs
 
+- Need to set up some kind of token system for users. Right now the hobbyist tier should probably give X credits a month. Need to figure out how much that should be and also how to track it per user.
+- - Story prompts are 1
+- - Image prompts are ~5?
+- - Can the user buy more if they want?
+
 - Can this app even work in mobile? Perhaps mobile is a "view only" version?
 
 - Update the AI features to only work with a paid account.
 
 - General refactor to clean up large files?
 
-- Need to set up some kind of token system for users. Right now the hobbyist tier should probably give X credits a month. Need to figure out how much that should be and also how to track it per user.
 
 - Set up "Locations", and other things to work similar to characters for easy AI reference
 
-- The AI Prompt generator is TOO descriptive
-
 - Delete Account
 
-- Remove pricing page and hide AI features
 
 
 ## Bugs
 
 
-- Update all models 
+- 
 - Have each AI Image generated save in a temporary storage so users can access it even if they don't use it. Perhaps save it and show it as a thumbnail in the history?
 - Cloud SVG is overflowing container.
 - Some actions don't seem to get caught in the undo. Is there a redo?
 - I still get the forced zoom every now and then
-- Potentially remove the PWA functionality to avoid weird issues like the target="_blank" issue Weigh the pros and cons again
+
 
 
 ## Ideas and Brainstorming
@@ -35,6 +36,7 @@
 
 ### Scripts
 - Should we provide some kind of "Scripts" page?
+- - Tied to a project
 - - Perhaps a tool for writing comic scripts and dialog?
 - - AI Could then reference and edit this as well
 
@@ -127,6 +129,11 @@ I think a lot of people in other countries would like this application. Can I ke
 - - Models and limitations
 - - AI Prompt Suggestion
 - - Story AI
+
+
+# Security
+- What happens if someone keeps sending bad prompts to fal or open router. Can that affect my account? How can we prevent that from being an issue?
+- General abuse of tokens
 
 
 ## Marketing

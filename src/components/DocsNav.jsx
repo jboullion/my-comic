@@ -34,9 +34,9 @@ export default function DocsNav() {
             <Link to="/docs" className="text-slate-400 hover:text-white transition-colors">
               Documentation
             </Link>
-            <Link to="/pricing" className="text-slate-400 hover:text-white transition-colors">
+            {/* <Link to="/pricing" className="text-slate-400 hover:text-white transition-colors">
               Pricing
-            </Link>
+            </Link> */}
             {user && (
               <Link to="/app" className="text-slate-400 hover:text-white transition-colors">
                 Dashboard
