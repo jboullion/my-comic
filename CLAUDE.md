@@ -4,8 +4,6 @@
 
 A Progressive Web App (PWA) for creating digital comic books. Client-centric architecture where all creative work happens in the browser—no backend storage for user content.
 
-**Current State:** Phase 8 - Multi-select support, rulers, grid overlay, snap-to-grid, and project/page settings.
-
 ## Tech Stack
 
 - **React 19** with functional components and hooks
@@ -17,6 +15,8 @@ A Progressive Web App (PWA) for creating digital comic books. Client-centric arc
 - **Dexie.js** for IndexedDB storage
 - **Google Fonts** for text elements
 - **Fal.ai** for AI image generation (FLUX models)
+- **OpenRouter** for Story AI chat (vision-capable LLMs)
+- **Supabase Edge Functions** for AI credit system and API security
 
 ## Commands
 
@@ -62,48 +62,51 @@ nudgeSelectedElements(direction)  // 'left', 'right', 'up', 'down'
 - `src/components/editor/ui/` - Reusable controls (NumberInput, FontSelect, etc.)
 
 ### AI Image Generation
-AI-powered image generation using Fal.ai with FLUX models.
-
-**Setup:**
-```bash
-# Add to .env.local (copy from .env.example)
-VITE_FAL_AI_KEY=your-key-from-fal.ai
-```
-Get your key from: https://fal.ai/dashboard/keys
+AI-powered image generation using Fal.ai with FLUX models, routed through Supabase Edge Functions for credit tracking.
 
 **Features:**
-- Text-to-image generation with FLUX 2 Pro, FLUX 2 Dev, or Nano Banana Pro
+- Text-to-image generation with FLUX 2 Pro, FLUX 2 Dev, or Nano Banana
+- Simple mode (prompt + style) and Advanced mode (structured prompts)
+- AI-powered prompt enhancement via Gemini
 - Character-consistent generation via reference images and LoRA models
 - Style presets (Comic Book, Manga, Realistic, Retro Vintage)
 - Custom base models from CivitAI (FLUX, SDXL, SD 1.5)
 - Generation history (last 20 prompts per project)
-- Queue status tracking with progress updates
+- Credit-based usage tracking
 
 **Key Files:**
-- `src/lib/falai.js` - Core Fal.ai integration (~325 lines)
-- `src/components/editor/AIImageModal.jsx` - Main UI modal (~750 lines)
+- `src/lib/ai/falai.js` - Fal.ai integration
+- `src/lib/ai/edgeFunctions.ts` - Edge function client for credit-tracked API calls
+- `src/components/editor/AIImageModal.jsx` - Main UI modal with Generate/Advanced/History tabs
 - `src/components/settings/AIModelSettingsTab.jsx` - Custom model configuration
-- `src/components/editor/CharacterPicker.jsx` - Multi-select character UI
+- `src/components/editor/CharacterPicker.jsx` - Character selection UI
 
 **Usage Patterns:**
 ```javascript
-// Generate image with character reference
-import { generateImage } from '@/lib/falai'
+// Generate image via Edge Function (credit-tracked)
+import { generateImageViaEdge } from '@/lib/ai/edgeFunctions'
 
-const result = await generateImage({
+const result = await generateImageViaEdge({
   prompt: "A superhero flying",
   style: 'comic',              // 'comic' | 'manga' | 'realistic' | 'retro' | 'none'
   model: 'flux-2-pro',         // 'flux-2-pro' | 'flux-2' | 'nano-banana' | 'custom'
   imageSize: 'match_page',     // Auto-calculate from page dimensions
-  referenceImageBlob: blob,    // Character reference image
-  referenceStrength: 0.75,     // 0-1, how closely to match reference
-  loraUrl: 'civitai.com/...',  // Character LoRA URL
-  loraTriggerWord: 'hero1',    // LoRA activation word
-  loraScale: 0.8               // LoRA strength
+  lora: {                      // Optional character LoRA
+    url: 'civitai.com/...',
+    triggerWord: 'hero1',
+    scale: 0.8
+  }
 })
-
-// Returns: { imageUrl, width, height, seed, prompt, fullPrompt, model, ... }
+// Returns: { imageUrl, width, height, seed, fullPrompt, model, credits }
 ```
+
+**Advanced Mode:**
+Structured prompts with separate fields:
+- Scene/Setting - Environment description
+- Character/Subject - Who/what is in the image
+- Lighting/Atmosphere - Mood and lighting
+- Composition/Framing - Camera angle and composition
+- Style (free text) - Additional style notes
 
 **Character Integration:**
 Characters can have AI-specific properties:
@@ -123,6 +126,49 @@ Configure in `AIModelSettingsTab`:
   allowMature: false
 }
 ```
+
+### Story AI Chat
+AI-powered story assistant using OpenRouter with vision-capable LLMs, routed through Supabase Edge Functions.
+
+**Features:**
+- Vision-capable models (Gemini, Claude, GPT, Llama, ByteDance Seed)
+- Page capture for visual context analysis
+- Image upload for reference analysis
+- Custom story prompts per series
+- Chat history (max 50 messages per project)
+- Project context awareness (characters, page info)
+
+**Key Files:**
+- `src/lib/ai/openrouter.js` - OpenRouter integration
+- `src/lib/ai/edgeFunctions.ts` - Edge function client
+- `src/components/editor/StoryAIPanel.jsx` - Chat panel UI
+
+**Usage Patterns:**
+```javascript
+// Chat with Story AI via Edge Function
+import { storyChatViaEdge } from '@/lib/ai/edgeFunctions'
+
+const result = await storyChatViaEdge({
+  message: "Help me write dialogue for this scene",
+  model: 'gemini-2.5-flash',
+  imageUrl: dataUrl,           // Optional: page capture or uploaded image
+  chatHistory: previousMessages,
+  projectContext: {
+    title: "My Comic",
+    pageNumber: 3,
+    totalPages: 10,
+    characters: [...]
+  }
+})
+// Returns: { response, model, provider, credits }
+```
+
+**Available Models:**
+- Google: Gemini 2.5 Flash, Gemini 3 Flash, Gemini 2.5 Pro
+- Anthropic: Claude Sonnet 4.5, Claude Haiku 4.5
+- OpenAI: GPT-5-mini, GPT-5-nano, GPT-4o
+- Meta: Llama 3.2 90B Vision
+- ByteDance: Seed 1.6 Flash
 
 ## Coding Conventions
 
@@ -179,11 +225,15 @@ export default function NewComponent({ title, count }: Props) {
 | `src/components/editor/properties/` | Property panels |
 | `src/components/settings/` | Settings tabs (Page, Images, Text, Speech Bubbles, Text Effects) |
 | `src/pages/ProjectSettingsPage.jsx` | Project defaults configuration |
-| `src/lib/falai.js` | Fal.ai integration and AI generation |
+| `src/lib/ai/falai.js` | Fal.ai integration |
+| `src/lib/ai/openrouter.js` | OpenRouter integration for Story AI |
+| `src/lib/ai/edgeFunctions.ts` | Edge function client for credit-tracked API calls |
 | `src/components/editor/AIImageModal.jsx` | AI image generation UI |
+| `src/components/editor/StoryAIPanel.jsx` | Story AI chat panel |
 | `src/components/settings/AIModelSettingsTab.jsx` | Custom AI model configuration |
 | `src/stores/useSeriesStore.js` | Series and custom model state |
 | `src/stores/useCharactersStore.js` | Character and LoRA management |
+| `src/stores/useCreditsStore.js` | AI credit balance and tracking |
 
 ## Current Features
 
@@ -206,6 +256,9 @@ export default function NewComponent({ title, count }: Props) {
 - Export all pages as ZIP (WebP, PNG, JPEG)
 - Element grouping
 - AI image generation with Fal.ai (FLUX models, character references, LoRA, custom models)
+- AI prompt enhancement (Gemini-powered prompt expansion)
+- Story AI chat assistant with vision support (Gemini, Claude, GPT, Llama)
+- Credit system for AI features
 
 ## Custom Commands
 

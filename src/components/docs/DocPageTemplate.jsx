@@ -16,6 +16,13 @@ const docsSections = [
     ]
   },
   {
+    group: 'AI Features',
+    items: [
+      { title: 'AI Image Generation', path: '/docs/ai-image-generation', icon: null },
+      { title: 'Story AI', path: '/docs/story-ai', icon: null },
+    ]
+  },
+  {
     group: 'Elements',
     items: [
       { title: 'Images', path: '/docs/images', icon: null },

@@ -1,7 +1,5 @@
 ## Current TODOs
 
-- Dashboard button should be highlighed and next to the user menu probably. See supabase for example
-
 - Token system refinement!
 - - Should we list Nana Banana as the default?
 - - Should we include other models besides Flux 2? 
