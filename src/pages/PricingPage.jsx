@@ -32,7 +32,7 @@ export default function PricingPage() {
       'Multi-page projects',
       'Export to WebP, PNG, JPEG'
     ],
-    ctaText: 'Get Started',
+    ctaText: '',
     highlighted: false
   }
 
@@ -40,17 +40,16 @@ export default function PricingPage() {
     name: 'Hobbyist',
     price: '$10',
     priceSubtext: 'per month',
-    badge: 'Most Popular',
-    description: 'For serious creators',
+    badge: '',
+    description: 'For comic fans',
     features: [
       'Everything in Free',
       'AI image generation',
-      'Character-consistent images',
+      'AI Inpainting',
       'Reference image support',
-      'LoRA model integration',
       'Style presets (Comic, Manga, Realistic)',
-      'Custom model support (CivitAI)',
-      'Generation history tracking'
+      'Generation history tracking',
+      'Story Assistant'
     ],
     ctaText: 'Coming Soon',
     highlighted: true
@@ -60,7 +59,7 @@ export default function PricingPage() {
     name: 'Pro',
     price: 'TBD',
     badge: 'Coming Soon',
-    description: 'For professional studios',
+    description: 'For serious creators',
     features: [
       'Everything in Hobbyist',
       'Cloud sync across devices',
@@ -114,7 +113,7 @@ export default function PricingPage() {
       {/* Hero section */}
       <div className="max-w-7xl mx-auto px-4 py-16">
         <div className="text-center mb-12">
-          <h1 className="text-5xl font-bold mb-4 bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">
+          <h1 className="text-5xl font-bold mb-4">
             Simple, Transparent Pricing
           </h1>
           <p className="text-xl text-slate-400">
