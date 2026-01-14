@@ -67,8 +67,8 @@
 - - Privacy and contact page
 - - Images for the header and other areas
   
-
 - Allow page settings to have rounded edges? Same with export?
+
 
 ### Text
 
@@ -101,7 +101,6 @@
 
 - Form field name / id for a11y purposes
 
-- Move things with keyboard keys?
 
 ### Tools
 
@@ -134,8 +133,7 @@ I think a lot of people in other countries would like this application. Can I ke
 
 
 # Security
-- What happens if someone keeps sending bad prompts to fal or open router. Can that affect my account? How can we prevent that from being an issue?
-- General abuse of tokens
+
 
 
 ## Marketing

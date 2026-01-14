@@ -187,6 +187,10 @@ export const DEFAULT_PROJECT_SETTINGS = {
   height: 1200,
   backgroundColor: '#ffffff',
 
+  // Font settings
+  fontScript: 'latin',  // 'latin' | 'cjk' | 'cyrillic' | 'arabic' | 'devanagari'
+  customFonts: [],      // User-added Google Fonts: [{ name, family }]
+
   // Text element defaults
   text: {
     fontFamily: 'Comic Neue, cursive',

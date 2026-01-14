@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import { FiTrash2 } from 'react-icons/fi'
 import useProjectStore from '../../../stores/useProjectStore'
 import CollapsibleSection from './sections/CollapsibleSection'
@@ -8,13 +9,21 @@ import TextSection from './sections/TextSection'
 import TextStyleSection from './sections/TextStyleSection'
 import TextEffectStyleSection from './sections/TextEffectStyleSection'
 import TransformSection from './sections/TransformSection'
+import { getProjectFonts } from '../../../lib/fonts'
 
 /**
  * ElementProperties Component
  * Properties panel for selected element - orchestrates section components
  */
 export default function ElementProperties({ element }) {
-  const { updateElement } = useProjectStore()
+  const { updateElement, currentProject } = useProjectStore()
+
+  // Get project fonts based on font settings
+  const projectFonts = useMemo(() => {
+    const fontScript = currentProject?.settings?.fontScript || 'latin'
+    const customFonts = currentProject?.settings?.customFonts || []
+    return getProjectFonts(fontScript, customFonts)
+  }, [currentProject?.settings?.fontScript, currentProject?.settings?.customFonts])
 
   const handleUpdate = (updates) => {
     updateElement(element.id, updates)
@@ -81,7 +90,7 @@ export default function ElementProperties({ element }) {
             title="Bubble Style"
             storageKey="bubble-style"
           >
-            <BubbleStyleSection element={element} onUpdate={handleUpdate} />
+            <BubbleStyleSection element={element} onUpdate={handleUpdate} projectFonts={projectFonts} />
           </CollapsibleSection>
 
           <CollapsibleSection
@@ -107,7 +116,7 @@ export default function ElementProperties({ element }) {
             title="Text Style"
             storageKey="text-style"
           >
-            <TextStyleSection element={element} onUpdate={handleUpdate} />
+            <TextStyleSection element={element} onUpdate={handleUpdate} projectFonts={projectFonts} />
           </CollapsibleSection>
         </>
       )}
@@ -126,7 +135,7 @@ export default function ElementProperties({ element }) {
             title="Effect Style"
             storageKey="textEffect-style"
           >
-            <TextEffectStyleSection element={element} onUpdate={handleUpdate} />
+            <TextEffectStyleSection element={element} onUpdate={handleUpdate} projectFonts={projectFonts} />
           </CollapsibleSection>
         </>
       )}

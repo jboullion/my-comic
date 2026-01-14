@@ -368,8 +368,11 @@ const HtmlCanvas = forwardRef(function HtmlCanvas(props, ref) {
       if (!capture) return null
 
       try {
-        // Get embedded font CSS for proper font rendering
-        const fontEmbedCSS = await getEmbeddedFontCSS()
+        // Get embedded font CSS for proper font rendering (including project fonts)
+        const fontEmbedCSS = await getEmbeddedFontCSS(
+          projectSettings.fontScript || 'latin',
+          projectSettings.customFonts || []
+        )
 
         // Scale so smallest dimension is 500px
         const TARGET_MIN_DIMENSION = 500
@@ -410,8 +413,11 @@ const HtmlCanvas = forwardRef(function HtmlCanvas(props, ref) {
       if (!capture) return null
 
       try {
-        // Get embedded font CSS for proper font rendering
-        const fontEmbedCSS = await getEmbeddedFontCSS()
+        // Get embedded font CSS for proper font rendering (including project fonts)
+        const fontEmbedCSS = await getEmbeddedFontCSS(
+          projectSettings.fontScript || 'latin',
+          projectSettings.customFonts || []
+        )
 
         // Use toCanvas for format flexibility
         const canvas = await toCanvas(capture.clone, {
@@ -476,7 +482,11 @@ const HtmlCanvas = forwardRef(function HtmlCanvas(props, ref) {
         if (!capture) continue
 
         try {
-          const fontEmbedCSS = await getEmbeddedFontCSS()
+          // Get embedded font CSS (including project fonts)
+          const fontEmbedCSS = await getEmbeddedFontCSS(
+            project.settings?.fontScript || 'latin',
+            project.settings?.customFonts || []
+          )
           const pageData = project.pages[i]
           const pageSettings = pageData.settings || project.settings
           const width = pageSettings.width
