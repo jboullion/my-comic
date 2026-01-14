@@ -53,6 +53,9 @@ export default function ProjectSettingsPage() {
   // Local customStoryPrompt state (separate from settings)
   const [localCustomStoryPrompt, setLocalCustomStoryPrompt] = useState(null)
 
+  // Local storyAiModel state (separate from settings)
+  const [localStoryAiModel, setLocalStoryAiModel] = useState(null)
+
   // Save state for feedback
   const [saveState, setSaveState] = useState('idle') // 'idle' | 'saving' | 'saved'
 
@@ -86,6 +89,13 @@ export default function ProjectSettingsPage() {
     }
   }, [currentProject?.customStoryPrompt])
 
+  // Initialize storyAiModel from project
+  useEffect(() => {
+    if (currentProject) {
+      setLocalStoryAiModel(currentProject.storyAiModel || null)
+    }
+  }, [currentProject?.storyAiModel])
+
   // Save tab preference
   useEffect(() => {
     localStorage.setItem('projectSettingsTab', activeTab)
@@ -100,8 +110,11 @@ export default function ProjectSettingsPage() {
       setSaveState('saving')
       // Save both settings and customStoryPrompt
       await saveProjectSettings(localSettings)
-      // Save customStoryPrompt separately (it's on the project, not settings)
-      await updateCurrentProject({ customStoryPrompt: localCustomStoryPrompt })
+      // Save customStoryPrompt and storyAiModel separately (they're on the project, not settings)
+      await updateCurrentProject({
+        customStoryPrompt: localCustomStoryPrompt,
+        storyAiModel: localStoryAiModel
+      })
       setSaveState('saved')
       // Reset to idle after showing "Saved!" for 1.5 seconds
       setTimeout(() => setSaveState('idle'), 1500)
@@ -230,6 +243,8 @@ export default function ProjectSettingsPage() {
               <AISettingsTab
                 customStoryPrompt={localCustomStoryPrompt}
                 onUpdate={setLocalCustomStoryPrompt}
+                storyAiModel={localStoryAiModel}
+                onUpdateModel={setLocalStoryAiModel}
               />
             )}
             {activeTab === 'storage' && (

@@ -1,5 +1,7 @@
 ## Current TODOs
 
+- is the Project story prompt even being sent to the AI?
+
 - Token system refinement!
 - - Should we list Nana Banana as the default?
 - - Should we include other models besides Flux 2? 

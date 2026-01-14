@@ -1,14 +1,22 @@
-import { FiRotateCcw, FiAlertCircle } from 'react-icons/fi'
-import { getDefaultStoryPromptTemplate } from '../../lib/ai/openrouter'
+import { FiRotateCcw, FiAlertCircle, FiImage, FiZap } from 'react-icons/fi'
+import { getDefaultStoryPromptTemplate, STORY_AI_MODELS } from '../../lib/ai/openrouter'
+import { getStoryChatCost } from '../../lib/ai/edgeFunctions'
+
+// Default model configuration
+const DEFAULT_STORY_MODEL = { provider: 'google', model: 'gemini-3-flash' }
 
 /**
  * AISettingsTab Component
- * Settings for AI features - custom Story AI prompt
+ * Settings for AI features - Story AI model selection and custom prompt
  */
-export default function AISettingsTab({ customStoryPrompt, onUpdate }) {
+export default function AISettingsTab({ customStoryPrompt, onUpdate, storyAiModel, onUpdateModel }) {
   const defaultPrompt = getDefaultStoryPromptTemplate()
   const prompt = customStoryPrompt || defaultPrompt
   const isUsingDefault = !customStoryPrompt
+
+  // Current model selection
+  const currentModel = storyAiModel || DEFAULT_STORY_MODEL
+  const modelConfig = STORY_AI_MODELS[currentModel.provider]?.[currentModel.model]
 
   const handlePromptChange = (e) => {
     const value = e.target.value
@@ -23,8 +31,73 @@ export default function AISettingsTab({ customStoryPrompt, onUpdate }) {
     }
   }
 
+  const handleModelSelect = (provider, model) => {
+    onUpdateModel({ provider, model })
+  }
+
   return (
     <div className="space-y-8">
+      {/* Story AI Model Selection */}
+      <section>
+        <h2 className="text-[10px] text-slate-500 uppercase font-bold tracking-wider mb-4">
+          Story AI Model
+        </h2>
+
+        <p className="text-xs text-slate-400 mb-4">
+          Choose which AI model powers your Story Assistant. All models support vision (analyzing your comic pages).
+        </p>
+
+        {/* Model Dropdown */}
+        <div className="mb-4">
+          <select
+            value={`${currentModel.provider}:${currentModel.model}`}
+            onChange={(e) => {
+              const [provider, model] = e.target.value.split(':')
+              handleModelSelect(provider, model)
+            }}
+            className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
+          >
+            {Object.entries(STORY_AI_MODELS).map(([providerKey, models]) => (
+              <optgroup
+                key={providerKey}
+                label={providerKey === 'google' ? 'Google' :
+                       providerKey === 'anthropic' ? 'Anthropic' :
+                       providerKey === 'openai' ? 'OpenAI' :
+                       providerKey === 'meta' ? 'Meta' :
+                       providerKey === 'bytedance' ? 'ByteDance' :
+                       'Other'}
+              >
+                {Object.entries(models).map(([modelKey, model]) => {
+                  const cost = getStoryChatCost(modelKey)
+                  return (
+                    <option key={modelKey} value={`${providerKey}:${modelKey}`}>
+                      {model.name} ({cost} {cost === 1 ? 'credit' : 'credits'})
+                    </option>
+                  )
+                })}
+              </optgroup>
+            ))}
+          </select>
+        </div>
+
+        {/* Selected Model Info */}
+        {modelConfig && (
+          <div className="bg-slate-800 border border-slate-700 rounded-lg p-3">
+            <div className="flex items-center justify-between mb-1">
+              <div className="flex items-center gap-2">
+                {modelConfig.vision && <FiImage className="w-4 h-4 text-indigo-400" />}
+                <span className="text-sm font-medium text-white">{modelConfig.name}</span>
+              </div>
+              <span className="flex items-center gap-1 text-xs text-slate-400">
+                <FiZap className="w-3 h-3 text-amber-400" />
+                {getStoryChatCost(currentModel.model)} credits/msg
+              </span>
+            </div>
+            <p className="text-xs text-slate-500">{modelConfig.description}</p>
+          </div>
+        )}
+      </section>
+
       {/* Story AI Prompt Section */}
       <section>
         <h2 className="text-[10px] text-slate-500 uppercase font-bold tracking-wider mb-4">
