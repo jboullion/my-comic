@@ -134,14 +134,15 @@ AI-powered story assistant using OpenRouter with vision-capable LLMs, routed thr
 - Vision-capable models (Gemini, Claude, GPT, Llama, ByteDance Seed)
 - Page capture for visual context analysis
 - Image upload for reference analysis
-- Custom story prompts per series
+- Custom story prompts per project (with series fallback)
 - Chat history (max 50 messages per project)
 - Project context awareness (characters, page info)
 
 **Key Files:**
 - `src/lib/ai/openrouter.js` - OpenRouter integration
 - `src/lib/ai/edgeFunctions.ts` - Edge function client
-- `src/components/editor/StoryAIPanel.jsx` - Chat panel UI
+- `src/components/editor/properties/StoryAIPanel.jsx` - Chat panel UI
+- `src/components/editor/StoryPromptModal.jsx` - Custom prompt editor
 
 **Usage Patterns:**
 ```javascript

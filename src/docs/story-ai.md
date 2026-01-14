@@ -51,11 +51,14 @@ Your conversation is saved per project (up to 50 messages). Clear history using 
 
 ## Custom Story Prompts
 
-For series-based projects, you can set a custom story prompt that gives the AI specific instructions about your story:
+You can set a custom story prompt for any project to give the AI specific instructions about your story:
 
-1. Click the **Edit Prompt** button in the panel header
-2. Write instructions about your story's tone, setting, or rules
-3. The AI will follow these guidelines in all responses
+1. Click the **Edit Prompt** button (pencil icon) in the Story AI panel header
+2. This opens **Project Settings > AI** tab
+3. Write instructions about your story's tone, setting, or rules
+4. Click **Save** to apply the changes
+
+The AI will follow your custom guidelines in all responses. If no custom prompt is set, a sensible default is used.
 
 Example custom prompt:
 ```

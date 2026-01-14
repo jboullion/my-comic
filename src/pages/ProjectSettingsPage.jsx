@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
-import { FiArrowLeft, FiLayout, FiType, FiMessageCircle, FiZap, FiImage, FiHardDrive } from 'react-icons/fi'
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
+import { FiArrowLeft, FiLayout, FiType, FiMessageCircle, FiZap, FiImage, FiHardDrive, FiCpu } from 'react-icons/fi'
 import EditorLayout from '../layouts/EditorLayout'
 import useProjectStore from '../stores/useProjectStore'
 import { DEFAULT_PROJECT_SETTINGS } from '../lib/db'
@@ -10,6 +10,7 @@ import SpeechBubbleSettingsTab from '../components/settings/SpeechBubbleSettings
 import TextEffectSettingsTab from '../components/settings/TextEffectSettingsTab'
 import ImageSettingsTab from '../components/settings/ImageSettingsTab'
 import StorageSettingsTab from '../components/settings/StorageSettingsTab'
+import AISettingsTab from '../components/settings/AISettingsTab'
 
 const TABS = [
   { id: 'page', label: 'Page', icon: FiLayout },
@@ -17,6 +18,7 @@ const TABS = [
   { id: 'text', label: 'Text', icon: FiType },
   { id: 'speechBubble', label: 'Speech Bubbles', icon: FiMessageCircle },
   { id: 'textEffect', label: 'Text Effects', icon: FiZap },
+  { id: 'ai', label: 'AI', icon: FiCpu },
   { id: 'storage', label: 'Storage', icon: FiHardDrive }
 ]
 
@@ -27,20 +29,29 @@ const TABS = [
 export default function ProjectSettingsPage() {
   const { projectId } = useParams()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const {
     currentProject,
     currentProjectLoading,
     loadProject,
     saveProjectSettings,
+    updateCurrentProject,
   } = useProjectStore()
 
-  // Tab state with localStorage persistence
+  // Tab state - check URL param first, then localStorage
   const [activeTab, setActiveTab] = useState(() => {
+    const tabParam = searchParams.get('tab')
+    if (tabParam && TABS.some(t => t.id === tabParam)) {
+      return tabParam
+    }
     return localStorage.getItem('projectSettingsTab') || 'page'
   })
 
   // Local settings state for editing
   const [localSettings, setLocalSettings] = useState(null)
+
+  // Local customStoryPrompt state (separate from settings)
+  const [localCustomStoryPrompt, setLocalCustomStoryPrompt] = useState(null)
 
   // Save state for feedback
   const [saveState, setSaveState] = useState('idle') // 'idle' | 'saving' | 'saved'
@@ -68,6 +79,13 @@ export default function ProjectSettingsPage() {
     }
   }, [currentProject?.settings])
 
+  // Initialize customStoryPrompt from project
+  useEffect(() => {
+    if (currentProject) {
+      setLocalCustomStoryPrompt(currentProject.customStoryPrompt || null)
+    }
+  }, [currentProject?.customStoryPrompt])
+
   // Save tab preference
   useEffect(() => {
     localStorage.setItem('projectSettingsTab', activeTab)
@@ -80,7 +98,10 @@ export default function ProjectSettingsPage() {
   const handleSave = async () => {
     if (localSettings && saveState === 'idle') {
       setSaveState('saving')
+      // Save both settings and customStoryPrompt
       await saveProjectSettings(localSettings)
+      // Save customStoryPrompt separately (it's on the project, not settings)
+      await updateCurrentProject({ customStoryPrompt: localCustomStoryPrompt })
       setSaveState('saved')
       // Reset to idle after showing "Saved!" for 1.5 seconds
       setTimeout(() => setSaveState('idle'), 1500)
@@ -203,6 +224,12 @@ export default function ProjectSettingsPage() {
               <TextEffectSettingsTab
                 settings={localSettings.textEffect}
                 onUpdate={(updates) => updateNestedSettings('textEffect', updates)}
+              />
+            )}
+            {activeTab === 'ai' && (
+              <AISettingsTab
+                customStoryPrompt={localCustomStoryPrompt}
+                onUpdate={setLocalCustomStoryPrompt}
               />
             )}
             {activeTab === 'storage' && (

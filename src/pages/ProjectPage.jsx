@@ -9,7 +9,6 @@ import PagesSidebar from '../components/editor/PagesSidebar'
 import PropertiesSidebar from '../components/editor/PropertiesSidebar'
 import ExportModal from '../components/editor/ExportModal'
 import AIImageModal from '../components/editor/AIImageModal'
-import StoryPromptModal from '../components/series/StoryPromptModal'
 import AssetPropertiesPopup from '../components/editor/properties/AssetPropertiesPopup'
 import { exportPagesToZip } from '../lib/export'
 
@@ -434,9 +433,6 @@ export default function ProjectPage() {
           onClose={() => setShowAIModal(false)}
           onSave={handleAISave}
         />
-
-        {/* Story Prompt Modal */}
-        <StoryPromptModal />
       </div>
     </EditorLayout>
   )

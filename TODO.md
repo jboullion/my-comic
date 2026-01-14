@@ -18,7 +18,7 @@
 - - Find Comics
 - - Save information in DB
 
-
+- Ability to change a project's series / attach a project to a series
 
 
 

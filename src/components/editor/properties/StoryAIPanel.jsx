@@ -1,10 +1,10 @@
 import { useState, useRef, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { FiSend, FiTrash2, FiCpu, FiAlertCircle, FiImage, FiChevronDown, FiCamera, FiUpload, FiX, FiEdit3, FiZap } from 'react-icons/fi'
 import { STORY_AI_MODELS } from '../../../lib/ai/openrouter'
 import { storyChatViaEdge, getStoryChatCost } from '../../../lib/ai/edgeFunctions'
 import { useProjectStore } from '../../../stores/useProjectStore'
 import { useCharactersStore } from '../../../stores/useCharactersStore'
-import useSeriesStore from '../../../stores/useSeriesStore'
 import { useCredits } from '../../../hooks/useCredits'
 
 /**
@@ -43,16 +43,16 @@ function saveChatHistory(projectId, messages) {
  * Chat interface for AI story assistance with vision support
  */
 export default function StoryAIPanel({ onCaptureCanvas }) {
+  const navigate = useNavigate()
   const currentProject = useProjectStore(state => state.currentProject)
   const activePageIndex = useProjectStore(state => state.activePageIndex)
   const { characters } = useCharactersStore()
-  const { openStoryPromptModal, getSeriesStoryPrompt, getSeriesById } = useSeriesStore()
 
   // Get credits info for cost preview and auth check
   const { balance, isLoggedIn, hasCredits } = useCredits()
 
-  const seriesId = currentProject?.seriesId
-  const customPrompt = seriesId ? getSeriesStoryPrompt(seriesId) : null
+  // Custom prompt from project (null means use default)
+  const customPrompt = currentProject?.customStoryPrompt || null
   
   const [messages, setMessages] = useState([])
   const [inputValue, setInputValue] = useState('')
@@ -87,17 +87,20 @@ export default function StoryAIPanel({ onCaptureCanvas }) {
   
   // Build project context for AI
   const buildContext = () => {
-    const seriesCharacters = characters.filter(c => c.seriesId === currentProject?.seriesId)
+    // Filter characters: if project has a series, use series characters; otherwise use unassigned characters
+    const projectCharacters = currentProject?.seriesId
+      ? characters.filter(c => c.seriesId === currentProject.seriesId)
+      : characters.filter(c => !c.seriesId)
 
     return {
       title: currentProject?.title || 'Untitled Project',
       pageNumber: (activePageIndex || 0) + 1,
       totalPages: currentProject?.pages?.length || 1,
-      characters: seriesCharacters.map(c => ({
+      characters: projectCharacters.map(c => ({
         name: c.name,
         description: c.description || ''
       })),
-      customStoryPrompt: customPrompt  // Add custom prompt from series
+      customStoryPrompt: customPrompt  // Custom prompt from project settings
     }
   }
   
@@ -190,13 +193,8 @@ export default function StoryAIPanel({ onCaptureCanvas }) {
   }
 
   const handleEditPrompt = () => {
-    if (!seriesId) {
-      setError('Cannot edit prompt: project is not assigned to a series')
-      return
-    }
-    const series = getSeriesById(seriesId)
-    if (series) {
-      openStoryPromptModal(series)
+    if (currentProject?.id) {
+      navigate(`/app/project/${currentProject.id}/settings?tab=ai`)
     }
   }
 
@@ -317,9 +315,8 @@ export default function StoryAIPanel({ onCaptureCanvas }) {
         <div className="flex items-center gap-2">
           <button
             onClick={handleEditPrompt}
-            disabled={!seriesId}
-            className="p-1.5 text-slate-500 hover:text-slate-300 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-            title={seriesId ? "Edit Story AI prompt" : "Assign project to a series to edit prompt"}
+            className="p-1.5 text-slate-500 hover:text-slate-300 transition-colors"
+            title="Edit Story AI prompt"
           >
             <FiEdit3 className="w-4 h-4" />
           </button>
