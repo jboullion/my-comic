@@ -42,6 +42,7 @@ import DocsExporting from './pages/docs/DocsExporting'
 import DocsStorage from './pages/docs/DocsStorage'
 import DocsAIImageGeneration from './pages/docs/DocsAIImageGeneration'
 import DocsStoryAI from './pages/docs/DocsStoryAI'
+import DocsCredits from './pages/docs/DocsCredits'
 
 function App() {
   return (
@@ -71,6 +72,7 @@ function App() {
         <Route path="/docs/storage" element={<DocsStorage />} />
         <Route path="/docs/ai-image-generation" element={<DocsAIImageGeneration />} />
         <Route path="/docs/story-ai" element={<DocsStoryAI />} />
+        <Route path="/docs/credits" element={<DocsCredits />} />
 
         {/* App Routes (Sidebar Layout) */}
         <Route path="/app" element={<DashboardPage />} />

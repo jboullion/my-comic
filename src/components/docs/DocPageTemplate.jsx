@@ -20,6 +20,7 @@ const docsSections = [
     items: [
       { title: 'AI Image Generation', path: '/docs/ai-image-generation', icon: null },
       { title: 'Story AI', path: '/docs/story-ai', icon: null },
+      { title: 'Credits', path: '/docs/credits', icon: null },
     ]
   },
   {

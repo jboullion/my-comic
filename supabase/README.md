@@ -9,6 +9,8 @@ The token system tracks AI usage credits:
 - **Hobbyist tier**: 100 credits/month ($10/mo)
 - **Pro tier**: 250 credits/month (future)
 
+**Credits roll over** - unused credits carry over to the next month. Users never lose credits they don't spend.
+
 ### Token Costs
 
 | Provider | Model | Credits |

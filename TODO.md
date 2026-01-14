@@ -4,6 +4,10 @@
 - - Should we list Nana Banana as the default?
 - - Should we include other models besides Flux 2? 
 - - How much is "10 tokens"? Maybe we give 20 tokens or we reduce the token cost of the models?
+- - Don't charge anything for the image prompt suggestion? "Using the Enhance button to expand your prompt costs 1 credit."
+- - Update credits to be 2, 4, 6.
+- - Hobbyist gives "1000" credits? What does that equate to in generations? If they are paying $10 is that profitable for us?
+- - Add a "Buy Credits" feature where a user can buy more credits if they want. $5 / 500, $10 / 1200, $20, 3000?
 
 - Can this app even work in mobile? Perhaps mobile is a "view only" version?
 
@@ -20,6 +24,7 @@
 
 - Ability to change a project's series / attach a project to a series
 
+- Improve prompt history from 20 to 50? Infinite?
 
 
 ## Bugs
@@ -36,6 +41,10 @@
 
 ### General Concepts
 
+
+### Monitization
+
+- Set up Stripe! Or other payment processor
 
 ### Scripts
 - Should we provide some kind of "Scripts" page?
