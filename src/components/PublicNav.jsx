@@ -5,7 +5,7 @@ import { useAuth } from '../contexts/AuthContext'
 import { FiMenu } from 'react-icons/fi'
 import MobileNav from './nav/MobileNav'
 
-export default function PublicNav() {
+export default function PublicNav({ fullWidth = false }) {
   const { user } = useAuth()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
@@ -19,10 +19,14 @@ export default function PublicNav() {
     navLinks.push({ label: 'Dashboard', to: '/app' })
   }
 
+  const containerClasses = fullWidth
+    ? 'px-6 py-4 flex items-center justify-between'
+    : 'max-w-6xl mx-auto px-4 py-4 flex items-center justify-between'
+
   return (
     <>
       <header className="border-b border-slate-800 bg-slate-900 sticky top-0 z-50">
-        <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
+        <div className={containerClasses}>
           <NavLogo size="lg" />
 
           {/* Desktop Navigation */}

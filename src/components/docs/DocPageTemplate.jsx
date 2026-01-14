@@ -11,7 +11,7 @@ import DocsSidebar from './DocsSidebar'
 export default function DocPageTemplate({ content }) {
   return (
     <div className="min-h-screen bg-slate-900 text-white flex flex-col">
-      <PublicNav />
+      <PublicNav fullWidth />
 
       <div className="flex-1 flex">
         {/* Left Sidebar - Navigation (collapsible like AppSidebar) */}
