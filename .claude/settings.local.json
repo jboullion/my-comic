@@ -40,7 +40,8 @@
       "mcp__supabase__get_cost",
       "mcp__supabase__confirm_cost",
       "mcp__supabase__list_edge_functions",
-      "Bash(npx supabase functions deploy:*)"
+      "Bash(npx supabase functions deploy:*)",
+      "Bash(timeout:*)"
     ]
   }
 }

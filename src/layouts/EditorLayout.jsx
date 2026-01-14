@@ -1,5 +1,7 @@
 import { Navigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
+import { useMobileDetect } from '../hooks/useMobileDetect'
+import DesktopRequired from '../components/DesktopRequired'
 
 /**
  * EditorLayout Component
@@ -7,6 +9,12 @@ import { useAuth } from '../contexts/AuthContext'
  */
 export default function EditorLayout({ children }) {
   const { user, loading } = useAuth()
+  const { isMobile } = useMobileDetect()
+
+  // Show desktop required message on mobile
+  if (isMobile) {
+    return <DesktopRequired />
+  }
 
   // Show loading state
   if (loading) {
