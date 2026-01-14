@@ -1,7 +1,5 @@
 ## Current TODOs
 
-- is the Project story prompt even being sent to the AI?
-
 - Token system refinement!
 - - Should we list Nana Banana as the default?
 - - Should we include other models besides Flux 2? 
@@ -154,3 +152,12 @@ I think a lot of people in other countries would like this application. Can I ke
 - - Export static or "motion" comics.
 - - Use the latest AI models for image generation and story / dialog assistance. (Pro)
 
+- Use Cases
+- - Comics (Of Course!) (Western, Japanese, Korean)
+- - Story Boarding
+- - Childrens books
+
+
+## Integrations
+
+- Integrate with other Image providers or other systems?

@@ -1,8 +1,11 @@
+import { useState } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import AppSidebarLayout from '../layouts/AppSidebarLayout'
+import DeleteAccountModal from '../components/profile/DeleteAccountModal'
 
 export default function ProfilePage() {
   const { user } = useAuth()
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
 
   const userInfo = {
     name: user?.user_metadata?.full_name || 'User',
@@ -39,11 +42,11 @@ export default function ProfilePage() {
               <div className="flex justify-between">
                 <dt className="text-slate-400">Member since</dt>
                 <dd className="text-white">
-                  {userInfo.createdAt 
-                    ? new Date(userInfo.createdAt).toLocaleDateString('en-US', { 
-                        year: 'numeric', 
-                        month: 'long', 
-                        day: 'numeric' 
+                  {userInfo.createdAt
+                    ? new Date(userInfo.createdAt).toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
                       })
                     : 'Unknown'
                   }
@@ -57,57 +60,26 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        {/* Settings Sections */}
-        <div className="space-y-4">
-          <SettingsSection
-            title="Preferences"
-            description="Customize your experience"
-            comingSoon
-          />
-          <SettingsSection
-            title="Storage"
-            description="Manage your project storage and backups"
-            comingSoon
-          />
-          <SettingsSection
-            title="Connected Accounts"
-            description="Manage linked social accounts"
-            comingSoon
-          />
-        </div>
-
         {/* Danger Zone */}
-        <div className="mt-8 p-4 bg-red-900/20 rounded-lg border border-red-900/50">
+        <div className="p-4 bg-red-900/20 rounded-lg border border-red-900/50">
           <h3 className="text-red-400 font-medium mb-2">Danger Zone</h3>
           <p className="text-sm text-slate-400 mb-4">
             Permanently delete your account and all associated data.
           </p>
-          <button 
+          <button
+            onClick={() => setShowDeleteModal(true)}
             className="px-4 py-2 bg-red-600/20 hover:bg-red-600/30 text-red-400 rounded-lg text-sm font-medium transition-colors border border-red-600/50"
-            disabled
           >
-            Delete Account (Coming Soon)
+            Delete Account
           </button>
         </div>
       </div>
-    </AppSidebarLayout>
-  )
-}
 
-function SettingsSection({ title, description, comingSoon = false }) {
-  return (
-    <div className="bg-slate-800/30 rounded-lg border border-slate-700/50 p-4 flex items-center justify-between">
-      <div>
-        <h3 className="font-medium">{title}</h3>
-        <p className="text-sm text-slate-500">{description}</p>
-      </div>
-      {comingSoon ? (
-        <span className="text-xs text-slate-500 bg-slate-800 px-2 py-1 rounded">Coming Soon</span>
-      ) : (
-        <button className="text-sm text-indigo-400 hover:text-indigo-300">
-          Manage
-        </button>
-      )}
-    </div>
+      {/* Delete Account Modal */}
+      <DeleteAccountModal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+      />
+    </AppSidebarLayout>
   )
 }

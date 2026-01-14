@@ -311,3 +311,36 @@ export function getImageGenerationCost(modelKey: string): number {
 export function getStoryChatCost(modelKey: string): number {
   return getModelCost(modelKey)
 }
+
+// ============================================
+// Account Management via Edge Function
+// ============================================
+
+/**
+ * Delete the current user's account via Edge Function
+ * This permanently deletes the user and all associated data
+ */
+export async function deleteAccountViaEdge(): Promise<{ success: boolean }> {
+  const token = await getAuthToken()
+
+  if (!token) {
+    throw new Error('Please sign in to delete your account')
+  }
+
+  const response = await fetch(`${EDGE_FUNCTION_URL}/delete-account`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+  })
+
+  const data = await response.json()
+
+  if (!response.ok) {
+    const errorMessage = data.error?.message || `Request failed: ${response.status}`
+    throw new Error(errorMessage)
+  }
+
+  return { success: true }
+}
