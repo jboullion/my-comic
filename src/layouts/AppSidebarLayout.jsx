@@ -26,8 +26,8 @@ export default function AppSidebarLayout({ children }) {
     <div className="min-h-screen bg-slate-900 text-white flex">
       <AppSidebar />
 
-      {/* Main Content */}
-      <main className="flex-1 overflow-auto">
+      {/* Main Content - add top padding on mobile for hamburger menu */}
+      <main className={`flex-1 overflow-auto ${isMobile ? 'pt-10' : ''}`}>
         {children}
       </main>
 

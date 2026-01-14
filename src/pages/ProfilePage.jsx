@@ -21,7 +21,7 @@ export default function ProfilePage() {
         <h1 className="text-2xl font-bold mb-8">Profile</h1>
 
         {/* Profile Card */}
-        <div className="bg-slate-800/50 rounded-xl border border-slate-700 p-6 mb-6">
+        <div className="bg-slate-800/50 rounded-xl border border-slate-700 p-4 mb-6">
           <div className="flex items-center gap-4 mb-6">
             <img
               src={userInfo.avatar || `https://ui-avatars.com/api/?name=${userInfo.email}&background=6366f1&color=fff&size=80`}
