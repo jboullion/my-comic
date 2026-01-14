@@ -24,8 +24,8 @@ Click on your credit balance in the editor to view your transaction history.
 
 | Model | Cost per Image |
 |-------|----------------|
-| FLUX 2 Pro | 6 credits |
-| FLUX 2 Dev | 4 credits |
+| FLUX 2 Pro | 8 credits |
+| FLUX 2 Dev | 5 credits |
 | Nano Banana | 2 credits |
 | Custom Model (Comming Soon) |  Variable |
 
@@ -76,8 +76,8 @@ If you attempt an action without enough credits, you'll see an "Insufficient Cre
 ### Image Generation
 
 - Start with **Nano Banana** (2 credits) for quick tests
-- Use **FLUX 2 Dev** (4 credits) for iteration of images
-- Reserve **FLUX 2 Pro** (6 credits) for final, high-quality renders
+- Use **FLUX 2 Dev** (5 credits) for iteration of images
+- Reserve **FLUX 2 Pro** (8 credits) for final, high-quality renders
 - Save and reuse seeds from images you like
 
 ### Story AI
