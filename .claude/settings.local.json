@@ -41,7 +41,8 @@
       "mcp__supabase__confirm_cost",
       "mcp__supabase__list_edge_functions",
       "Bash(npx supabase functions deploy:*)",
-      "Bash(timeout:*)"
+      "Bash(timeout:*)",
+      "Bash(npx eslint:*)"
     ]
   }
 }

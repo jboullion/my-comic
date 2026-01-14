@@ -101,6 +101,18 @@ db.version(8).stores({
   }
 })
 
+// Version 9: Add AI generation history with thumbnails
+db.version(9).stores({
+  projects: '++id, title, seriesId, createdAt, updatedAt, fileHandle',
+  images: '++id, projectId, hash, [projectId+hash], name, size, type, createdAt',
+  characters: '++id, name, seriesId, createdAt, updatedAt',
+  characterImages: '++id, characterId, type, createdAt',
+  series: '++id, name, createdAt, updatedAt',
+  seriesImages: '++id, seriesId, createdAt',
+  // AI generation history - stores prompts with thumbnails for gallery view
+  generationHistory: '++id, projectId, timestamp, pinned, [projectId+timestamp], [projectId+pinned]'
+})
+
 /**
  * Series schema:
  * {
@@ -177,6 +189,24 @@ db.version(8).stores({
  *   height: number
  *   name: string
  *   createdAt: Date
+ * }
+ *
+ * GenerationHistory schema (v9+):
+ * {
+ *   id: number (auto-increment)
+ *   projectId: number (FK to projects)
+ *   timestamp: number (Unix epoch ms for sorting)
+ *   pinned: boolean (if true, never auto-deleted)
+ *   prompt: string (the text prompt used)
+ *   style: string | null ('comic', 'manga', 'realistic', 'retro', 'none')
+ *   model: string ('flux-2-pro', 'flux-2', 'nano-banana', 'custom')
+ *   imageSize: string | object (size preset or custom { width, height })
+ *   structuredPrompts: { scene, character, lighting, composition } | null (advanced tab)
+ *   advancedStyle: string | null (free-text style for advanced tab)
+ *   advancedParams: { guidanceScale, inferenceSteps, negativePrompt, seed } | null
+ *   imageBlob: Blob (WebP full-size image)
+ *   imageWidth: number
+ *   imageHeight: number
  * }
  */
 
