@@ -59,7 +59,7 @@ export const AI_MODELS = {
     name: 'FLUX 2 Pro',
     description: 'Best quality, production-ready',
     steps: null,
-    cost: '~$0.03/MP',
+    cost: '8 credits',
     generation: 2
   },
   'flux-2': {
@@ -67,7 +67,7 @@ export const AI_MODELS = {
     name: 'FLUX 2 Dev',
     description: 'Great quality, faster',
     steps: 28,
-    cost: '~$0.012/MP',
+    cost: '5 credits',
     generation: 2
   },
   'nano-banana': {
@@ -75,7 +75,7 @@ export const AI_MODELS = {
     name: 'Nano Banana Pro',
     description: 'Fast, budget-friendly',
     steps: null,
-    cost: '~$0.001/MP',
+    cost: '2 credit',
     generation: 2,
     usesAspectRatio: true
   }

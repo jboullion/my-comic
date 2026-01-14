@@ -1,9 +1,12 @@
 import { useState, useCallback, useEffect, useMemo } from 'react'
 import { useParams } from 'react-router-dom'
-import { FiX, FiZap, FiRefreshCw, FiCheck, FiAlertCircle, FiCpu, FiClock, FiTrash2, FiLoader } from 'react-icons/fi'
+import { FiX, FiZap, FiRefreshCw, FiCheck, FiAlertCircle, FiCpu, FiClock, FiLoader } from 'react-icons/fi'
 import { AI_MODELS, AI_STYLES } from '../../lib/ai/falai'
 import { generateImageViaEdge, enhancePromptViaEdge, getImageGenerationCost } from '../../lib/ai/edgeFunctions'
 import { fetchImageAsBlob } from '../../lib/ai/utils'
+import { generationHistoryDb, fetchImageAsWebP } from '../../lib/generationHistory'
+import { useGenerationHistory } from '../../hooks/useGenerationHistory'
+import HistoryGallery from './HistoryGallery'
 import CharacterPicker from './CharacterPicker'
 import useCharactersStore from '../../stores/useCharactersStore'
 import useProjectStore from '../../stores/useProjectStore'
@@ -45,50 +48,14 @@ function calculateMatchingDimensions(pageWidth, pageHeight, maxDimension = 1152)
   return { width, height }
 }
 
-// History storage helpers
-const getHistoryKey = (projectId) => `ai-history:${projectId}`
-
-const loadHistory = (projectId) => {
-  if (!projectId) return []
-  try {
-    const stored = localStorage.getItem(getHistoryKey(projectId))
-    return stored ? JSON.parse(stored) : []
-  } catch {
-    return []
+// Migration: Clean up old localStorage history (one-time)
+const migrateOldHistory = (projectId) => {
+  if (!projectId) return
+  const oldKey = `ai-history:${projectId}`
+  if (localStorage.getItem(oldKey)) {
+    localStorage.removeItem(oldKey)
+    console.info('Migrated AI history to IndexedDB (old entries discarded)')
   }
-}
-
-const saveToHistory = (projectId, entry) => {
-  if (!projectId) return
-  const history = loadHistory(projectId)
-  const updated = [entry, ...history].slice(0, 20)
-  localStorage.setItem(getHistoryKey(projectId), JSON.stringify(updated))
-  return updated
-}
-
-const deleteFromHistory = (projectId, entryId) => {
-  if (!projectId) return []
-  const history = loadHistory(projectId)
-  const updated = history.filter(h => h.id !== entryId)
-  localStorage.setItem(getHistoryKey(projectId), JSON.stringify(updated))
-  return updated
-}
-
-const clearHistory = (projectId) => {
-  if (!projectId) return
-  localStorage.removeItem(getHistoryKey(projectId))
-}
-
-// Format relative time
-const formatTimeAgo = (timestamp) => {
-  const seconds = Math.floor((Date.now() - timestamp) / 1000)
-  if (seconds < 60) return 'just now'
-  const minutes = Math.floor(seconds / 60)
-  if (minutes < 60) return `${minutes}m ago`
-  const hours = Math.floor(minutes / 60)
-  if (hours < 24) return `${hours}h ago`
-  const days = Math.floor(hours / 24)
-  return `${days}d ago`
 }
 
 /**
@@ -194,13 +161,26 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
   const [originalPrompt, setOriginalPrompt] = useState('')
   const [wasEnhanced, setWasEnhanced] = useState(false)
 
-  // History state
-  const [history, setHistory] = useState([])
+  // History with IndexedDB (replaces localStorage)
+  const {
+    entries: history,
+    isLoading: isHistoryLoading,
+    hasMore: hasMoreHistory,
+    totalCount: historyTotalCount,
+    loadMore: loadMoreHistory,
+    togglePin: toggleHistoryPin,
+    deleteEntry: deleteHistoryEntry,
+    clearAll: clearHistory,
+    refresh: refreshHistory
+  } = useGenerationHistory({
+    projectId: projectId ? Number(projectId) : null,
+    pageSize: 20
+  })
 
-  // Load history when modal opens
+  // Migrate old localStorage history on first open
   useEffect(() => {
     if (isOpen && projectId) {
-      setHistory(loadHistory(projectId))
+      migrateOldHistory(projectId)
     }
   }, [isOpen, projectId])
 
@@ -327,17 +307,31 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
 
       setGeneratedImage({ ...result, style })
 
-      // Save to history
-      const historyEntry = {
-        id: Date.now(),
-        prompt: prompt.trim(),
-        style,
-        model,
-        imageSize,
-        timestamp: Date.now()
+      // Save to history with full image
+      try {
+        const { blob: imageBlob, width: imageWidth, height: imageHeight } =
+          await fetchImageAsWebP(result.imageUrl)
+
+        await generationHistoryDb.add({
+          projectId: Number(projectId),
+          timestamp: Date.now(),
+          pinned: false,
+          prompt: prompt.trim(),
+          style,
+          model,
+          imageSize,
+          imageBlob,
+          imageWidth,
+          imageHeight
+        })
+
+        // Prune to 100 items and refresh the list
+        await generationHistoryDb.pruneToLimit(Number(projectId), 100)
+        refreshHistory()
+      } catch (historyErr) {
+        console.error('Failed to save to history:', historyErr)
+        // Don't fail the generation if history save fails
       }
-      const updatedHistory = saveToHistory(projectId, historyEntry)
-      setHistory(updatedHistory)
     } catch (err) {
       setError(err.message)
       setGeneratedImage(null)
@@ -345,7 +339,7 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
       setIsGenerating(false)
       setProgress(null)
     }
-  }, [prompt, style, model, imageSize, projectId, buildPromptWithCharacters, getCharacterLora, allowMature, matchPageDimensions, customModel, wasEnhanced, hasCredits, balance])
+  }, [prompt, style, model, imageSize, projectId, buildPromptWithCharacters, getCharacterLora, allowMature, matchPageDimensions, customModel, wasEnhanced, hasCredits, balance, refreshHistory])
 
   const handleAdvancedGenerate = useCallback(async () => {
     const combinedPrompt = combineStructuredPrompts()
@@ -393,19 +387,34 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
 
       setGeneratedImage({ ...result, style: advancedStyle })
 
-      // Save to history with structured prompts
-      const historyEntry = {
-        id: Date.now(),
-        prompt: combinedPrompt,
-        structuredPrompts: advancedPrompts,
-        advancedParams: advancedParams,
-        advancedStyle,
-        model,
-        imageSize,
-        timestamp: Date.now()
+      // Save to history with full image and structured prompts
+      try {
+        const { blob: imageBlob, width: imageWidth, height: imageHeight } =
+          await fetchImageAsWebP(result.imageUrl)
+
+        await generationHistoryDb.add({
+          projectId: Number(projectId),
+          timestamp: Date.now(),
+          pinned: false,
+          prompt: combinedPrompt,
+          style: null, // Advanced tab uses advancedStyle instead
+          model,
+          imageSize,
+          structuredPrompts: advancedPrompts,
+          advancedStyle,
+          advancedParams,
+          imageBlob,
+          imageWidth,
+          imageHeight
+        })
+
+        // Prune to 100 items and refresh the list
+        await generationHistoryDb.pruneToLimit(Number(projectId), 100)
+        refreshHistory()
+      } catch (historyErr) {
+        console.error('Failed to save to history:', historyErr)
+        // Don't fail the generation if history save fails
       }
-      const updatedHistory = saveToHistory(projectId, historyEntry)
-      setHistory(updatedHistory)
     } catch (err) {
       setError(err.message)
       setGeneratedImage(null)
@@ -413,7 +422,7 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
       setIsGenerating(false)
       setProgress(null)
     }
-  }, [combineStructuredPrompts, advancedStyle, model, imageSize, projectId, getCharacterLora, allowMature, matchPageDimensions, customModel, advancedPrompts, advancedParams, hasCredits, balance])
+  }, [combineStructuredPrompts, advancedStyle, model, imageSize, projectId, getCharacterLora, allowMature, matchPageDimensions, customModel, advancedPrompts, advancedParams, hasCredits, balance, refreshHistory])
 
   const handleSave = useCallback(async () => {
     if (!generatedImage?.imageUrl) return
@@ -465,39 +474,28 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
     onClose()
   }, [onClose])
 
-  const handleHistoryClick = (entry) => {
+  const handleHistoryClick = useCallback((entry) => {
     // Check if this is an advanced tab entry with structured prompts
     if (entry.structuredPrompts) {
       setAdvancedPrompts(entry.structuredPrompts)
       setAdvancedStyle(entry.advancedStyle || '')
       setActiveTab('advanced')
+      if (entry.advancedParams) {
+        setAdvancedParams(entry.advancedParams)
+      }
     } else {
       setPrompt(entry.prompt)
-      setStyle(entry.style)
+      setStyle(entry.style || 'comic')
       setActiveTab('generate')
     }
 
-    // Handle both old 'mode' format and new 'model' format from history
     if (entry.model) {
       setModel(entry.model)
-    } else if (entry.mode === 'draft') {
-      setModel('schnell')
-    } else if (entry.mode === 'production') {
-      setModel('flux-1-dev')
     }
-    setImageSize(entry.imageSize)
-  }
-
-  const handleDeleteHistory = (entryId, e) => {
-    e.stopPropagation()
-    const updated = deleteFromHistory(projectId, entryId)
-    setHistory(updated)
-  }
-
-  const handleClearHistory = () => {
-    clearHistory(projectId)
-    setHistory([])
-  }
+    if (entry.imageSize) {
+      setImageSize(entry.imageSize)
+    }
+  }, [])
 
   if (!isOpen) return null
 
@@ -967,73 +965,20 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
               )}
             </>
           ) : (
-            /* History Tab */
-            <div className="space-y-3">
-              {history.length === 0 ? (
-                <div className="text-center py-12">
-                  <FiClock className="w-12 h-12 mx-auto text-slate-600 mb-3" />
-                  <p className="text-slate-400">No generation history yet</p>
-                  <p className="text-sm text-slate-500 mt-1">
-                    Generated prompts will appear here
-                  </p>
-                </div>
-              ) : (
-                <>
-                  {history.map((entry) => (
-                    <div
-                      key={entry.id}
-                      role="button"
-                      tabIndex={0}
-                      onClick={() => handleHistoryClick(entry)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' || e.key === ' ') {
-                          e.preventDefault()
-                          handleHistoryClick(entry)
-                        }
-                      }}
-                      className="w-full text-left bg-slate-800 hover:bg-slate-750 border border-slate-700 rounded-lg p-4 transition-colors group cursor-pointer"
-                    >
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm text-white line-clamp-2">
-                            {entry.prompt}
-                          </p>
-                          <div className="flex items-center gap-2 mt-2 flex-wrap">
-                            {(entry.advancedStyle || entry.style) && (
-                              <span className="px-2 py-0.5 text-[10px] bg-indigo-500/20 text-indigo-300 rounded">
-                                {entry.advancedStyle || AI_STYLES[entry.style]?.name || entry.style}
-                              </span>
-                            )}
-                            <span className="px-2 py-0.5 text-[10px] bg-slate-700 text-slate-300 rounded">
-                              {AI_MODELS[entry.model]?.name || entry.mode || 'Unknown'}
-                            </span>
-                            <span className="text-[10px] text-slate-500">
-                              {formatTimeAgo(entry.timestamp)}
-                            </span>
-                          </div>
-                        </div>
-                        <button
-                          onClick={(e) => handleDeleteHistory(entry.id, e)}
-                          className="p-1.5 text-slate-500 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all"
-                          title="Delete"
-                        >
-                          <FiTrash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-
-                  <div className="pt-4 border-t border-slate-700">
-                    <button
-                      onClick={handleClearHistory}
-                      className="w-full px-4 py-2 text-sm text-slate-400 hover:text-red-400 transition-colors"
-                    >
-                      Clear All History
-                    </button>
-                  </div>
-                </>
-              )}
-            </div>
+            /* History Tab - Visual Gallery */
+            <HistoryGallery
+              entries={history}
+              isLoading={isHistoryLoading}
+              hasMore={hasMoreHistory}
+              totalCount={historyTotalCount}
+              onLoadMore={loadMoreHistory}
+              onSelect={handleHistoryClick}
+              onTogglePin={toggleHistoryPin}
+              onDelete={deleteHistoryEntry}
+              onClearAll={clearHistory}
+              getModelName={(modelKey) => AI_MODELS[modelKey]?.name || modelKey}
+              getStyleName={(styleKey) => styleKey ? (AI_STYLES[styleKey]?.name || styleKey) : null}
+            />
           )}
         </div>
 
