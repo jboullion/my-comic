@@ -41,7 +41,7 @@ export default function ProjectsPage() {
 
   return (
     <AppSidebarLayout>
-      <div className="max-w-6xl mx-auto px-4 py-8">
+      <div className="px-6 py-8">
         {/* Header */}
         <ProjectsHeader
           userName={userName}
