@@ -1,9 +1,12 @@
 import { Navigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
+import { useMobileDetect } from '../hooks/useMobileDetect'
 import AppSidebar from '../components/AppSidebar'
+import MobileToast from '../components/MobileToast'
 
 export default function AppSidebarLayout({ children }) {
   const { user, loading } = useAuth()
+  const { isMobile } = useMobileDetect()
 
   // Show loading state
   if (loading) {
@@ -27,6 +30,9 @@ export default function AppSidebarLayout({ children }) {
       <main className="flex-1 overflow-auto">
         {children}
       </main>
+
+      {/* Mobile notice toast */}
+      {isMobile && <MobileToast />}
     </div>
   )
 }

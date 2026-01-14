@@ -15,8 +15,6 @@
 
 - Set up "Locations", and other things to work similar to characters for easy AI reference
 
-- Delete Account
-
 - If Supabase is set up we could do things like Share Comics page and lots of other features.
 - - Share Comics
 - - Find Comics
