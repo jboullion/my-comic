@@ -13,7 +13,7 @@ const EFFECT_TYPES = [
  * TextEffectStyleSection Component
  * Styling controls for text effect elements (fill, stroke, outer stroke, path effects)
  */
-export default function TextEffectStyleSection({ element, onUpdate }) {
+export default function TextEffectStyleSection({ element, onUpdate, projectFonts }) {
   const effectType = element.effectType || 'none'
 
   return (
@@ -35,6 +35,7 @@ export default function TextEffectStyleSection({ element, onUpdate }) {
         label="Font Family"
         value={element.fontFamily || 'Bangers, cursive'}
         onChange={(val) => onUpdate({ fontFamily: val })}
+        projectFonts={projectFonts}
       />
 
       {/* Font size and letter spacing */}

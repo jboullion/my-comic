@@ -33,6 +33,7 @@ import DocsImages from './pages/docs/DocsImages'
 import DocsSpeechBubbles from './pages/docs/DocsSpeechBubbles'
 import DocsText from './pages/docs/DocsText'
 import DocsTextEffects from './pages/docs/DocsTextEffects'
+import DocsFonts from './pages/docs/DocsFonts'
 import DocsProjectSettings from './pages/docs/DocsProjectSettings'
 import DocsPageSettings from './pages/docs/DocsPageSettings'
 import DocsCanvas from './pages/docs/DocsCanvas'
@@ -41,6 +42,7 @@ import DocsExporting from './pages/docs/DocsExporting'
 import DocsStorage from './pages/docs/DocsStorage'
 import DocsAIImageGeneration from './pages/docs/DocsAIImageGeneration'
 import DocsStoryAI from './pages/docs/DocsStoryAI'
+import DocsCredits from './pages/docs/DocsCredits'
 
 function App() {
   return (
@@ -61,6 +63,7 @@ function App() {
         <Route path="/docs/speech-bubbles" element={<DocsSpeechBubbles />} />
         <Route path="/docs/text" element={<DocsText />} />
         <Route path="/docs/text-effects" element={<DocsTextEffects />} />
+        <Route path="/docs/fonts" element={<DocsFonts />} />
         <Route path="/docs/project-settings" element={<DocsProjectSettings />} />
         <Route path="/docs/page-settings" element={<DocsPageSettings />} />
         <Route path="/docs/canvas" element={<DocsCanvas />} />
@@ -69,6 +72,7 @@ function App() {
         <Route path="/docs/storage" element={<DocsStorage />} />
         <Route path="/docs/ai-image-generation" element={<DocsAIImageGeneration />} />
         <Route path="/docs/story-ai" element={<DocsStoryAI />} />
+        <Route path="/docs/credits" element={<DocsCredits />} />
 
         {/* App Routes (Sidebar Layout) */}
         <Route path="/app" element={<DashboardPage />} />

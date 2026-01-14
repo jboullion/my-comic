@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
-import { FiArrowLeft, FiLayout, FiType, FiMessageCircle, FiZap, FiImage, FiHardDrive, FiCpu } from 'react-icons/fi'
+import { FiArrowLeft, FiLayout, FiType, FiMessageCircle, FiZap, FiImage, FiHardDrive, FiCpu, FiBold } from 'react-icons/fi'
 import EditorLayout from '../layouts/EditorLayout'
 import useProjectStore from '../stores/useProjectStore'
 import { DEFAULT_PROJECT_SETTINGS } from '../lib/db'
@@ -11,9 +11,11 @@ import TextEffectSettingsTab from '../components/settings/TextEffectSettingsTab'
 import ImageSettingsTab from '../components/settings/ImageSettingsTab'
 import StorageSettingsTab from '../components/settings/StorageSettingsTab'
 import AISettingsTab from '../components/settings/AISettingsTab'
+import FontsSettingsTab from '../components/settings/FontsSettingsTab'
 
 const TABS = [
   { id: 'page', label: 'Page', icon: FiLayout },
+  { id: 'fonts', label: 'Fonts', icon: FiBold },
   { id: 'image', label: 'Images', icon: FiImage },
   { id: 'text', label: 'Text', icon: FiType },
   { id: 'speechBubble', label: 'Speech Bubbles', icon: FiMessageCircle },
@@ -56,6 +58,9 @@ export default function ProjectSettingsPage() {
   // Local storyAiModel state (separate from settings)
   const [localStoryAiModel, setLocalStoryAiModel] = useState(null)
 
+  // Local custom fonts state
+  const [localCustomFonts, setLocalCustomFonts] = useState([])
+
   // Save state for feedback
   const [saveState, setSaveState] = useState('idle') // 'idle' | 'saving' | 'saved'
 
@@ -96,6 +101,13 @@ export default function ProjectSettingsPage() {
     }
   }, [currentProject?.storyAiModel])
 
+  // Initialize custom fonts from project
+  useEffect(() => {
+    if (currentProject?.settings) {
+      setLocalCustomFonts(currentProject.settings.customFonts || [])
+    }
+  }, [currentProject?.settings])
+
   // Save tab preference
   useEffect(() => {
     localStorage.setItem('projectSettingsTab', activeTab)
@@ -108,8 +120,11 @@ export default function ProjectSettingsPage() {
   const handleSave = async () => {
     if (localSettings && saveState === 'idle') {
       setSaveState('saving')
-      // Save both settings and customStoryPrompt
-      await saveProjectSettings(localSettings)
+      // Save settings including custom fonts
+      await saveProjectSettings({
+        ...localSettings,
+        customFonts: localCustomFonts
+      })
       // Save customStoryPrompt and storyAiModel separately (they're on the project, not settings)
       await updateCurrentProject({
         customStoryPrompt: localCustomStoryPrompt,
@@ -213,6 +228,12 @@ export default function ProjectSettingsPage() {
               <PageSettingsTab
                 settings={localSettings}
                 onUpdate={updateLocalSettings}
+              />
+            )}
+            {activeTab === 'fonts' && (
+              <FontsSettingsTab
+                customFonts={localCustomFonts}
+                onUpdateCustomFonts={setLocalCustomFonts}
               />
             )}
             {activeTab === 'image' && (

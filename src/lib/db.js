@@ -187,6 +187,9 @@ export const DEFAULT_PROJECT_SETTINGS = {
   height: 1200,
   backgroundColor: '#ffffff',
 
+  // Custom fonts
+  customFonts: [],      // User-added Google Fonts: [{ name, family }]
+
   // Text element defaults
   text: {
     fontFamily: 'Comic Neue, cursive',

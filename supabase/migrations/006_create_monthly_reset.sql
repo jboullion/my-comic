@@ -1,23 +1,24 @@
--- Migration: Create monthly credit reset function
--- Description: Function to reset credits for users whose 30-day period has elapsed
+-- Migration: Create monthly credit allocation functions
+-- Description: Function to add monthly credits to users (with rollover - unused credits preserved)
 
--- Function to reset monthly credits
--- Returns the number of users whose credits were reset
+-- Function to add monthly credits (with rollover)
+-- Returns the number of users who received their monthly allocation
 CREATE OR REPLACE FUNCTION public.reset_monthly_credits()
 RETURNS INTEGER AS $$
 DECLARE
   reset_count INTEGER;
 BEGIN
-  -- Find users whose last reset was more than 30 days ago and reset them
+  -- Find users whose last reset was more than 30 days ago and ADD their monthly allocation
+  -- (Credits roll over - unused credits are preserved)
   WITH reset_users AS (
     UPDATE public.user_credits
     SET
-      balance = monthly_allocation,
+      balance = balance + monthly_allocation,  -- ADD to existing balance (rollover)
       last_reset_at = NOW()
     WHERE last_reset_at < NOW() - INTERVAL '30 days'
-    RETURNING user_id, monthly_allocation
+    RETURNING user_id, monthly_allocation, balance
   ),
-  -- Log the reset transactions
+  -- Log the monthly grant transactions
   logged_resets AS (
     INSERT INTO public.credit_transactions (
       user_id,
@@ -30,10 +31,10 @@ BEGIN
     SELECT
       ru.user_id,
       ru.monthly_allocation,
-      ru.monthly_allocation,
+      ru.balance,  -- New balance after rollover
       'monthly_grant',
-      'Monthly credit reset',
-      jsonb_build_object('event', 'monthly_reset', 'allocation', ru.monthly_allocation)
+      'Monthly credit allocation (rollover)',
+      jsonb_build_object('event', 'monthly_allocation', 'allocation', ru.monthly_allocation)
     FROM reset_users ru
     RETURNING user_id
   )
@@ -150,7 +151,7 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- Add comments for documentation
 COMMENT ON FUNCTION public.reset_monthly_credits()
-  IS 'Resets credits for users whose 30-day period has elapsed. Call daily via cron.';
+  IS 'Adds monthly credit allocation to users whose 30-day period has elapsed. Credits roll over (unused credits preserved). Call daily via cron.';
 
 COMMENT ON FUNCTION public.deduct_credits(UUID, INTEGER, TEXT, TEXT, JSONB)
   IS 'Atomically deducts credits if sufficient balance. Returns new balance or error code.';

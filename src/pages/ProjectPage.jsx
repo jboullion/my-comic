@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom'
 import { FiLoader, FiFrown, FiUploadCloud } from 'react-icons/fi'
 import EditorLayout from '../layouts/EditorLayout'
 import useProjectStore from '../stores/useProjectStore'
+import { useProjectFonts } from '../hooks/useProjectFonts'
 import HtmlCanvas from '../components/HtmlCanvas'
 import ProjectHeader from '../components/editor/ProjectHeader'
 import PagesSidebar from '../components/editor/PagesSidebar'
@@ -52,6 +53,9 @@ export default function ProjectPage() {
   const [showAIModal, setShowAIModal] = useState(false)
   const [isExporting, setIsExporting] = useState(false)
   const [propertiesActiveTab, setPropertiesActiveTab] = useState('properties')
+
+  // Load custom project fonts dynamically
+  useProjectFonts(currentProject?.settings?.customFonts || [])
 
   // Callback to capture canvas for Story AI
   const captureCanvasForAI = useCallback(async () => {

@@ -6,7 +6,7 @@ import ColorPicker from '../../ui/ColorPicker'
  * TextStyleSection Component
  * Text styling controls for text elements (font, size, color, alignment)
  */
-export default function TextStyleSection({ element, onUpdate }) {
+export default function TextStyleSection({ element, onUpdate, projectFonts }) {
   return (
     <div className="space-y-3">
       {/* Text content */}
@@ -26,6 +26,7 @@ export default function TextStyleSection({ element, onUpdate }) {
         label="Font Family"
         value={element.fontFamily || 'Arial, sans-serif'}
         onChange={(val) => onUpdate({ fontFamily: val })}
+        projectFonts={projectFonts}
       />
 
       {/* Font size and weight */}
