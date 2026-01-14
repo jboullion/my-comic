@@ -1,11 +1,12 @@
 import NumberInput from '../../ui/NumberInput'
 import ColorPicker from '../../ui/ColorPicker'
+import FontSelect from '../../ui/FontSelect'
 
 /**
  * TextSection Component
  * Text content and formatting controls for speech bubble elements
  */
-export default function TextSection({ element, onUpdate }) {
+export default function TextSection({ element, onUpdate, projectFonts }) {
   return (
     <>
       <div className="space-y-1.5">
@@ -18,6 +19,14 @@ export default function TextSection({ element, onUpdate }) {
           placeholder="Enter dialog text..."
         />
       </div>
+
+      {/* Font family */}
+      <FontSelect
+        label="Font Family"
+        value={element.fontFamily || 'Comic Neue, cursive'}
+        onChange={(val) => onUpdate({ fontFamily: val })}
+        projectFonts={projectFonts}
+      />
 
       <div className="grid grid-cols-2 gap-3">
         <NumberInput

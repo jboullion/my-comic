@@ -54,11 +54,8 @@ export default function ProjectPage() {
   const [isExporting, setIsExporting] = useState(false)
   const [propertiesActiveTab, setPropertiesActiveTab] = useState('properties')
 
-  // Load project fonts (script + custom) dynamically
-  useProjectFonts(
-    currentProject?.settings?.fontScript || 'latin',
-    currentProject?.settings?.customFonts || []
-  )
+  // Load custom project fonts dynamically
+  useProjectFonts(currentProject?.settings?.customFonts || [])
 
   // Callback to capture canvas for Story AI
   const captureCanvasForAI = useCallback(async () => {

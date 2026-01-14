@@ -29,6 +29,7 @@ const docsSections = [
       { title: 'Speech Bubbles', path: '/docs/speech-bubbles', icon: null },
       { title: 'Text', path: '/docs/text', icon: null },
       { title: 'Text Effects', path: '/docs/text-effects', icon: null },
+      { title: 'Fonts', path: '/docs/fonts', icon: null },
     ]
   },
   {

@@ -82,7 +82,6 @@ export default function FontSelect({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all"
-        style={{ fontFamily: value }}
       >
         {groupedFonts ? (
           // Grouped display for project fonts

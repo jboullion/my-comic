@@ -18,12 +18,11 @@ import { getProjectFonts } from '../../../lib/fonts'
 export default function ElementProperties({ element }) {
   const { updateElement, currentProject } = useProjectStore()
 
-  // Get project fonts based on font settings
+  // Get project fonts (base + custom)
   const projectFonts = useMemo(() => {
-    const fontScript = currentProject?.settings?.fontScript || 'latin'
     const customFonts = currentProject?.settings?.customFonts || []
-    return getProjectFonts(fontScript, customFonts)
-  }, [currentProject?.settings?.fontScript, currentProject?.settings?.customFonts])
+    return getProjectFonts(customFonts)
+  }, [currentProject?.settings?.customFonts])
 
   const handleUpdate = (updates) => {
     updateElement(element.id, updates)
@@ -97,7 +96,7 @@ export default function ElementProperties({ element }) {
             title="Text"
             storageKey="bubble-text"
           >
-            <TextSection element={element} onUpdate={handleUpdate} />
+            <TextSection element={element} onUpdate={handleUpdate} projectFonts={projectFonts} />
           </CollapsibleSection>
         </>
       )}

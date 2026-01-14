@@ -58,8 +58,7 @@ export default function ProjectSettingsPage() {
   // Local storyAiModel state (separate from settings)
   const [localStoryAiModel, setLocalStoryAiModel] = useState(null)
 
-  // Local font settings state
-  const [localFontScript, setLocalFontScript] = useState('latin')
+  // Local custom fonts state
   const [localCustomFonts, setLocalCustomFonts] = useState([])
 
   // Save state for feedback
@@ -102,10 +101,9 @@ export default function ProjectSettingsPage() {
     }
   }, [currentProject?.storyAiModel])
 
-  // Initialize font settings from project
+  // Initialize custom fonts from project
   useEffect(() => {
     if (currentProject?.settings) {
-      setLocalFontScript(currentProject.settings.fontScript || 'latin')
       setLocalCustomFonts(currentProject.settings.customFonts || [])
     }
   }, [currentProject?.settings])
@@ -122,10 +120,9 @@ export default function ProjectSettingsPage() {
   const handleSave = async () => {
     if (localSettings && saveState === 'idle') {
       setSaveState('saving')
-      // Save settings including font settings
+      // Save settings including custom fonts
       await saveProjectSettings({
         ...localSettings,
-        fontScript: localFontScript,
         customFonts: localCustomFonts
       })
       // Save customStoryPrompt and storyAiModel separately (they're on the project, not settings)
@@ -235,9 +232,7 @@ export default function ProjectSettingsPage() {
             )}
             {activeTab === 'fonts' && (
               <FontsSettingsTab
-                fontScript={localFontScript}
                 customFonts={localCustomFonts}
-                onUpdateScript={setLocalFontScript}
                 onUpdateCustomFonts={setLocalCustomFonts}
               />
             )}

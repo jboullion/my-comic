@@ -1,15 +1,13 @@
 import { useState } from 'react'
 import { FiPlus, FiX, FiInfo, FiLoader, FiCheck, FiAlertCircle } from 'react-icons/fi'
-import { FONT_SCRIPTS, validateGoogleFont, createCustomFont } from '../../lib/fonts'
+import { validateGoogleFont, createCustomFont, BASE_FONTS } from '../../lib/fonts'
 
 /**
  * FontsSettingsTab Component
- * Font script selection and custom font management
+ * Custom Google Font management for projects
  */
 export default function FontsSettingsTab({
-  fontScript,
   customFonts,
-  onUpdateScript,
   onUpdateCustomFonts
 }) {
   const [newFontName, setNewFontName] = useState('')
@@ -17,17 +15,24 @@ export default function FontsSettingsTab({
   const [validationError, setValidationError] = useState(null)
   const [validationSuccess, setValidationSuccess] = useState(false)
 
-  const currentScript = FONT_SCRIPTS[fontScript] || FONT_SCRIPTS.latin
-
   const handleAddFont = async () => {
     if (!newFontName.trim()) return
 
-    // Check if font already exists
-    const exists = customFonts.some(
+    // Check if font already exists in custom fonts
+    const existsInCustom = customFonts.some(
       f => f.name.toLowerCase() === newFontName.trim().toLowerCase()
     )
-    if (exists) {
+    if (existsInCustom) {
       setValidationError('This font is already added')
+      return
+    }
+
+    // Check if font already exists in base fonts
+    const existsInBase = BASE_FONTS.some(
+      f => f.name.toLowerCase() === newFontName.trim().toLowerCase()
+    )
+    if (existsInBase) {
+      setValidationError('This font is already included in the default fonts')
       return
     }
 
@@ -64,58 +69,35 @@ export default function FontsSettingsTab({
 
   return (
     <div className="space-y-8">
-      {/* Script Selection */}
+      {/* Base Fonts Info */}
       <section>
         <h2 className="text-[10px] text-slate-500 uppercase font-bold tracking-wider mb-4">
-          Default Project Fonts
+          Default Fonts
         </h2>
 
-        <div className="mb-3">
-          <select
-            value={fontScript}
-            onChange={(e) => onUpdateScript(e.target.value)}
-            className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
-          >
-            {Object.entries(FONT_SCRIPTS).map(([key, script]) => (
-              <option key={key} value={key}>
-                {script.label}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {/* Info banner */}
-        <div className="flex items-start gap-2 p-3 bg-slate-800/50 rounded-lg border border-slate-700/50">
+        <div className="flex items-start gap-2 p-3 bg-slate-800/50 rounded-lg border border-slate-700/50 mb-4">
           <FiInfo className="w-4 h-4 text-slate-400 mt-0.5 shrink-0" />
-          <div className="text-xs text-slate-400">
-            <p className="mb-1">
-              This only affects fonts available while making your comic, not the website interface.
-            </p>
-            <p className="text-slate-500">
-              {currentScript.description}
-            </p>
-          </div>
+          <p className="text-xs text-slate-400">
+            These fonts are always available in your projects. Add custom Google Fonts below for more options.
+          </p>
         </div>
 
-        {/* Preview of included fonts */}
-        <div className="mt-4">
-          <p className="text-xs text-slate-500 mb-2">Included fonts:</p>
-          <div className="flex flex-wrap gap-1.5">
-            {currentScript.fonts.slice(0, 8).map(font => (
-              <span
-                key={font.name}
-                className="px-2 py-1 text-xs bg-slate-800 text-slate-300 rounded"
-                style={{ fontFamily: font.family }}
-              >
-                {font.name}
-              </span>
-            ))}
-            {currentScript.fonts.length > 8 && (
-              <span className="px-2 py-1 text-xs bg-slate-800 text-slate-500 rounded">
-                +{currentScript.fonts.length - 8} more
-              </span>
-            )}
-          </div>
+        {/* Preview of base fonts */}
+        <div className="flex flex-wrap gap-1.5">
+          {BASE_FONTS.slice(0, 10).map(font => (
+            <span
+              key={font.name}
+              className="px-2 py-1 text-xs bg-slate-800 text-slate-300 rounded"
+              style={{ fontFamily: font.family }}
+            >
+              {font.name}
+            </span>
+          ))}
+          {BASE_FONTS.length > 10 && (
+            <span className="px-2 py-1 text-xs bg-slate-800 text-slate-500 rounded">
+              +{BASE_FONTS.length - 10} more
+            </span>
+          )}
         </div>
       </section>
 

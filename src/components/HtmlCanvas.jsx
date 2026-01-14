@@ -368,9 +368,8 @@ const HtmlCanvas = forwardRef(function HtmlCanvas(props, ref) {
       if (!capture) return null
 
       try {
-        // Get embedded font CSS for proper font rendering (including project fonts)
+        // Get embedded font CSS for proper font rendering (including custom fonts)
         const fontEmbedCSS = await getEmbeddedFontCSS(
-          projectSettings.fontScript || 'latin',
           projectSettings.customFonts || []
         )
 
@@ -413,9 +412,8 @@ const HtmlCanvas = forwardRef(function HtmlCanvas(props, ref) {
       if (!capture) return null
 
       try {
-        // Get embedded font CSS for proper font rendering (including project fonts)
+        // Get embedded font CSS for proper font rendering (including custom fonts)
         const fontEmbedCSS = await getEmbeddedFontCSS(
-          projectSettings.fontScript || 'latin',
           projectSettings.customFonts || []
         )
 
@@ -482,9 +480,8 @@ const HtmlCanvas = forwardRef(function HtmlCanvas(props, ref) {
         if (!capture) continue
 
         try {
-          // Get embedded font CSS (including project fonts)
+          // Get embedded font CSS (including custom fonts)
           const fontEmbedCSS = await getEmbeddedFontCSS(
-            project.settings?.fontScript || 'latin',
             project.settings?.customFonts || []
           )
           const pageData = project.pages[i]

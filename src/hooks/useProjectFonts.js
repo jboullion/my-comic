@@ -1,32 +1,30 @@
 /**
  * useProjectFonts Hook
- * Dynamically loads Google Fonts based on project font settings
+ * Dynamically loads custom Google Fonts for projects
  */
 
 import { useEffect, useMemo, useRef } from 'react'
-import { buildGoogleFontsUrl, getFontsToLoad, getProjectFonts } from '../lib/fonts'
+import { buildGoogleFontsUrl, getCustomFontsToLoad, getProjectFonts } from '../lib/fonts'
 
 /**
- * Hook to dynamically load fonts for a project
- * Injects a <link> tag for Google Fonts when script or custom fonts change
+ * Hook to dynamically load custom fonts for a project
+ * Injects a <link> tag for Google Fonts when custom fonts change
  *
- * @param {string} fontScript - The font script ('latin', 'cjk', etc.)
  * @param {Array} customFonts - Array of custom font objects
- * @returns {Object} - { fonts: combined font list, isLoading: boolean }
+ * @returns {Object} - { fonts: combined font list }
  */
-export function useProjectFonts(fontScript = 'latin', customFonts = []) {
+export function useProjectFonts(customFonts = []) {
   const linkRef = useRef(null)
-  const loadingRef = useRef(false)
 
-  // Get the combined font list for the project
+  // Get the combined font list for the project (base + custom)
   const fonts = useMemo(() => {
-    return getProjectFonts(fontScript, customFonts)
-  }, [fontScript, customFonts])
+    return getProjectFonts(customFonts)
+  }, [customFonts])
 
-  // Get fonts that need to be dynamically loaded
+  // Get custom fonts that need to be dynamically loaded
   const fontsToLoad = useMemo(() => {
-    return getFontsToLoad(fontScript, customFonts)
-  }, [fontScript, customFonts])
+    return getCustomFontsToLoad(customFonts)
+  }, [customFonts])
 
   // Load fonts when they change
   useEffect(() => {
@@ -47,6 +45,11 @@ export function useProjectFonts(fontScript = 'latin', customFonts = []) {
     link.rel = 'stylesheet'
     link.href = url
     link.id = 'project-fonts'
+
+    // Handle load errors gracefully
+    link.onerror = () => {
+      console.warn('Failed to load some project fonts. Some fonts may not display correctly.')
+    }
 
     // Add preconnect for faster loading
     const preconnect = document.createElement('link')
@@ -70,8 +73,7 @@ export function useProjectFonts(fontScript = 'latin', customFonts = []) {
 
   return {
     fonts,
-    fontsToLoad,
-    isLoading: loadingRef.current
+    fontsToLoad
   }
 }
 
@@ -80,13 +82,12 @@ export function useProjectFonts(fontScript = 'latin', customFonts = []) {
  * Use in components that need to access the current project's font configuration
  *
  * @param {Object} settings - Project settings object
- * @returns {Object} - { fonts, fontScript, customFonts }
+ * @returns {Object} - { fonts, customFonts }
  */
 export function useProjectFontsFromSettings(settings) {
-  const fontScript = settings?.fontScript || 'latin'
   const customFonts = settings?.customFonts || []
 
-  return useProjectFonts(fontScript, customFonts)
+  return useProjectFonts(customFonts)
 }
 
 export default useProjectFonts
