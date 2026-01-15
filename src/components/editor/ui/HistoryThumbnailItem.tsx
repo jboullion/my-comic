@@ -1,4 +1,4 @@
-import { FiStar, FiTrash2 } from 'react-icons/fi'
+import { FiStar, FiTrash2, FiPlus } from 'react-icons/fi'
 import { useHistoryThumbnailUrl } from '../../../hooks/useHistoryThumbnailUrl'
 import type { GenerationHistoryEntry } from '../../../lib/generationHistory'
 
@@ -7,6 +7,7 @@ interface HistoryThumbnailItemProps {
   onSelect: () => void
   onTogglePin: () => void
   onDelete: () => void
+  onAddToCanvas?: () => void
   modelName?: string
   styleName?: string
 }
@@ -32,6 +33,7 @@ export default function HistoryThumbnailItem({
   onSelect,
   onTogglePin,
   onDelete,
+  onAddToCanvas,
   modelName,
   styleName
 }: HistoryThumbnailItemProps) {
@@ -45,6 +47,11 @@ export default function HistoryThumbnailItem({
   const handleDeleteClick = (e: React.MouseEvent) => {
     e.stopPropagation()
     onDelete()
+  }
+
+  const handleAddToCanvasClick = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    onAddToCanvas?.()
   }
 
   return (
@@ -71,20 +78,34 @@ export default function HistoryThumbnailItem({
         <div className="w-full h-full animate-pulse bg-slate-700" />
       )}
 
-      {/* Pin Badge (top-left) */}
-      <button
-        onClick={handlePinClick}
-        className={`absolute top-1.5 left-1.5 p-1 rounded-md transition-all ${
-          entry.pinned
-            ? 'bg-amber-500 text-white'
-            : 'bg-slate-900/70 text-slate-400 opacity-0 group-hover:opacity-100 hover:text-amber-400'
-        }`}
-        title={entry.pinned ? 'Unpin' : 'Pin (never delete)'}
-      >
-        <FiStar
-          className={`w-3.5 h-3.5 ${entry.pinned ? 'fill-current' : ''}`}
-        />
-      </button>
+      {/* Action Buttons (top-left) */}
+      <div className="absolute top-1.5 left-1.5 flex gap-1">
+        {/* Pin Badge */}
+        <button
+          onClick={handlePinClick}
+          className={`p-1 rounded-md transition-all ${
+            entry.pinned
+              ? 'bg-amber-500 text-white'
+              : 'bg-slate-900/70 text-slate-400 opacity-0 group-hover:opacity-100 hover:text-amber-400'
+          }`}
+          title={entry.pinned ? 'Unpin' : 'Pin (never delete)'}
+        >
+          <FiStar
+            className={`w-3.5 h-3.5 ${entry.pinned ? 'fill-current' : ''}`}
+          />
+        </button>
+
+        {/* Add to Canvas */}
+        {onAddToCanvas && (
+          <button
+            onClick={handleAddToCanvasClick}
+            className="p-1 rounded-md bg-slate-900/70 text-slate-400 opacity-0 group-hover:opacity-100 hover:text-green-400 hover:bg-green-500/20 transition-all"
+            title="Add to canvas"
+          >
+            <FiPlus className="w-3.5 h-3.5" />
+          </button>
+        )}
+      </div>
 
       {/* Delete Button (top-right, hover only) */}
       <button

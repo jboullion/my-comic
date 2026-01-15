@@ -12,6 +12,7 @@ interface HistoryGalleryProps {
   onSelect: (entry: GenerationHistoryEntry) => void
   onTogglePin: (id: number) => void
   onDelete: (id: number) => void
+  onAddToCanvas?: (entry: GenerationHistoryEntry) => void
   onClearAll: () => void
   getModelName?: (model: string) => string
   getStyleName?: (style: string | null) => string
@@ -29,6 +30,7 @@ export default function HistoryGallery({
   onSelect,
   onTogglePin,
   onDelete,
+  onAddToCanvas,
   onClearAll,
   getModelName,
   getStyleName
@@ -105,6 +107,7 @@ export default function HistoryGallery({
             onSelect={() => onSelect(entry)}
             onTogglePin={() => onTogglePin(entry.id!)}
             onDelete={() => onDelete(entry.id!)}
+            onAddToCanvas={onAddToCanvas ? () => onAddToCanvas(entry) : undefined}
             modelName={getModelName?.(entry.model)}
             styleName={getStyleName?.(entry.style)}
           />

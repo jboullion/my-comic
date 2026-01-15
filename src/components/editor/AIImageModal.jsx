@@ -289,6 +289,33 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
     }
   }, [form])
 
+  // Handle adding history image to canvas
+  const handleHistoryAddToCanvas = useCallback(async (entry) => {
+    if (!entry.imageBlob) return
+
+    form.setIsSaving(true)
+    form.setError(null)
+
+    try {
+      const fileName = `ai-generated-${entry.timestamp}.png`
+      const file = new File([entry.imageBlob], fileName, { type: 'image/webp' })
+
+      const metadata = {
+        prompt: entry.prompt,
+        model: entry.model,
+        style: entry.style,
+        fromHistory: true
+      }
+
+      await onSave(file, metadata)
+      onClose()
+    } catch (err) {
+      form.setError(`Failed to add image: ${err.message}`)
+    } finally {
+      form.setIsSaving(false)
+    }
+  }, [form, onSave, onClose])
+
   if (!isOpen) return null
 
   const isConfigured = isLoggedIn
@@ -432,6 +459,7 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
               onSelect={handleHistoryClick}
               onTogglePin={history.togglePin}
               onDelete={history.deleteEntry}
+              onAddToCanvas={handleHistoryAddToCanvas}
               onClearAll={history.clearAll}
               getModelName={(modelKey) => AI_MODELS[modelKey]?.name || modelKey}
               getStyleName={(styleKey) => styleKey ? (AI_STYLES[styleKey]?.name || styleKey) : null}

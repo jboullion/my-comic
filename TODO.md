@@ -11,8 +11,6 @@
 
 - Ability to change a project's series / attach a project to a series
 
-- Improve prompt history from 20 to 50? Infinite?
-
 
 ## Bugs
 
