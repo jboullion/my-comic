@@ -85,6 +85,11 @@
 
 ### Canvas
 
+
+- SVG "Tails".
+- - Figure out some kind of tail system that will allow a user to draw a tail from any bubble to any point.
+- - Tails should have standard points and also "bubble" tails if possible
+
 - Toggle / Checkbox each corner for rounding. Users might only want to have one corner "rounded". We could even do each corner with separate rounding in an "advanced" mode.
 
 

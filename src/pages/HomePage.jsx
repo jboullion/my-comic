@@ -58,14 +58,13 @@ export default function HomePage() {
         title="AI-Powered Image Generation"
         description="Create stunning comic art with state-of-the-art AI models. Generate character-consistent images with FLUX Pro and custom LoRA support."
         imagePosition="left"
-        ctaLink={{ text: 'View AI Features →', to: '/pricing' }}
+        ctaLink={{ text: 'View AI Features →', to: '/docs/ai-image-generation' }}
       >
         <ul className="space-y-2 text-slate-400 mb-6">
-          <li>• FLUX 2 Pro, Dev, and Nano models</li>
-          <li>• Character-consistent generation</li>
-          <li>• LoRA model support</li>
+          <li>• FLUX 2 Pro, Dev, and NanoBanana models</li>
+          <li>• In Painting</li>
           <li>• Comic, Manga, Realistic, and Retro styles</li>
-          <li>• Custom model integration (CivitAI)</li>
+
         </ul>
       </FeatureSection>
 
