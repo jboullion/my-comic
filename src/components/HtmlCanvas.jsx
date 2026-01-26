@@ -59,6 +59,13 @@ const HtmlCanvas = forwardRef(function HtmlCanvas(props, ref) {
     zoom,
   })
 
+  // Check if a single image element is selected (for context menu options)
+  const selectedElements = currentPage?.elements?.filter(el =>
+    selectedElementIds.includes(el.id)
+  ) || []
+  const isSingleImageSelected = selectedElements.length === 1 &&
+    selectedElements[0].type === 'image'
+
   /**
    * Handle element selection with modifier key support
    * - Click (no modifier): Replace selection with clicked element
@@ -103,6 +110,26 @@ const HtmlCanvas = forwardRef(function HtmlCanvas(props, ref) {
     }
     return false
   }, [selectedElementIds, startMultiDrag])
+
+  /**
+   * Fit selected image to page dimensions and send to back
+   */
+  const handleFitToPage = useCallback(() => {
+    if (selectedElementIds.length !== 1) return
+    const elementId = selectedElementIds[0]
+
+    // Update size and position to fill the page
+    // Note: Elements use center-based positioning, so x/y is the center point
+    updateElement(elementId, {
+      x: pageWidth / 2,
+      y: pageHeight / 2,
+      width: pageWidth,
+      height: pageHeight
+    })
+
+    // Send to back layer
+    reorderElements(selectedElementIds, 'back')
+  }, [selectedElementIds, pageWidth, pageHeight, updateElement, reorderElements])
 
   // Close context menu on click elsewhere
   useEffect(() => {
@@ -226,8 +253,12 @@ const HtmlCanvas = forwardRef(function HtmlCanvas(props, ref) {
       return
     }
 
-    // Deselect if clicking on page background
-    if (e.target === pageRef.current) {
+    // Deselect if clicking on canvas background (container, transform wrapper, or page)
+    const isBackground = e.target === containerRef.current ||
+      e.target === pageRef.current ||
+      e.target.hasAttribute('data-canvas-background')
+
+    if (isBackground) {
       setSelectedElementIds([])
     }
   }, [isPanningMode, setSelectedElementIds])
@@ -551,6 +582,7 @@ const HtmlCanvas = forwardRef(function HtmlCanvas(props, ref) {
 
       {/* Transform container - applies zoom and pan */}
       <div
+        data-canvas-background
         style={{
           transform: `translate(${panOffset.x + RULER_SIZE}px, ${panOffset.y + RULER_SIZE}px) scale(${zoom})`,
           transformOrigin: '0 0',
@@ -590,11 +622,6 @@ const HtmlCanvas = forwardRef(function HtmlCanvas(props, ref) {
             backgroundColor: pageSettings.backgroundColor === 'transparent' ? 'transparent' : (pageSettings.backgroundColor || '#ffffff'),
             position: 'relative',
             boxShadow: pageSettings.backgroundColor === 'transparent' ? 'none' : '5px 5px 20px rgba(0,0,0,0.5)'
-          }}
-          onClick={(e) => {
-            if (e.target === pageRef.current) {
-              setSelectedElementIds([])
-            }
           }}
           onContextMenu={handleContextMenu}
         >
@@ -717,6 +744,8 @@ const HtmlCanvas = forwardRef(function HtmlCanvas(props, ref) {
         visible={contextMenu.visible}
         x={contextMenu.x}
         y={contextMenu.y}
+        showFitToPage={isSingleImageSelected}
+        onFitToPage={handleFitToPage}
         onBringToFront={() => reorderElements(selectedElementIds, 'front')}
         onBringForward={() => reorderElements(selectedElementIds, 'forward')}
         onSendBackward={() => reorderElements(selectedElementIds, 'backward')}

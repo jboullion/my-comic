@@ -152,6 +152,7 @@
 - - Comics (Of Course!) (Western, Japanese, Korean)
 - - Story Boarding
 - - Childrens books
+- - Thumbnail Maker (YouTube) (Set up default "thumbnail" size?)
 
 
 ## Integrations

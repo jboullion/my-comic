@@ -4,14 +4,16 @@ import React from 'react'
  * Canvas Context Menu Component
  * Right-click menu for element operations
  */
-export default function CanvasContextMenu({ 
-  visible, 
-  x, 
-  y, 
+export default function CanvasContextMenu({
+  visible,
+  x,
+  y,
   onBringToFront,
   onBringForward,
   onSendBackward,
   onSendToBack,
+  onFitToPage,
+  showFitToPage = false,
   onDelete,
   onClose
 }) {
@@ -23,7 +25,19 @@ export default function CanvasContextMenu({
       style={{ left: x, top: y }}
       onClick={(e) => e.stopPropagation()}
     >
-      <ContextMenuItem 
+      {showFitToPage && (
+        <>
+          <ContextMenuItem
+            label="Fit to Page"
+            onClick={() => {
+              onFitToPage()
+              onClose()
+            }}
+          />
+          <div className="h-px bg-slate-700 my-1" />
+        </>
+      )}
+      <ContextMenuItem
         label="Bring to Front" 
         onClick={() => {
           onBringToFront()

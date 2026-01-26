@@ -16,14 +16,6 @@ export default function HomePage() {
             A powerful, free comic book editor that works entirely in your browser.
             Create professional comics with.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-            <Link to="/app" className="px-8 py-4 bg-indigo-500 hover:bg-indigo-600 rounded-xl text-lg font-semibold transition-colors shadow-lg shadow-indigo-500/25">
-              Start Creating
-            </Link>
-            <Link to="/pricing" className="px-8 py-4 border-2 border-indigo-500 text-indigo-400 hover:bg-indigo-500/10 rounded-xl text-lg font-semibold transition-colors">
-              View Pricing
-            </Link>
-          </div>
         </div>
       </div>
 

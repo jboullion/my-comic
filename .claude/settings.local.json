@@ -42,7 +42,8 @@
       "mcp__supabase__list_edge_functions",
       "Bash(npx supabase functions deploy:*)",
       "Bash(timeout:*)",
-      "Bash(npx eslint:*)"
+      "Bash(npx eslint:*)",
+      "Bash(grep:*)"
     ]
   }
 }
