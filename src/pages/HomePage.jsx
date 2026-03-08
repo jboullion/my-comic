@@ -1,7 +1,5 @@
-import { Link } from 'react-router-dom'
-import { FiImage, FiMessageSquare, FiSmartphone } from 'react-icons/fi'
 import PublicLayout from '../layouts/PublicLayout'
-import FeatureSection from '../components/public/FeatureSection'
+import Features from '../components/public/Features'
 
 export default function HomePage() {
   return (
@@ -19,20 +17,7 @@ export default function HomePage() {
         </div>
       </div>
 
-     
-
+      <Features />
     </PublicLayout>
-  )
-}
-
-function FeatureCard({ icon, title, description }) {
-  return (
-    <div className="p-6 bg-slate-800/50 rounded-xl border border-slate-700 hover:border-indigo-500/50 transition-colors">
-      <div className="w-12 h-12 bg-indigo-500/20 rounded-lg flex items-center justify-center text-indigo-400 mb-4">
-        {icon}
-      </div>
-      <h3 className="text-lg font-semibold mb-2">{title}</h3>
-      <p className="text-slate-400">{description}</p>
-    </div>
   )
 }
