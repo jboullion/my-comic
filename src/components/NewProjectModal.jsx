@@ -21,16 +21,18 @@ export default function NewProjectModal({ defaultSeriesId = null }) {
 
   const [title, setTitle] = useState('')
   const [seriesId, setSeriesId] = useState(null)
+  const [createNewSeries, setCreateNewSeries] = useState(false)
+  const [newSeriesName, setNewSeriesName] = useState('')
   const [saveToFile, setSaveToFile] = useState(false)
   const [isCreating, setIsCreating] = useState(false)
   const [error, setError] = useState(null)
 
-  // Load series when modal opens (only if not already loaded/loading)
+  // Load series when modal opens
   useEffect(() => {
-    if (isNewProjectModalOpen && series.length === 0 && !seriesLoading) {
+    if (isNewProjectModalOpen) {
       loadSeries()
     }
-  }, [isNewProjectModalOpen, series.length, seriesLoading, loadSeries])
+  }, [isNewProjectModalOpen, loadSeries])
 
   // Set default series when modal opens (only if explicitly provided)
   useEffect(() => {
@@ -48,7 +50,13 @@ export default function NewProjectModal({ defaultSeriesId = null }) {
     setIsCreating(true)
 
     try {
-      const project = await createProject(title.trim() || 'Untitled Project', {}, seriesId)
+      let finalSeriesId = seriesId
+      if (createNewSeries && newSeriesName.trim()) {
+        const newSeries = await useSeriesStore.getState().createSeries(newSeriesName.trim())
+        finalSeriesId = newSeries.id
+      }
+
+      const project = await createProject(title.trim() || 'Untitled Project', {}, finalSeriesId)
 
       // If user wants to save to file immediately
       if (saveToFile && hasFileSystemAccess) {
@@ -78,6 +86,8 @@ export default function NewProjectModal({ defaultSeriesId = null }) {
       // Reset form
       setTitle('')
       setSeriesId(null)
+      setCreateNewSeries(false)
+      setNewSeriesName('')
       setSaveToFile(false)
 
       // Navigate to the new project
@@ -94,6 +104,8 @@ export default function NewProjectModal({ defaultSeriesId = null }) {
     if (!isCreating) {
       setTitle('')
       setSeriesId(null)
+      setCreateNewSeries(false)
+      setNewSeriesName('')
       setSaveToFile(false)
       setError(null)
       closeNewProjectModal()
@@ -145,11 +157,38 @@ export default function NewProjectModal({ defaultSeriesId = null }) {
             </div>
 
             {/* Series Selection */}
-            <SeriesSelector
-              value={seriesId}
-              onChange={setSeriesId}
-              disabled={isCreating}
-            />
+            <div>
+              {!createNewSeries && (
+                <SeriesSelector
+                  value={seriesId}
+                  onChange={setSeriesId}
+                  disabled={isCreating}
+                />
+              )}
+              <div className="flex items-center gap-3 mt-3">
+                <input
+                  id="createNewSeries"
+                  type="checkbox"
+                  checked={createNewSeries}
+                  onChange={(e) => setCreateNewSeries(e.target.checked)}
+                  disabled={isCreating}
+                  className="w-4 h-4 bg-slate-900 border-slate-700 rounded text-indigo-500 focus:ring-indigo-500 focus:ring-offset-0"
+                />
+                <label htmlFor="createNewSeries" className="text-sm font-medium text-slate-300">
+                  Create new series
+                </label>
+              </div>
+              {createNewSeries && (
+                <input
+                  type="text"
+                  value={newSeriesName}
+                  onChange={(e) => setNewSeriesName(e.target.value)}
+                  placeholder="Series name"
+                  disabled={isCreating}
+                  className="mt-2 w-full px-4 py-2.5 bg-slate-900 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent disabled:opacity-50"
+                />
+              )}
+            </div>
 
             {/* Save Location Option */}
             {hasFileSystemAccess && (

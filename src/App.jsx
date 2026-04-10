@@ -2,7 +2,6 @@ import { Routes, Route, Navigate, useParams } from 'react-router-dom'
 import HomePage from './pages/HomePage'
 import PrivacyPage from './pages/PrivacyPage'
 import ContactPage from './pages/ContactPage'
-import PricingPage from './pages/PricingPage'
 import AuthCallbackPage from './pages/AuthCallbackPage'
 import DashboardPage from './pages/DashboardPage'
 import SeriesListPage from './pages/SeriesListPage'
@@ -55,7 +54,6 @@ function App() {
         <Route path="/auth/callback" element={<AuthCallbackPage />} />
         <Route path="/privacy" element={<PrivacyPage />} />
         <Route path="/contact" element={<ContactPage />} />
-        <Route path="/pricing" element={<PricingPage />} />
 
         {/* Documentation Routes */}
         <Route path="/docs" element={<DocsGettingStarted />} />

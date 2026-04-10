@@ -120,7 +120,7 @@ export default function ContactPage() {
                 <option value="General Question">General Question</option>
                 <option value="Bug Report">Bug Report</option>
                 <option value="Feature Request">Feature Request</option>
-                <option value="Pricing Inquiry">Pricing Inquiry</option>
+                {/* <option value="Pricing Inquiry">Pricing Inquiry</option> */}
                 <option value="Other">Other</option>
               </select>
             </div>

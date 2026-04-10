@@ -16,12 +16,10 @@ export default function SeriesSelector({
 }) {
   const { series, seriesLoading, loadSeries } = useSeriesStore()
 
-  // Load series if not already loaded
+  // Load series on mount
   useEffect(() => {
-    if (series.length === 0 && !seriesLoading) {
-      loadSeries()
-    }
-  }, [series.length, seriesLoading, loadSeries])
+    loadSeries()
+  }, [loadSeries])
 
   const handleChange = (e) => {
     const val = e.target.value

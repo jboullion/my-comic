@@ -1,5 +1,12 @@
 ## Current TODOs
 
+- RELEASE AS A TOTALLY FREE VERSION FOR NOW!?
+- - Hide AI Features and documentation
+- - Hide Characters
+- - Set up a basic starter project so that users can see how things work?
+
+
+
 - Token system refinement!
 - - Should we list Nana Banana as the default?
 - - Should we include other models besides Flux 2? 
@@ -11,14 +18,20 @@
 
 - Ability to change a project's series / attach a project to a series
 
+- Set up Stripe! Or other payment processor
+
 
 ## Bugs
 
-- Have each AI Image generated save in a temporary storage so users can access it even if they don't use it. Perhaps save it and show it as a thumbnail in the history?
-- Cloud SVG is overflowing container.
+- The fal credentials are exposed in the browser's environment. That's not recommended for production use cases.
+- Create Project not working!
+- Series is not working for new projects if no series exist
 - Some actions don't seem to get caught in the undo. Is there a redo?
+- - First action is not captured by undo!
 - I still get the forced zoom every now and then
-
+- Cloud SVG is overflowing container.
+- - Possibly make a custom SVG shape maker?
+- - At least include speech tails
 
 
 ## Ideas and Brainstorming

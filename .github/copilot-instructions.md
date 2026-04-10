@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-A Progressive Web App (PWA) for creating digital comic books. Client-centric architecture where all creative work happens in the browser—no backend storage for user content (user data sovereignty).
+A Progressive Web App (PWA) for creating digital comic books. Client-centric architecture where all creative work happens in the browser. Users sign in with Google or Discord to associate projects with their account—no personal data is stored beyond analytics. Cloud project storage is planned for a future release.
 
 ## Tech Stack & Patterns
 
