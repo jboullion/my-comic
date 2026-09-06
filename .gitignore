@@ -36,3 +36,5 @@ nul
 .mcp.json
 
 tmpclaude*
+# Local Netlify folder
+.netlify

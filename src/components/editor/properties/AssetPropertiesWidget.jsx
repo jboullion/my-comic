@@ -4,6 +4,7 @@ import { useAsset } from '../../../hooks/useAsset'
 import { useImageUrl } from '../../../hooks/useImage'
 import useProjectStore from '../../../stores/useProjectStore'
 import { AI_STYLES, AI_MODELS } from '../../../lib/ai/falai'
+import { COMIC_MODELS } from '../../../../supabase/functions/_shared/comicModels'
 
 /**
  * AssetPropertiesWidget Component
@@ -156,7 +157,7 @@ export default function AssetPropertiesWidget({ assetId, onAdd, showInPopup = fa
                 <div className="flex justify-between items-center">
                   <span className="text-xs text-slate-400">Model</span>
                   <span className="text-xs text-slate-200 font-medium">
-                    {AI_MODELS[asset.aiModel]?.name || asset.aiModel}
+                    {COMIC_MODELS[asset.aiModel]?.name || AI_MODELS[asset.aiModel]?.name || asset.aiModel}
                   </span>
                 </div>
               )}

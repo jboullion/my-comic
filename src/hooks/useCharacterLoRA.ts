@@ -7,6 +7,9 @@ export interface CharacterLoRA {
   scale: number
   characterName: string
 }
+interface LoraCharacter {
+  id: number; name: string; loraUrl?: string; loraTriggerWord?: string; loraScale?: number
+}
 
 /**
  * Hook to get LoRA configuration from selected characters
@@ -22,7 +25,7 @@ export function useCharacterLoRA(selectedCharacterIds: number[]) {
 
     // Find first selected character with a LoRA configured
     for (const id of selectedCharacterIds) {
-      const char = characters.find(c => c.id === id)
+      const char = characters.find((c: LoraCharacter) => c.id === id)
       if (char?.loraUrl) {
         return {
           url: char.loraUrl,
@@ -35,5 +38,10 @@ export function useCharacterLoRA(selectedCharacterIds: number[]) {
     return null
   }, [selectedCharacterIds, characters])
 
-  return { getCharacterLora, characters }
+  const getCharacterLoras = useCallback((): CharacterLoRA[] => selectedCharacterIds.flatMap(id => {
+    const char = characters.find((c: LoraCharacter) => c.id === id)
+    return char?.loraUrl ? [{ url: char.loraUrl, triggerWord: char.loraTriggerWord || '', scale: char.loraScale ?? 0.8, characterName: char.name }] : []
+  }), [selectedCharacterIds, characters])
+
+  return { getCharacterLora, getCharacterLoras, characters }
 }

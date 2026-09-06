@@ -15,6 +15,7 @@ function CharacterPickerItem({ character, selected, onSelect, disabled }) {
   return (
     <button
       type="button"
+      aria-pressed={selected}
       onClick={() => !disabled && onSelect(character.id)}
       disabled={disabled}
       className={`
@@ -56,7 +57,7 @@ function CharacterPickerItem({ character, selected, onSelect, disabled }) {
 
 /**
  * CharacterPicker Component
- * Single-select character picker for AI image generation
+ * Character picker for AI image generation, with a configurable selection limit
  * Filters characters by current project's series
  */
 export default function CharacterPicker({
@@ -64,7 +65,8 @@ export default function CharacterPicker({
   onChange,
   disabled = false,
   className = '',
-  showDescription = true
+  showDescription = true,
+  maxSelections = 1
 }) {
   const { characters, charactersLoading, loadCharacters } = useCharactersStore()
   const { currentProject } = useProjectStore()
@@ -73,13 +75,10 @@ export default function CharacterPicker({
   // Get current project's seriesId
   const seriesId = currentProject?.seriesId
 
-  // Load characters on mount if not already loaded
+  // Load once per mount; an empty library is a valid result, not a retry signal.
   useEffect(() => {
-    // Load characters if we don't have any and aren't currently loading
-    if (characters.length === 0 && !charactersLoading) {
-      loadCharacters()
-    }
-  }, [characters.length, charactersLoading, loadCharacters])
+    loadCharacters()
+  }, [loadCharacters])
 
   // Filter characters by series
   const seriesCharacters = useMemo(() => {
@@ -87,13 +86,13 @@ export default function CharacterPicker({
     return characters.filter(c => c.seriesId === seriesId)
   }, [characters, seriesId])
 
-  // Single-select: clicking selects, clicking again deselects
+  // Clicking a selected character removes it; otherwise respect the model's limit.
   const handleSelect = (characterId) => {
     if (disabled) return
 
-    // If already selected, deselect (empty array)
-    // Otherwise, select only this character
-    const newSelected = selectedIds.includes(characterId) ? [] : [characterId]
+    const newSelected = selectedIds.includes(characterId)
+      ? selectedIds.filter(id => id !== characterId)
+      : maxSelections === 1 ? [characterId] : [...selectedIds, characterId].slice(0, maxSelections)
     onChange(newSelected)
   }
 
@@ -157,7 +156,8 @@ export default function CharacterPicker({
   return (
     <div className={className}>
       <label className="text-[10px] text-slate-500 uppercase font-bold block mb-2">
-        Character {selectedIds.length > 0 && '(1 selected)'}
+        Characters {selectedIds.length > 0 && `(${selectedIds.length} selected)`}
+        {maxSelections > 1 && ` · up to ${maxSelections}`}
       </label>
 
       {/* Character List */}
@@ -169,7 +169,7 @@ export default function CharacterPicker({
               character={character}
               selected={selectedIds.includes(character.id)}
               onSelect={handleSelect}
-              disabled={disabled}
+              disabled={disabled || (maxSelections > 1 && selectedIds.length >= maxSelections && !selectedIds.includes(character.id))}
             />
           ))}
         </div>

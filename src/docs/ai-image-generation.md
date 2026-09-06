@@ -1,6 +1,6 @@
 # AI Image Generation
 
-Generate comic images using AI with FLUX models. Access via the toolbar or press **A**.
+Generate comic images using Fal models or curated Civitai comic-style LoRAs, all run through Fal. Access via the toolbar or press **A**.
 
 ## Getting Started
 
@@ -22,7 +22,8 @@ Quick generation with a single prompt:
 | Enhance | AI-powered prompt expansion for better results |
 | Character | Select a character for consistent appearance |
 | Style | Visual style preset |
-| Model | AI model to use |
+| Model source | Fal.ai or Civitai via Fal |
+| Model | Generation model or curated comic look |
 | Size | Output dimensions |
 
 ### Advanced Mode
@@ -50,7 +51,11 @@ Advanced mode also provides:
 | FLUX 2 Pro | Highest | Slower | 8 credits |
 | FLUX 2 Dev | High | Medium | 5 credits |
 | Nano Banana | Good | Fastest | 2 credits |
-| Custom | Varies | Medium | 5 credits |
+| Comic Book Illustration (SDXL) | Illustrated comic style | Varies | 5 credits |
+| Comic Realism (SDXL) | More realistic comic style | Varies | 5 credits |
+| Comic Cover Maker (SDXL) | Comic-cover style | Varies | 5 credits |
+
+Choose **Civitai · via Fal** in either generation tab to see the comic models. Each uses the same SDXL 1.0 base checkpoint with a different style LoRA. Set a starting model for a series in its AI Model settings. Model downloads must be enabled by the site administrator.
 
 ## Style Presets
 
@@ -66,11 +71,13 @@ Advanced mode also provides:
 
 For consistent character appearance across images:
 
-1. **Profile Image** - Upload a reference image for your character
-2. **LoRA Model** - Use a trained LoRA from CivitAI for best results
-3. **Trigger Word** - Automatically added to prompts when using LoRA
+1. **LoRA Model** - In the character editor, paste a Civitai URL for a specific SDXL 1.0 LoRA version. Include `modelVersionId` in a model-page link, or use its download URL. Do not include API keys.
+2. **Trigger Words** - Add an override, or leave blank to use the model version's trained words automatically.
+3. **Strength** - Start at 0.8; reduce it if the character overwhelms the style.
 
-Set these in the Character settings when creating or editing a character.
+Select up to three characters when using a Civitai comic model. FLUX, Pony and Illustrious LoRAs are incompatible with this initial catalog and will be rejected. The model must permit third-party hosted generation. Standard Fal models do not apply character LoRAs. Profile images are stored with characters but are not sent as image references by this generation flow.
+
+LoRAs influence appearance, but cannot guarantee identical characters across images or prevent blending between multiple characters.
 
 ## Generation History
 
