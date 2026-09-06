@@ -107,6 +107,22 @@ export const STORY_AI_MODELS = {
 
   // === META LLAMA ===
   meta: {
+    'llama-4-scout': {
+      id: 'meta-llama/llama-4-scout',
+      name: 'Llama 4 Scout',
+      description: 'Fast multimodal MoE model',
+      vision: true,
+      inputPrice: 0.08,
+      outputPrice: 0.30
+    },
+    'llama-4-maverick': {
+      id: 'meta-llama/llama-4-maverick',
+      name: 'Llama 4 Maverick',
+      description: 'High-capacity multimodal MoE model',
+      vision: true,
+      inputPrice: 0.15,
+      outputPrice: 0.60
+    },
     'llama-3.2-90b-vision': {
       id: 'meta-llama/llama-3.2-90b-vision-instruct',
       name: 'Llama 3.2 90B Vision',

@@ -38,6 +38,7 @@ export interface GenerateImageOptions {
   imageSize?: string | { width: number; height: number }
   seed?: number | null
   allowMature?: boolean
+  characterLoras?: Array<{ url: string; scale?: number; triggerWord?: string }>
   lora?: {
     url: string
     scale?: number

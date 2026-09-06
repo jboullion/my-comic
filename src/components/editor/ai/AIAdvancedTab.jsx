@@ -1,3 +1,5 @@
+import ImageModelPicker from './ImageModelPicker'
+import { isComicModel } from '../../../../supabase/functions/_shared/comicModels'
 import { FiAlertCircle } from 'react-icons/fi'
 import { AI_MODELS } from '../../../lib/ai/falai'
 import CharacterPicker from '../CharacterPicker'
@@ -109,6 +111,7 @@ export default function AIAdvancedTab({
 
       {/* Character Picker */}
       <CharacterPicker
+        maxSelections={isComicModel(model) ? 3 : 1}
         selectedIds={selectedCharacterIds}
         onChange={setSelectedCharacterIds}
         disabled={isGenerating}
@@ -136,22 +139,7 @@ export default function AIAdvancedTab({
 
       {/* Options Row */}
       <div className="grid grid-cols-2 gap-4">
-        {/* Model Selection */}
-        <div className="space-y-2">
-          <label className="text-[10px] text-slate-500 uppercase font-bold">Model</label>
-          <select
-            value={model}
-            onChange={(e) => setModel(e.target.value)}
-            disabled={isGenerating}
-            className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 disabled:opacity-50"
-          >
-            {Object.entries(AI_MODELS).map(([key, modelConfig]) => (
-              <option key={key} value={key}>
-                {modelConfig.name}
-              </option>
-            ))}
-          </select>
-        </div>
+        <ImageModelPicker model={model} setModel={setModel} disabled={isGenerating} />
 
         {/* Image Size Selection */}
         <div className="space-y-2">

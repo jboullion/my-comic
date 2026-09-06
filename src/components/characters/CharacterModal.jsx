@@ -4,6 +4,7 @@ import useCharactersStore from '../../stores/useCharactersStore'
 import useSeriesStore from '../../stores/useSeriesStore'
 import CharacterImageUpload from './CharacterImageUpload'
 import SeriesSelector from '../series/SeriesSelector'
+import { civitaiVersionId } from '../../../supabase/functions/_shared/comicModels'
 
 /**
  * CharacterModal Component
@@ -18,7 +19,7 @@ export default function CharacterModal({ defaultSeriesId = null }) {
     updateCharacter,
     addCharacterImage
   } = useCharactersStore()
-  const { series, seriesLoading, loadSeries, refreshSeriesCounts } = useSeriesStore()
+  const { loadSeries, refreshSeriesCounts } = useSeriesStore()
 
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
@@ -26,19 +27,25 @@ export default function CharacterModal({ defaultSeriesId = null }) {
   const [profileImage, setProfileImage] = useState(null) // { file, url } for new, { blob, url } for existing
   const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState(null)
+  const [loraUrl, setLoraUrl] = useState('')
+  const [loraTriggerWord, setLoraTriggerWord] = useState('')
+  const [loraScale, setLoraScale] = useState(0.8)
 
   const isEditing = !!editingCharacter
 
   // Load series when modal opens (only if not already loaded/loading)
   useEffect(() => {
-    if (isCharacterModalOpen && series.length === 0 && !seriesLoading) {
+    if (isCharacterModalOpen) {
       loadSeries()
     }
-  }, [isCharacterModalOpen, series.length, seriesLoading, loadSeries])
+  }, [isCharacterModalOpen, loadSeries])
 
   // Reset form when modal opens/closes or editing character changes
   useEffect(() => {
     if (isCharacterModalOpen) {
+      setLoraUrl(editingCharacter?.loraUrl || '')
+      setLoraTriggerWord(editingCharacter?.loraTriggerWord || '')
+      setLoraScale(editingCharacter?.loraScale ?? 0.8)
       if (editingCharacter) {
         setName(editingCharacter.name || '')
         setDescription(editingCharacter.description || '')
@@ -87,11 +94,18 @@ export default function CharacterModal({ defaultSeriesId = null }) {
     setIsSaving(true)
 
     try {
+      if (loraUrl.trim()) civitaiVersionId(loraUrl.trim())
+      const loraData = {
+        loraUrl: loraUrl.trim() || null,
+        loraTriggerWord: loraTriggerWord.trim() || null,
+        loraScale: Number(loraScale),
+      }
       if (isEditing) {
         // Update existing character
         await updateCharacter(editingCharacter.id, {
           name: name.trim(),
-          description: description.trim()
+          description: description.trim(),
+          ...loraData,
         })
 
         // If there's a new profile image (has file property), upload it
@@ -100,7 +114,7 @@ export default function CharacterModal({ defaultSeriesId = null }) {
         }
       } else {
         // Create new character
-        const character = await createCharacter(name.trim(), description.trim(), seriesId)
+        const character = await createCharacter(name.trim(), description.trim(), seriesId, loraData)
 
         // Upload profile image if provided
         if (profileImage?.file) {
@@ -114,7 +128,7 @@ export default function CharacterModal({ defaultSeriesId = null }) {
       // Modal will be closed by the store actions
     } catch (err) {
       console.error('Failed to save character:', err)
-      setError(isEditing ? 'Failed to update character' : 'Failed to create character')
+      setError(err.message || (isEditing ? 'Failed to update character' : 'Failed to create character'))
     } finally {
       setIsSaving(false)
     }
@@ -232,6 +246,27 @@ export default function CharacterModal({ defaultSeriesId = null }) {
                 This description can be used for AI prompt and story generation.
               </p>
             </div>
+
+            <fieldset disabled={isSaving} className="space-y-3 border border-slate-700 rounded-lg p-4">
+              <legend className="text-sm text-white px-1">Character LoRA (optional)</legend>
+              <label className="block text-xs text-slate-400">
+                Civitai version URL
+                <input type="url" value={loraUrl} onChange={e => setLoraUrl(e.target.value)}
+                  placeholder="https://civitai.com/models/...?modelVersionId=..."
+                  className="mt-1 w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white" />
+              </label>
+              <label className="block text-xs text-slate-400">
+                Trigger words
+                <input value={loraTriggerWord} onChange={e => setLoraTriggerWord(e.target.value)}
+                  className="mt-1 w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white" />
+              </label>
+              <label className="block text-xs text-slate-400">
+                Strength: {loraScale}
+                <input type="range" min="0" max="1" step="0.05" value={loraScale}
+                  onChange={e => setLoraScale(Number(e.target.value))} className="block w-full mt-2" />
+              </label>
+              <p className="text-xs text-slate-400">Choose a version trained for the same base model as your comic style. A LoRA influences appearance; it does not guarantee that a character stays identical.</p>
+            </fieldset>
 
             {/* Info Box */}
             <div className="bg-slate-900/50 rounded-lg px-4 py-3 text-sm text-slate-400">

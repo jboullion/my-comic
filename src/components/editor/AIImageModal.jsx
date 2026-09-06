@@ -15,6 +15,7 @@ import AIAdvancedTab from './ai/AIAdvancedTab'
 import { useCredits } from '../../hooks/useCredits'
 import { useIsImageGenRestricted, useImageGenLockoutMessage } from '../../stores/useCreditsStore'
 import CreditCostPreview from '../credits/CreditCostPreview'
+import { COMIC_MODELS, isComicModel } from '../../../supabase/functions/_shared/comicModels'
 
 // Migration: Clean up old localStorage history (one-time)
 const migrateOldHistory = (projectId) => {
@@ -44,7 +45,7 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
   const form = useAIImageForm({ projectId })
 
   // Character LoRA hook
-  const { getCharacterLora, characters } = useCharacterLoRA(form.selectedCharacterIds)
+  const { getCharacterLora, getCharacterLoras, characters } = useCharacterLoRA(form.selectedCharacterIds)
 
   // Prompt enhancement hook
   const enhancement = usePromptEnhancement({
@@ -72,11 +73,11 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
     if (form.activeTab !== 'advanced') return
     if (form.selectedCharacterIds.length === 0) return
 
-    const selectedChar = characters.find(c => form.selectedCharacterIds.includes(c.id))
-    if (selectedChar?.description) {
+    const selectedChars = characters.filter(c => form.selectedCharacterIds.includes(c.id) && c.description)
+    if (selectedChars.length) {
       form.setAdvancedPrompts(prev => ({
         ...prev,
-        character: selectedChar.description
+        character: selectedChars.map(c => `${c.name}: ${c.description}`).join(', ')
       }))
     }
   }, [form.selectedCharacterIds, form.activeTab, characters, form.setAdvancedPrompts])
@@ -113,6 +114,7 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
         imageSize: imageSizeParam,
         allowMature,
         lora,
+        characterLoras: isComicModel(form.model) ? getCharacterLoras() : [],
         customModel: form.model === 'custom' ? form.customModel : null,
         onProgress: form.setProgress
       })
@@ -131,6 +133,10 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
           prompt: form.prompt.trim(),
           style: form.style,
           model: form.model,
+          selectedCharacterIds: form.selectedCharacterIds,
+          characterLoras: isComicModel(form.model) ? getCharacterLoras() : [],
+          seed: result.seed,
+          fullPrompt: result.fullPrompt,
           imageSize: form.imageSize,
           imageBlob,
           imageWidth,
@@ -149,7 +155,7 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
       form.setIsGenerating(false)
       form.setProgress(null)
     }
-  }, [form, getCharacterLora, allowMature, hasCredits, balance, projectId, history])
+  }, [form, getCharacterLora, getCharacterLoras, allowMature, hasCredits, balance, projectId, history])
 
   // Handle generation (Advanced tab)
   const handleAdvancedGenerate = useCallback(async () => {
@@ -182,6 +188,7 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
         seed: form.advancedParams.seed,
         allowMature,
         lora,
+        characterLoras: isComicModel(form.model) ? getCharacterLoras() : [],
         customModel: form.model === 'custom' ? form.customModel : null,
         guidanceScale: form.advancedParams.guidanceScale,
         inferenceSteps: form.advancedParams.inferenceSteps,
@@ -203,6 +210,10 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
           prompt: combinedPrompt,
           style: null,
           model: form.model,
+          selectedCharacterIds: form.selectedCharacterIds,
+          characterLoras: isComicModel(form.model) ? getCharacterLoras() : [],
+          seed: result.seed,
+          fullPrompt: result.fullPrompt,
           imageSize: form.imageSize,
           structuredPrompts: form.advancedPrompts,
           advancedStyle: form.advancedStyle,
@@ -224,7 +235,7 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
       form.setIsGenerating(false)
       form.setProgress(null)
     }
-  }, [form, getCharacterLora, allowMature, hasCredits, balance, projectId, history])
+  }, [form, getCharacterLora, getCharacterLoras, allowMature, hasCredits, balance, projectId, history])
 
   // Handle save to canvas
   const handleSave = useCallback(async () => {
@@ -268,6 +279,7 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
 
   // Handle history click
   const handleHistoryClick = useCallback((entry) => {
+    form.setSelectedCharacterIds(entry.selectedCharacterIds || [])
     if (entry.structuredPrompts) {
       form.setAdvancedPrompts(entry.structuredPrompts)
       form.setAdvancedStyle(entry.advancedStyle || '')
@@ -461,7 +473,7 @@ export default function AIImageModal({ isOpen, onClose, onSave }) {
               onDelete={history.deleteEntry}
               onAddToCanvas={handleHistoryAddToCanvas}
               onClearAll={history.clearAll}
-              getModelName={(modelKey) => AI_MODELS[modelKey]?.name || modelKey}
+              getModelName={(modelKey) => COMIC_MODELS[modelKey]?.name || AI_MODELS[modelKey]?.name || modelKey}
               getStyleName={(styleKey) => styleKey ? (AI_STYLES[styleKey]?.name || styleKey) : null}
             />
           )}

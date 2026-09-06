@@ -1,4 +1,6 @@
 [build]
+# This site's primary URL is staging: https://comic-book-maker.netlify.app/
+# No separate live production environment exists; see docs/environments.md.
   command = "npm run build"
   publish = "dist"
 

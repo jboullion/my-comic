@@ -1,5 +1,7 @@
 # Supabase Token/Credit System Setup
 
+For the optional Civitai comic-model integration, see [Civitai setup](../docs/civitai-setup.md), including migration 011 and the server-only `CIVITAI_API_KEY` secret.
+
 This directory contains the database migrations and Edge Functions for the Comic Book Maker's AI credit system.
 
 ## Overview

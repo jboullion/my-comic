@@ -7,6 +7,8 @@ import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { handleCors, jsonResponse, errorResponse } from '../_shared/cors.ts'
 import { verifyAuth } from '../_shared/auth.ts'
 import { createAdminClient, checkCredits, deductCredits } from '../_shared/credits.ts'
+import { isComicModel } from '../_shared/comicModels.ts'
+import { resolveComicModel, type LoraSelection } from '../_shared/civitai.ts'
 import {
   checkImageGenStatus,
   checkPromptContent,
@@ -84,6 +86,7 @@ interface GenerateRequest {
   imageSize?: string | { width: number; height: number }
   seed?: number | null
   allowMature?: boolean
+  characterLoras?: LoraSelection[]
   lora?: {
     url: string
     scale?: number
@@ -134,10 +137,25 @@ serve(async (req: Request) => {
       guidanceScale = null,
       inferenceSteps = null,
       negativePrompt = null,
+      characterLoras = [],
     } = body
 
-    if (!prompt || prompt.trim().length === 0) {
+    if (typeof prompt !== 'string' || prompt.trim().length === 0) {
       return errorResponse('Prompt is required', 400, 'INVALID_REQUEST')
+    }
+
+    const comicModel = isComicModel(modelKey)
+    if (!comicModel && !Object.prototype.hasOwnProperty.call(MODEL_IDS, modelKey)) {
+      return errorResponse('Unknown image model', 400, 'INVALID_REQUEST')
+    }
+    if (!Array.isArray(characterLoras) || characterLoras.length > 3 || (!comicModel && characterLoras.length)) {
+      return errorResponse('Character LoRAs require a Civitai comic model (maximum three).', 400, 'INVALID_REQUEST')
+    }
+    if (comicModel && (lora || customModel)) {
+      return errorResponse('Use characterLoras with a curated comic model.', 400, 'INVALID_REQUEST')
+    }
+    if (!comicModel && lora?.url && modelKey !== 'custom') {
+      return errorResponse('The selected model does not support character LoRAs. Choose Civitai via Fal.', 400, 'INVALID_REQUEST')
     }
 
     // Create admin client for credit operations
@@ -184,12 +202,25 @@ serve(async (req: Request) => {
       return errorResponse('Fal.ai API key not configured', 500, 'CONFIG_ERROR')
     }
 
+    let resolvedComic: Awaited<ReturnType<typeof resolveComicModel>> | null = null
+    if (comicModel) {
+      try {
+        resolvedComic = await resolveComicModel(modelKey, characterLoras, Deno.env.get('CIVITAI_API_KEY'))
+      } catch (error) {
+        // Never log download URLs or upstream responses containing signed links or credentials.
+        const message = error instanceof Error && !error.message.includes('://') ? error.message : 'Unable to resolve Civitai model downloads.'
+        return errorResponse(message, 400, 'CIVITAI_MODEL_ERROR')
+      }
+    }
+
     // Determine model ID
     const useCustomModel = modelKey === 'custom' && customModel?.url
-    const useLora = lora?.url !== null && lora?.url !== undefined
+    const useLora = !!resolvedComic || (lora?.url !== null && lora?.url !== undefined)
     let modelId: string
 
-    if (useCustomModel) {
+    if (resolvedComic) {
+      modelId = resolvedComic.modelId
+    } else if (useCustomModel) {
       modelId = customModel!.type === 'flux' ? 'fal-ai/flux-lora' : 'fal-ai/lora'
     } else if (useLora) {
       modelId = 'fal-ai/flux-lora'
@@ -202,8 +233,13 @@ serve(async (req: Request) => {
     if (lora?.triggerWord) {
       finalPrompt = `${lora.triggerWord}, ${prompt}`
     }
+    if (resolvedComic) finalPrompt = [...resolvedComic.triggers, prompt].join(', ')
     const styleSuffix = STYLE_SUFFIXES[style] || ''
     const fullPrompt = finalPrompt + styleSuffix
+    if (resolvedComic) {
+      const fullFilter = await checkPromptContent(adminClient, fullPrompt)
+      if (!fullFilter.passed) return errorResponse('Please revise your prompt or LoRA trigger words.', 400, 'CONTENT_POLICY_VIOLATION')
+    }
 
     // Build Fal.ai input
     const input: Record<string, unknown> = {
@@ -292,7 +328,15 @@ serve(async (req: Request) => {
     }
 
     // LoRA settings
-    if (useLora) {
+    if (resolvedComic) {
+      input.model_name = resolvedComic.modelName
+      input.loras = resolvedComic.loras
+      input.image_format = 'png'
+      delete input.output_format
+      input.scheduler = 'DPM++ 2M Karras'
+      input.guidance_scale = guidanceScale ?? 7.5
+      input.num_inference_steps = inferenceSteps ?? 30
+    } else if (useLora) {
       input.loras = [{
         path: lora!.url,
         scale: lora!.scale ?? 0.8,
@@ -314,7 +358,7 @@ serve(async (req: Request) => {
 
     if (!queueResponse.ok) {
       const errorData = await queueResponse.json().catch(() => ({}))
-      console.error('[generate-image] Fal.ai queue error:', errorData)
+      console.error('[generate-image] Fal.ai queue error status:', queueResponse.status)
 
       // Check if this is a content policy rejection (422)
       if (isFalContentPolicyError(queueResponse.status, errorData)) {
@@ -333,7 +377,7 @@ serve(async (req: Request) => {
       }
 
       return errorResponse(
-        errorData.detail || `Fal.ai request failed: ${queueResponse.status}`,
+        `Fal.ai request failed (${queueResponse.status}). Check model availability and try again.`,
         queueResponse.status === 401 ? 500 : queueResponse.status,
         'FAL_API_ERROR'
       )
@@ -352,7 +396,7 @@ serve(async (req: Request) => {
     const { data: result, error: pollError } = await pollForResult(modelId, requestId, falApiKey)
 
     if (pollError || !result) {
-      return errorResponse(pollError || 'Image generation failed', 500, 'GENERATION_FAILED')
+      return errorResponse('Image generation failed or timed out. No site credits were deducted.', 500, 'GENERATION_FAILED')
     }
 
     const image = (result.images as Array<{ url: string; width: number; height: number }>)?.[0]
@@ -386,9 +430,9 @@ serve(async (req: Request) => {
       prompt: prompt,
       fullPrompt: fullPrompt,
       model: modelKey,
-      customModelName: useCustomModel ? customModel!.name : null,
+      customModelName: resolvedComic?.name || (useCustomModel ? customModel!.name : null),
       usedLora: useLora,
-      usedCustomModel: useCustomModel,
+      usedCustomModel: !!resolvedComic || !!useCustomModel,
       credits: {
         cost,
         newBalance: deductResult.newBalance ?? (creditCheck.balance! - cost),

@@ -104,7 +104,7 @@ export function useAIImageForm({ projectId }: UseAIImageFormOptions) {
   // Generate tab state
   const [prompt, setPrompt] = useState('')
   const [style, setStyle] = useState('comic')
-  const [model, setModel] = useState('flux-2')
+  const [model, setModel] = useState(customModel?.presetKey || 'flux-2')
   const [imageSize, setImageSize] = useState('match_page')
   const [selectedCharacterIds, setSelectedCharacterIds] = useState<number[]>([])
 

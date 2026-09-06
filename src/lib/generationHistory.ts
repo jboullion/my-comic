@@ -30,6 +30,10 @@ export interface GenerationHistoryEntry {
   prompt: string
   style: string | null
   model: string
+  selectedCharacterIds?: number[]
+  characterLoras?: Array<{ url: string; scale?: number; triggerWord?: string }>
+  seed?: number
+  fullPrompt?: string
   imageSize: string | { width: number; height: number }
   structuredPrompts?: StructuredPrompts | null
   advancedStyle?: string | null
